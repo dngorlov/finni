@@ -78,7 +78,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
     Object.defineProperty(globalThis, "crypto", { configurable: true, value: undefined });
     try {
       await renderApp();
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
     } finally {
       if (descriptor) {
         Object.defineProperty(globalThis, "crypto", descriptor);
@@ -114,8 +114,8 @@ describe("first-run flow (Appendix A 1–4)", () => {
     try {
       const { user } = await renderApp(ports);
 
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
-      expect(screen.getByText("Описание 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
+      expect(screen.getByText(/Здесь будет жить твой пиксельный питомец/)).toBeOnTheScreen();
       expect(screen.getByText("1/6")).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Дальше" })).toBeOnTheScreen();
       expect(screen.queryByRole("button", { name: "Готово" })).not.toBeOnTheScreen();
@@ -124,14 +124,14 @@ describe("first-run flow (Appendix A 1–4)", () => {
 
       await user.press(screen.getByRole("button", { name: "Назад" }));
       expect(exit).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
 
       await user.press(screen.getByRole("button", { name: "Дальше" }));
-      expect(screen.getByText("Заголовок 2")).toBeOnTheScreen();
+      expect(screen.getByText("Копим на мечту")).toBeOnTheScreen();
       expect(screen.getByText("2/6")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Назад" }));
       expect(exit).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
 
       await leaveOpeningCards(user);
       expect(screen.getByText("Питомец")).toBeOnTheScreen();
@@ -294,7 +294,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
     await view.unmount();
     const again = userEvent.setup();
     await render(<FinPetApp ports={ports} />);
-    expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+    expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
     expect(screen.queryByText("Питомец")).not.toBeOnTheScreen();
     await leaveOpeningCards(again);
     expect(screen.getByRole("button", { name: "Вид 1" })).toBeSelected();

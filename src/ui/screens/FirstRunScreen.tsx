@@ -14,6 +14,7 @@ import type { RootStackParamList } from "../navigation/types";
 import { COLOR_KEYS, SPECIES_KEYS, type ColorKey, type SpeciesKey } from "../pet/keys";
 import { PetView } from "../pet/PetView";
 import { useSession } from "../session/SessionProvider";
+import { IntroArt } from "./IntroArt";
 import { strings } from "../strings";
 import { colors, minTarget, radius, spacing, type } from "../theme";
 
@@ -152,6 +153,7 @@ function OpeningCards({
       }
       footer={<PrimaryButton label={last ? strings.done : strings.next} onPress={onNext} />}
     >
+      <IntroArt id={card.id} />
       <ScreenTitle style={styles.title}>{card.title}</ScreenTitle>
       <CoinText text={card.body} style={styles.body} />
     </Screen>

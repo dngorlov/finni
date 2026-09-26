@@ -11,6 +11,17 @@ import { currentTaskLabel, resolveCurrentTask } from "../tasks/resolveCurrentTas
 import { colors, font, minTarget, radius, spacing, type } from "../theme";
 import { MeterBar } from "./MeterBar";
 import { PixelSprite } from "./PixelSprite";
+import { PixelIcon } from "./Pictogram";
+import type { PixelIconName } from "../pixelIconXml";
+
+/** One pixel icon per kind of Текущая задача. */
+const TASK_ICON: Record<NonNullable<ReturnType<typeof resolveCurrentTask>>["kind"], PixelIconName> = {
+  "set-goal": "target",
+  "buy-goal": "star",
+  "confirm-plan": "clipboard",
+  "buy-bills": "shopping-cart",
+  lesson: "map",
+};
 
 const EDGE = 4;
 
@@ -107,9 +118,20 @@ export function StatusStrip() {
           role="button"
           aria-label={currentTaskLabel(task, content)}
           onPress={() => openTask(task, { navigation, setTab, setMoney, setFocus })}
-          style={styles.task}
+          style={({ pressed }) => [styles.task, pressed ? styles.taskPressed : null]}
         >
-          <Text style={styles.taskLabel}>{currentTaskLabel(task, content)}</Text>
+          <View aria-hidden style={styles.taskBadge}>
+            <PixelIcon name={TASK_ICON[task.kind]} size={24} color={colors.onRaised} />
+          </View>
+          <View aria-hidden style={styles.taskText}>
+            <Text style={styles.taskCaption}>{strings.currentTaskCaption}</Text>
+            <Text style={styles.taskLabel} numberOfLines={2}>
+              {currentTaskLabel(task, content).replace(/^Текущая задача: /, "")}
+            </Text>
+          </View>
+          <View aria-hidden style={styles.taskGo}>
+            <PixelIcon name="arrow-right" size={20} color={colors.onRaised} />
+          </View>
         </Pressable>
       ) : null}
     </View>
@@ -133,16 +155,52 @@ const styles = StyleSheet.create({
     gap: spacing.m,
   },
   task: {
-    backgroundColor: colors.highlight,
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderBottomWidth: 4,
+    borderColor: colors.accent,
     borderRadius: radius.card,
-    minHeight: minTarget,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.s,
+    minHeight: minTarget + 8,
+    paddingHorizontal: spacing.s,
+    paddingVertical: 6,
+  },
+  taskPressed: {
+    borderBottomWidth: 2,
+    marginTop: 2,
+  },
+  taskBadge: {
+    alignItems: "center",
+    backgroundColor: colors.raisedFace,
+    borderRadius: 12,
+    height: 40,
     justifyContent: "center",
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
+    width: 40,
+  },
+  taskText: {
+    flex: 1,
+  },
+  taskCaption: {
+    color: colors.accentText,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   taskLabel: {
     color: colors.text,
     fontSize: type.body,
+    fontWeight: "700",
+  },
+  taskGo: {
+    alignItems: "center",
+    backgroundColor: colors.raisedFace,
+    borderRadius: 16,
+    height: 32,
+    justifyContent: "center",
+    width: 32,
   },
   balance: {
     alignItems: "center",

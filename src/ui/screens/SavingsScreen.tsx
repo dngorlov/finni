@@ -118,8 +118,11 @@ export default function SavingsScreen() {
     if (focus?.kind === "goal") setPickerOpen(true);
   }
 
+  // A «выбери цель» request from Дом opens the picker once. setGoalPrompt lives in the
+  // shared chrome context, so it cannot be cleared during this component's render.
   useEffect(() => {
     if (!goalPrompt) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPickerOpen(true);
     setGoalPrompt(false);
   }, [goalPrompt, setGoalPrompt]);
@@ -501,7 +504,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(34, 26, 18, 0.45)",
   },
   dialogWrap: {

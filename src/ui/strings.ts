@@ -196,6 +196,7 @@ export const strings = {
   cheapGoalHeld: "Одна такая цель не открывает следующий этап. Купи ещё, чтобы набрать сумму.",
   goalDrop: "Без цели",
   goalEmptyPrompt: "Выбери цель",
+  currentTaskCaption: "Текущая задача",
   currentTaskSetGoal: "Текущая задача: выбрать цель",
   currentTaskBuyGoal: (name: string) => `Текущая задача: купить «${name}»`,
   currentTaskPlan: "Текущая задача: спланировать день",
