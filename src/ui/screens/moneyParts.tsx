@@ -57,6 +57,7 @@ export function HeroCard({
   value,
   label,
   signed,
+  compact,
   children,
 }: {
   caption: string;
@@ -65,13 +66,17 @@ export function HeroCard({
   label: string;
   /** Show a leading + when this is money that just arrived. */
   signed?: boolean;
+  /** Caption and amount on one line, a smaller number — for screens where the hero is not the star. */
+  compact?: boolean;
   children?: ReactNode;
 }) {
   return (
-    <View style={styles.hero}>
-      <Text style={styles.heroCaption}>{caption}</Text>
-      <View accessible aria-label={label}>
-        <Amount value={value} signed={signed} size={32} color={moneyColors.heroText} />
+    <View style={[styles.hero, compact ? styles.heroCompact : null]}>
+      <View style={compact ? styles.heroRow : null}>
+        <Text style={[styles.heroCaption, compact ? styles.heroCaptionCompact : null]}>{caption}</Text>
+        <View accessible aria-label={label}>
+          <Amount value={value} signed={signed} size={compact ? 20 : 32} color={moneyColors.heroText} />
+        </View>
       </View>
       {children}
     </View>
@@ -409,10 +414,23 @@ const styles = StyleSheet.create({
     gap: spacing.s,
     padding: spacing.m + 4,
   },
+  heroCompact: {
+    gap: 6,
+    padding: spacing.m,
+  },
+  heroRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.s,
+    justifyContent: "space-between",
+  },
   heroCaption: {
     color: moneyColors.heroSubtle,
     fontSize: type.body,
     fontWeight: "700",
+  },
+  heroCaptionCompact: {
+    flexShrink: 1,
   },
   bar: {
     borderRadius: 6,

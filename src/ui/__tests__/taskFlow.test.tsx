@@ -138,7 +138,8 @@ describe("Карта заданий", () => {
     expect(screen.getByLabelText("Сытость -15")).toBeOnTheScreen();
     expect(screen.getByLabelText("Счастье -15")).toBeOnTheScreen();
     expect(screen.queryByRole("heading", { name: /Открылось/ })).not.toBeOnTheScreen();
-    expect(screen.queryByText(/Каждый день/)).not.toBeOnTheScreen();
+    expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
+    expect(screen.getByRole("heading", { name: "Разбор дня" })).toBeOnTheScreen();
     expect(screen.queryByText(/плана на день не было/)).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Магазин" })).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Следующий день" }));
@@ -183,7 +184,8 @@ describe("Карта заданий", () => {
       expect(screen.getByLabelText("Сытость -15")).toBeOnTheScreen();
       expect(screen.getByLabelText("Счастье -15")).toBeOnTheScreen();
       expect(screen.queryByRole("heading", { name: /Открылось/ })).not.toBeOnTheScreen();
-      expect(screen.queryByText(/Каждый день/)).not.toBeOnTheScreen();
+      expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
+    expect(screen.getByRole("heading", { name: "Разбор дня" })).toBeOnTheScreen();
       expect(screen.queryByText(/плана на день не было/)).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Следующий день" }));
       expect(screen.getByText("День 2")).toBeOnTheScreen();

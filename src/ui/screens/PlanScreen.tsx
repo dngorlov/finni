@@ -16,10 +16,11 @@ import { usePlayChrome } from "../navigation/playChrome";
 import { activeGoalLabel } from "../goalLabel";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
+import { dayStrings } from "../stringsDay";
 import { moneyStrings } from "../stringsMoney";
 import { colors, spacing, type } from "../theme";
 import { bucketSpendOnDay, itemLookup } from "./journalStats";
-import { Amount, MoneyCard, moneyColors, ProgressBar } from "./moneyParts";
+import { Amount, HeroCard, MoneyCard, moneyColors, ProgressBar } from "./moneyParts";
 import { daysToGoalAt, incomeToday, todayBills, wantsThatFit } from "./planDraft";
 
 const EMPTY: PlanBuckets = { mandatory: 0, optional: 0, savings: 0 };
@@ -135,28 +136,16 @@ export default function PlanScreen() {
       }
     >
       <ScreenTitle style={styles.title}>{strings.navPlan}</ScreenTitle>
-      <View style={styles.availableRow}>
-        <Text style={styles.availableCaption}>{moneyStrings.planCaption}</Text>
-        <View accessible aria-label={strings.planAvailable(day.available)}>
-          <Amount value={day.available} size={16} />
-        </View>
-      </View>
-      {confirmed || income <= 0 ? null : <Text style={styles.income}>{strings.planIncomeToday(income)}</Text>}
-      {confirmed ? null : <CoinText text={strings.planPromise} style={styles.note} />}
-      <MoneyCard tight>
+      <HeroCard caption={moneyStrings.planCaption} value={day.available} label={strings.planAvailable(day.available)}>
+        {confirmed || income <= 0 ? null : <Text style={styles.income}>{strings.planIncomeToday(income)}</Text>}
+      </HeroCard>
+      <MoneyCard>
         <Text style={styles.section}>{confirmed ? moneyStrings.planSplit : moneyStrings.planHow}</Text>
         <SplitBar
           slices={slices.map((row) => ({ id: row.id, value: row.amount, color: row.color }))}
-          label={moneyStrings.planChartA11y(chartParts)}
+          label={moneyStrings.planChartA11y(chartParts.map((row) => ({ label: row.label, amount: row.amount, percent: 0 })))}
         />
-        {confirmed ? null : (
-          <CoinText
-            coin
-            text={strings.planRemainder(check.remainder)}
-            style={[styles.remainder, check.remainder < 0 ? styles.remainderOver : null]}
-          />
-        )}
-        {confirmed || check.ok ? null : <CoinText text={strings.planOverBudget} style={styles.body} />}
+        {confirmed ? null : <Leftover remainder={check.remainder} />}
         {confirmed ? (
           <>
             <BucketActual
@@ -194,11 +183,10 @@ export default function PlanScreen() {
               min={floor}
               max={day.available}
               yesterday={yesterday?.mandatory}
-              extra={floor > 0 ? strings.planBillsFloor(floor) : undefined}
               details={
                 bills.parts.length === 0 ? null : (
                   <View style={styles.bills}>
-                    <CoinText text={strings.planBillsTitle} style={styles.billTitle} />
+                    <CoinText coin text={dayStrings.planBillsMin(bills.total)} style={styles.billTitle} />
                     {bills.note ? <CoinText text={bills.note} style={styles.small} /> : null}
                     <CoinText coin text={strings.planBillsLine(bills.parts, bills.total)} style={styles.small} />
                     {billsShort > 0 ? <CoinText text={strings.planBillsShort(billsShort)} style={styles.small} /> : null}
@@ -215,7 +203,6 @@ export default function PlanScreen() {
               value={buckets.savings}
               max={day.available}
               yesterday={yesterday?.savings}
-              extra={strings.planSavingsExtra}
               hint={
                 goal
                   ? goalDays == null
@@ -266,6 +253,20 @@ function Yesterday({ today, yesterday }: { today: number; yesterday?: number }) 
   );
 }
 
+/** «Осталось разложить N» under the bar; red when the piles hold more than there is. */
+function Leftover({ remainder }: { remainder: number }) {
+  if (remainder < 0) {
+    return <CoinText text={dayStrings.planTooMuch(-remainder)} style={[styles.remainder, styles.remainderOver]} />;
+  }
+  return (
+    <CoinText
+      coin={remainder > 0}
+      text={remainder > 0 ? dayStrings.planLeft(remainder) : dayStrings.planAllPlaced}
+      style={[styles.remainder, remainder === 0 ? styles.remainderDone : null]}
+    />
+  );
+}
+
 /** One pile: colored shares, and the unfilled track is «Свободно». */
 function SplitBar({
   slices,
@@ -303,7 +304,6 @@ function DraftBucket({
   value,
   max,
   yesterday,
-  extra,
   hint,
   details,
   min,
@@ -316,7 +316,6 @@ function DraftBucket({
   value: number;
   max: number;
   yesterday?: number;
-  extra?: string;
   hint?: string;
   details?: ReactNode;
   min?: number;
@@ -339,7 +338,6 @@ function DraftBucket({
       />
       <Yesterday today={value} yesterday={yesterday} />
       {details}
-      {extra ? <CoinText coin={/\d/.test(extra)} text={extra} style={styles.small} /> : null}
       {hint ? <CoinText text={hint} style={styles.small} /> : null}
     </View>
   );
@@ -388,24 +386,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: type.body,
   },
-  note: {
-    color: colors.subtle,
-    fontSize: type.body,
-  },
-  availableRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.s,
-    justifyContent: "space-between",
-  },
-  availableCaption: {
-    color: colors.text,
-    flexShrink: 1,
-    fontSize: type.body,
-    fontWeight: "700",
-  },
   income: {
-    color: moneyColors.plus,
+    color: moneyColors.heroSubtle,
     fontSize: type.body,
     fontWeight: "700",
   },
@@ -422,25 +404,31 @@ const styles = StyleSheet.create({
   remainderOver: {
     color: moneyColors.minus,
   },
+  remainderDone: {
+    color: moneyColors.plus,
+  },
   bar: {
     backgroundColor: colors.track,
-    borderRadius: 8,
+    borderRadius: 10,
     flexDirection: "row",
-    height: 16,
+    height: 24,
     overflow: "hidden",
   },
   barSeg: {
-    height: 16,
+    height: 24,
   },
   bills: {
     gap: 0,
   },
   billTitle: {
-    color: colors.subtle,
+    color: colors.text,
     fontSize: type.body,
+    fontWeight: "700",
   },
   bucket: {
+    borderLeftWidth: 4,
     gap: 4,
+    paddingLeft: spacing.s,
     paddingVertical: 4,
   },
   divided: {

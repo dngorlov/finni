@@ -25,12 +25,10 @@ describe("plan from Main", () => {
     expect(screen.queryByText("Каждый день сытость -15 и счастье -15. Покупка в Магазине это компенсирует.")).not.toBeOnTheScreen();
     expect(screen.getByText("Сегодня пришло: +100")).toBeOnTheScreen();
     expect(screen.getByLabelText("Можно распределить: 100")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Это обещание на сегодня. Монеты пока в Балансе.")).toBeOnTheScreen();
-    expect(screen.getByText("Счета на сегодня")).toBeOnTheScreen();
+    expect(screen.getByText("Счета на сегодня — минимум 20")).toBeOnTheScreen();
     expect(screen.getByText("Обед 12 · Проезд 8 = 20")).toBeOnTheScreen();
-    expect(screen.getByText("Обязательных не меньше 20 — это счета.")).toBeOnTheScreen();
-    expect(screen.getByText("Положишь их отдельно — в Копилке.")).toBeOnTheScreen();
-    expect(screen.getByText("Останется свободных: 80")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Осталось разложить 80")).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /^План на сегодня: Обязательные 20 монет/ })).toBeOnTheScreen();
     expect(screen.queryByText(/Вчера: \d+/)).not.toBeOnTheScreen();
     expect(screen.getByText("Обязательные 20")).toBeOnTheScreen();
     expect(screen.getByText("Желаемые 0")).toBeOnTheScreen();
@@ -44,7 +42,7 @@ describe("plan from Main", () => {
     await user.press(screen.getByRole("button", { name: "Желаемые, больше" }));
     await user.press(screen.getByRole("button", { name: "Копилка, больше" }));
     expect(screen.getByText("Обязательные 22")).toBeOnTheScreen();
-    expect(screen.getByText("Останется свободных: 76")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Осталось разложить 76")).toBeOnTheScreen();
     expect(screen.getByText("Скейтборд: накопишь через 90 дней, если откладывать столько каждый день.")).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
@@ -59,8 +57,7 @@ describe("plan from Main", () => {
     expect(screen.getByText("план 22 · потрачено 0")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Обязательные, больше" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Подтвердить план" })).not.toBeOnTheScreen();
-    expect(screen.queryByLabelText("Это обещание на сегодня. Монеты пока в Балансе.")).not.toBeOnTheScreen();
-    expect(screen.queryByText("Положишь их отдельно — в Копилке.")).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText(/^Осталось разложить/)).not.toBeOnTheScreen();
     expect(screen.queryByText(/Вчера: \d+/)).not.toBeOnTheScreen();
 
     expect(screen.getByRole("button", { name: "План" })).toBeSelected();
@@ -79,9 +76,7 @@ describe("plan from Main", () => {
 
     await user.press(screen.getByRole("button", { name: "Деньги" }));
     await user.press(screen.getByRole("button", { name: "План" }));
-    expect(screen.getByLabelText("Это обещание на сегодня. Монеты пока в Балансе.")).toBeOnTheScreen();
-    expect(screen.getByText("Останется свободных: -140")).toBeOnTheScreen();
-    expect(screen.getByLabelText("В плане больше монет, чем есть. Убавь суммы.")).toBeOnTheScreen();
+    expect(screen.getByText("Разложено на 140 больше, чем есть. Убавь суммы.")).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Подтвердить план" })).toBeDisabled();
     expect(screen.queryByText(/Вчера: \d+/)).not.toBeOnTheScreen();
 
