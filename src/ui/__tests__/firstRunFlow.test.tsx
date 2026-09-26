@@ -78,7 +78,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
     Object.defineProperty(globalThis, "crypto", { configurable: true, value: undefined });
     try {
       await renderApp();
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
     } finally {
       if (descriptor) {
         Object.defineProperty(globalThis, "crypto", descriptor);
@@ -114,8 +114,8 @@ describe("first-run flow (Appendix A 1–4)", () => {
     try {
       const { user } = await renderApp(ports);
 
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
-      expect(screen.getByText("Описание 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
+      expect(screen.getByText(/Здесь будет жить твой пиксельный питомец/)).toBeOnTheScreen();
       expect(screen.getByText("1/6")).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Дальше" })).toBeOnTheScreen();
       expect(screen.queryByRole("button", { name: "Готово" })).not.toBeOnTheScreen();
@@ -124,14 +124,14 @@ describe("first-run flow (Appendix A 1–4)", () => {
 
       await user.press(screen.getByRole("button", { name: "Назад" }));
       expect(exit).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
 
       await user.press(screen.getByRole("button", { name: "Дальше" }));
-      expect(screen.getByText("Заголовок 2")).toBeOnTheScreen();
+      expect(screen.getByText("Копим на мечту")).toBeOnTheScreen();
       expect(screen.getByText("2/6")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Назад" }));
       expect(exit).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
 
       await leaveOpeningCards(user);
       expect(screen.getByText("Питомец")).toBeOnTheScreen();
@@ -142,8 +142,10 @@ describe("first-run flow (Appendix A 1–4)", () => {
     }
   });
 
-  it("starts with pet customization before Имя", async () => {
-    const { user } = await renderApp();
+  it("starts with pet customization before Имя, with Вид and Окрас only", async () => {
+    const ports = createFakePorts();
+    const complete = jest.spyOn(ports.firstRun, "complete");
+    const { user } = await renderApp(ports);
     await leaveOpeningCards(user);
 
     expect(screen.getByText("Питомец")).toBeOnTheScreen();
@@ -151,32 +153,31 @@ describe("first-run flow (Appendix A 1–4)", () => {
     expect(screen.queryByRole("button", { name: "Настройки" })).not.toBeOnTheScreen();
     expect(screen.getByText(strings.speciesLegend)).toBeOnTheScreen();
     expect(screen.getByText(strings.colorLegend)).toBeOnTheScreen();
-    expect(screen.getByText(strings.accessoryLegend)).toBeOnTheScreen();
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Окрас 1.*Аксессуар 1/ })).toBeOnTheScreen();
+    // Аксессуары open with Этап, so the first run does not offer them.
+    expect(screen.queryByText(strings.accessoryLegend)).not.toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: /Аксессуар|Очки|Шапочка/ })).not.toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Вид 1");
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Вид 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 1.*Аксессуар 1/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Вид 2");
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Окрас 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*Аксессуар 1/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Окрас 2");
     expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeDisabled();
 
-    await user.press(screen.getByRole("button", { name: "Аксессуар 3" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*Аксессуар 3/ })).toBeOnTheScreen();
-    expectSelectedAppearanceOption("Аксессуар 3");
-    expect(screen.getByRole("button", { name: "Аксессуар 1" })).not.toBeSelected();
-    expect(screen.getByRole("button", { name: "Аксессуар 1" })).not.toBeDisabled();
-
     await user.press(screen.getByRole("button", { name: "Дальше" }));
     expectNameChip("");
+    await user.type(nameField(), "Пух");
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(complete).toHaveBeenCalledWith(expect.objectContaining({ species: "sp2", color: "c2", accessory: "a1" }));
   });
 
   it("walks pet and Имя onto the hub", async () => {
@@ -293,7 +294,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
     await view.unmount();
     const again = userEvent.setup();
     await render(<FinPetApp ports={ports} />);
-    expect(screen.getByText("Заголовок 1")).toBeOnTheScreen();
+    expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
     expect(screen.queryByText("Питомец")).not.toBeOnTheScreen();
     await leaveOpeningCards(again);
     expect(screen.getByRole("button", { name: "Вид 1" })).toBeSelected();

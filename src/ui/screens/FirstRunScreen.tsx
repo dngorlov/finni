@@ -11,16 +11,10 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { TextButton } from "../components/TextButton";
 import type { RootStackParamList } from "../navigation/types";
-import {
-  ACCESSORY_KEYS,
-  COLOR_KEYS,
-  SPECIES_KEYS,
-  type AccessoryKey,
-  type ColorKey,
-  type SpeciesKey,
-} from "../pet/keys";
+import { COLOR_KEYS, SPECIES_KEYS, type ColorKey, type SpeciesKey } from "../pet/keys";
 import { PetView } from "../pet/PetView";
 import { useSession } from "../session/SessionProvider";
+import { IntroArt } from "./IntroArt";
 import { strings } from "../strings";
 import { colors, minTarget, radius, spacing, type } from "../theme";
 
@@ -30,11 +24,11 @@ type FirstRunDraft = {
   profileId: string;
   species: SpeciesKey;
   color: ColorKey;
-  accessory: AccessoryKey;
   petName: string;
 };
 
 const TEXTBOX_ROLE = "textbox" as Role;
+const NEW_PET_ACCESSORY = "a1";
 
 export default function FirstRunScreen({ navigation }: Props) {
   const { content, firstRun } = useSession();
@@ -44,7 +38,6 @@ export default function FirstRunScreen({ navigation }: Props) {
     profileId: createLocalId("profile"),
     species: "sp1",
     color: "c1",
-    accessory: "a1",
     petName: "",
   }));
   const [petNameTouched, setPetNameTouched] = useState(false);
@@ -76,7 +69,8 @@ export default function FirstRunScreen({ navigation }: Props) {
         petName: draft.petName.trim(),
         species: draft.species,
         color: draft.color,
-        accessory: draft.accessory,
+        // Аксессуары open with Этап: a new Питомец starts without one.
+        accessory: NEW_PET_ACCESSORY,
         contentVersion: content.contentVersion,
         goals: [],
       });
@@ -159,6 +153,7 @@ function OpeningCards({
       }
       footer={<PrimaryButton label={last ? strings.done : strings.next} onPress={onNext} />}
     >
+      <IntroArt id={card.id} />
       <ScreenTitle style={styles.title}>{card.title}</ScreenTitle>
       <CoinText text={card.body} style={styles.body} />
     </Screen>
@@ -171,7 +166,7 @@ function PetPhase({
   onNext,
 }: {
   draft: FirstRunDraft;
-  onChange: (change: Partial<Pick<FirstRunDraft, "species" | "color" | "accessory">>) => void;
+  onChange: (change: Partial<Pick<FirstRunDraft, "species" | "color">>) => void;
   onNext: () => void;
 }) {
   return (
@@ -180,7 +175,7 @@ function PetPhase({
       <PetView
         species={draft.species}
         color={draft.color}
-        accessory={draft.accessory}
+        accessory={NEW_PET_ACCESSORY}
         pose="idle"
       />
       <View style={styles.sliders}>
@@ -199,14 +194,6 @@ function PetPhase({
           labelOf={strings.colorName}
           value={draft.color}
           onChange={(color) => onChange({ color })}
-        />
-        <BeadSlider
-          legend={strings.accessoryLegend}
-          pictogram={strings.accessoryPictogram}
-          keys={ACCESSORY_KEYS}
-          labelOf={strings.accessoryName}
-          value={draft.accessory}
-          onChange={(accessory) => onChange({ accessory })}
         />
       </View>
     </Screen>
@@ -282,7 +269,7 @@ function NamePhase({
         <PetView
           species={draft.species}
           color={draft.color}
-          accessory={draft.accessory}
+          accessory={NEW_PET_ACCESSORY}
           pose="idle"
         />
         {petNameTouched && !isValidName(draft.petName) ? (

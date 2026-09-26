@@ -5,7 +5,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { META_KEYS } from "../metaKeys";
 import { MIGRATIONS } from "../migrations";
-import { createGameRepository } from "../repositories/gameRepository";
+import { accessorySeenKey, createGameRepository } from "../repositories/gameRepository";
 import { runMigrations } from "../runMigrations";
 import * as schema from "../schema";
 import { openMemoryGame } from "../testSupport/memoryDb";
@@ -462,6 +462,7 @@ describe("task reward", () => {
     game.saveDraftPlan(profileId, next.dayId, { mandatory: 12, optional: 0, savings: 0 });
     const closed = game.closeDay(profileId, tinyCatalog);
     expect(closed.meterDeltas).toMatchObject({ dailyMood: -15, overspend: 0, noPlan: -10, mood: -25 });
+    expect(closed.planConfirmed).toBe(false);
     expect(game.getProfile(profileId).mood).toBe(10);
   });
 
@@ -768,6 +769,7 @@ describe("day and journal reads", () => {
       score: 4,
       facts: { mandatoryCovered: true, withinPlan: true, deposited: true },
       plan: { mandatory: 12, optional: 5, savings: 15 },
+      planConfirmed: true,
       actual: { mandatory: 12, optional: 5, savings: 15 },
       meterDeltas: { care: -15, mood: -15 },
       stage: "novice",
@@ -1121,5 +1123,72 @@ describe("Ежедневный подарок", () => {
     clock.advanceDay();
     expect(game.dailyRewardState(profileId).cells[0]?.status).toBe("current");
     expect(game.claimDailyReward(profileId)).toEqual({ status: "ok", coins: 5 });
+  });
+});
+
+describe("Аксессуар and Внешний вид", () => {
+  function buyPreset(game: ReturnType<typeof seed>["game"], profileId: string, dayId: string, key: string, price: number) {
+    game.applyTaskStep(profileId, dayId, {
+      next: "exit",
+      verdict: "good",
+      explanation: "чек",
+      effects: [{ coins: price }],
+    });
+    game.setActiveGoal(profileId, { id: key, kind: "optional", price, effect: { meter: "mood", delta: 12 }, once: true });
+    const moved = game.transferToSavings(profileId, dayId, price);
+    if (moved.status !== "ok") throw new Error("expected transfer");
+    return game.purchaseFromSavings(profileId, dayId, { id: key, kind: "optional", price, effect: { meter: "mood", delta: 12 }, once: true });
+  }
+
+  it("puts on очки at Про and the шапочка at Миллионер, one card each", () => {
+    const { game, profileId } = seed();
+    const opened = game.openDay(profileId);
+    if (opened.status !== "opened") throw new Error("expected opened");
+    expect(game.accessoryUnlock(profileId)).toBeNull();
+
+    expect(buyPreset(game, profileId, opened.dayId, "skateboard", 90)).toMatchObject({ status: "ok" });
+    expect(game.getProfile(profileId)).toMatchObject({ stage: "pro", accessory: "a2" });
+    expect(game.accessoryUnlock(profileId)).toBe("a2");
+    game.celebrateAccessoryUnlock(profileId);
+    expect(game.accessoryUnlock(profileId)).toBeNull();
+
+    expect(buyPreset(game, profileId, opened.dayId, "telescope", 160)).toMatchObject({ status: "ok" });
+    expect(game.getProfile(profileId)).toMatchObject({ stage: "millionaire", accessory: "a3" });
+    expect(game.accessoryUnlock(profileId)).toBe("a3");
+    game.celebrateAccessoryUnlock(profileId);
+    expect(game.accessoryUnlock(profileId)).toBeNull();
+    expect(game.boughtGoalIds(profileId)).toEqual(["skateboard", "telescope"]);
+  });
+
+  it("saves Вид, Окрас, and an opened Аксессуар, and refuses a closed one", () => {
+    const { game, profileId } = seed();
+    game.setAppearance(profileId, { species: "sp3", color: "c2", accessory: "a1" });
+    expect(game.getProfile(profileId)).toMatchObject({ species: "sp3", color: "c2", accessory: "a1" });
+    expect(() => game.setAppearance(profileId, { species: "sp3", color: "c2", accessory: "a2" })).toThrow(
+      "Этот аксессуар ещё не открыт",
+    );
+    expect(() => game.setAppearance(profileId, { species: "sp9", color: "c2", accessory: "a1" })).toThrow();
+    expect(game.getProfile(profileId).accessory).toBe("a1");
+  });
+
+  it("clamps an old a3 profile to what Новичок may wear and cleans the card record on delete", () => {
+    const { game, meta, sqlite } = openMemoryGame();
+    const profileId = game.createProfile({
+      name: "Миша",
+      species: "sp2",
+      color: "c3",
+      accessory: "a3",
+      petName: "Пух",
+      contentVersion: 1,
+      goals: [],
+    });
+    expect(game.getProfile(profileId).accessory).toBe("a1");
+    sqlite.prepare("UPDATE petState SET stage = 1 WHERE profileId = ?").run(profileId);
+    expect(game.getProfile(profileId).accessory).toBe("a2");
+    expect(game.accessoryUnlock(profileId)).toBe("a2");
+    game.celebrateAccessoryUnlock(profileId);
+    expect(meta.get(accessorySeenKey(profileId))).toBe("1");
+    game.deleteProfile(profileId);
+    expect(meta.get(accessorySeenKey(profileId))).toBeNull();
   });
 });

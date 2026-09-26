@@ -76,7 +76,8 @@ export function DonutChart({
 
 /** Chart colors on the Andrei palette; each keeps ≥3:1 against the card. */
 export const CHART_COLORS = {
-  mandatory: "#855400",
+  /** Same big fill as the money hero cards: one token in theme.ts. */
+  mandatory: colors.heroFill,
   optional: "#F7A115",
   savings: "#6B7A00",
   bank: "#3F6A8A",

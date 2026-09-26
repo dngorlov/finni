@@ -16,7 +16,22 @@ import {
 import { checkDeposit, depositInterest, depositPayout, findOffer, maturesOnDay } from "../../core/bank";
 import { customGoalItemId, parseCustomGoalDraft } from "../../core/customGoal";
 import { applyGoalProgress, checkWithdrawal, estimateDaysToGoal, potFromTransfers } from "../../core/savings";
-import { applyStageStep, dayScore, explainStageChange, showStageThreshold, stageGoalFloor, type Stage } from "../../core/stages";
+import {
+  accessoryUnlocked,
+  clampAccessory,
+  isAccessoryKey,
+  newestAccessory,
+  pendingAccessoryUnlock,
+} from "../../core/accessories";
+import {
+  applyStageStep,
+  dayScore,
+  explainStageChange,
+  showStageThreshold,
+  STAGE_CODES,
+  stageGoalFloor,
+  type Stage,
+} from "../../core/stages";
 import { earnedAchievementIds, LUNCH_ITEM_ID, orderEarned, type AchievementFacts } from "../../core/achievements";
 import { createLocalId } from "../../data/localId";
 import { checkedTally, endsGameDay, rewardTopUp, type AnswerTally, type TaskStepResult } from "../../core/tasks";
@@ -66,6 +81,8 @@ type StoredProfile = ProfileView & {
   tasks: TaskProgressView[];
   deposits: StoredDeposit[];
   stageCredit: number;
+  /** Mirrors the `accessorySeen:<id>` meta row of the SQLite repository. */
+  accessorySeen: number;
   achievements: EarnedAchievement[];
   dailyRewardClaimed: number;
   dailyRewardClaimedOn: string | null;
@@ -112,6 +129,7 @@ function viewOf(row: StoredProfile): ProfileView {
     tasks: _tasks,
     deposits: _deposits,
     stageCredit: _stageCredit,
+    accessorySeen: _accessorySeen,
     achievements: _achievements,
     dailyRewardClaimed: _dailyRewardClaimed,
     dailyRewardClaimedOn: _dailyRewardClaimedOn,
@@ -120,7 +138,7 @@ function viewOf(row: StoredProfile): ProfileView {
     billsPaidDays: _billsPaidDays,
     ...view
   } = row;
-  return view;
+  return { ...view, accessory: clampAccessory(view.accessory, view.stage) };
 }
 
 function requireRow(profiles: Map<string, StoredProfile>, profileId: string): StoredProfile {
@@ -279,6 +297,7 @@ export function createFakePorts(): SessionPorts {
       tasks: [],
       deposits: [],
       stageCredit: 0,
+      accessorySeen: 0,
       achievements: [],
       dailyRewardClaimed: 0,
       dailyRewardClaimedOn: null,
@@ -333,6 +352,32 @@ export function createFakePorts(): SessionPorts {
       deleteProfile(profileId) {
         if (!profiles.has(profileId)) throw new Error(`Профиль ${profileId} не найден`);
         profiles.delete(profileId);
+      },
+      setAppearance(profileId, input) {
+        const row = requireRow(profiles, profileId);
+        if (!["sp1", "sp2", "sp3"].includes(input.species)) throw new Error(`Вид ${input.species} не найден`);
+        if (!["c1", "c2", "c3"].includes(input.color)) throw new Error(`Окрас ${input.color} не найден`);
+        if (!isAccessoryKey(input.accessory)) throw new Error(`Аксессуар ${input.accessory} не найден`);
+        if (!accessoryUnlocked(input.accessory, row.stage)) throw new Error("Этот аксессуар ещё не открыт");
+        row.species = input.species;
+        row.color = input.color;
+        row.accessory = input.accessory;
+        publish();
+      },
+      accessoryUnlock(profileId) {
+        const row = requireRow(profiles, profileId);
+        return pendingAccessoryUnlock(row.stage, row.accessorySeen);
+      },
+      celebrateAccessoryUnlock(profileId) {
+        const row = requireRow(profiles, profileId);
+        const pending = pendingAccessoryUnlock(row.stage, row.accessorySeen);
+        row.accessorySeen = STAGE_CODES[row.stage];
+        if (pending) row.accessory = pending;
+        publish();
+      },
+      boughtGoalIds(profileId) {
+        const row = requireRow(profiles, profileId);
+        return [...new Set(row.purchases.filter((item) => item.boughtAsActiveGoal).map((item) => item.itemId))];
       },
       dailyRewardState(profileId) {
         const row = requireRow(profiles, profileId);
@@ -491,6 +536,7 @@ export function createFakePorts(): SessionPorts {
         });
         row.stage = step.stage;
         row.stageCredit = step.credit;
+        if (step.stage !== from) row.accessory = newestAccessory(step.stage);
         const stageHeld =
           showStageThreshold({ stage: from, custom, price: item.price, threshold }) && step.stage === from;
         record(row);
@@ -794,6 +840,7 @@ export function createFakePorts(): SessionPorts {
           score,
           facts: { mandatoryCovered, withinPlan, deposited },
           plan: { ...row.buckets },
+          planConfirmed: confirmed !== null,
           actual: actuals(row),
           meterDeltas,
           stage: row.stage,

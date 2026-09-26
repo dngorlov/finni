@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { DailyRewardCell } from "../../core/dailyReward";
 import { BANK, FEATURES } from "../../core/config";
 import { META_KEYS } from "../../data/metaKeys";
 import type { DayState, ProfileView, SavingsView } from "../../data/repositories/gameRepository";
+import { AccessoryUnlockCard } from "../components/AccessoryUnlockCard";
 import { PixelSprite } from "../components/PixelSprite";
 import { FeedbackCard, type FeedbackModel } from "../components/FeedbackCard";
 import { Screen } from "../components/Screen";
@@ -15,6 +16,7 @@ import type { MoneySection } from "../navigation/playChrome";
 import { usePlayChrome } from "../navigation/playChrome";
 import type { RootStackParamList } from "../navigation/types";
 import { goalFace } from "../goalLabel";
+import { roomDecorations, type RoomDecoration } from "../pet/room";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { shopStrings } from "../stringsShop";
@@ -47,6 +49,7 @@ type HubModel = {
   bankOpen: boolean;
   giftReady: boolean;
   giftCells: DailyRewardCell[];
+  decorations: RoomDecoration[];
 };
 
 const MONEY_OPTIONS: { id: MoneySection; label: string }[] = [
@@ -56,8 +59,31 @@ const MONEY_OPTIONS: { id: MoneySection; label: string }[] = [
   { id: "bank", label: strings.navBank },
 ];
 
+/**
+ * The Аксессуар waiting for its card, held back while a Достижение modal is
+ * still up so the two celebrations come one after the other.
+ */
+function useAccessoryUnlock(profileId: string | null) {
+  const { game } = useSession();
+  const subscribe = useCallback(
+    (listener: () => void) => (profileId ? game.subscribe(listener) : () => {}),
+    [game, profileId],
+  );
+  const read = useCallback(() => {
+    if (!profileId) return null;
+    try {
+      if (game.listAchievements(profileId).some((row) => !row.celebrated)) return null;
+      return game.accessoryUnlock(profileId);
+    } catch {
+      return null;
+    }
+  }, [game, profileId]);
+  return useSyncExternalStore(subscribe, read, read);
+}
+
 export default function MainScreen({ navigation }: Props) {
   const { game, meta, content } = useSession();
+  const focused = useIsFocused();
   const { tab, setTab, money, setMoney, revision, setGoalPrompt, touchChrome } = usePlayChrome();
   const [hub, setHub] = useState<HubModel | null>(null);
   const [feedback, setFeedback] = useState<FeedbackModel | null>(null);
@@ -145,6 +171,7 @@ export default function MainScreen({ navigation }: Props) {
       bankOpen,
       giftReady: gift.ready,
       giftCells: gift.cells,
+      decorations: roomDecorations(game.boughtGoalIds(profileId), content.goals),
     });
     const bankPaid = bank && bank.paid > 0 ? bank : null;
     if (bankPaid) {
@@ -213,6 +240,15 @@ export default function MainScreen({ navigation }: Props) {
     if (!visible) setMoney("journal");
   }, [hub, money, setMoney]);
 
+  const unlockKey = useAccessoryUnlock(hub?.profile.id ?? null);
+  const celebrateUnlock = useCallback(() => {
+    const profileId = meta.get(META_KEYS.activeProfileId);
+    if (!profileId) return;
+    game.celebrateAccessoryUnlock(profileId);
+    loadHub();
+    touchChrome();
+  }, [game, loadHub, meta, touchChrome]);
+
   if (!hub) {
     return (
       <View style={styles.shell}>
@@ -232,6 +268,14 @@ export default function MainScreen({ navigation }: Props) {
     return true;
   });
   const current = options.find((option) => option.id === money) ?? options[0];
+  const showUnlock =
+    unlockKey != null &&
+    focused &&
+    tab === "home" &&
+    !cardOpen &&
+    !giftOpen &&
+    giftGot == null &&
+    feedback == null;
 
   return (
     <View ref={shellRef} style={styles.shell}>
@@ -271,6 +315,8 @@ export default function MainScreen({ navigation }: Props) {
                 dropRef={dropRef}
                 onDropLayout={placeDropShield}
                 bottomInset={STAGE_PEEK_HEIGHT}
+                active={focused && !showUnlock}
+                decorations={hub.decorations}
               />
             ) : null}
             {tab === "map" ? <TaskListScreen /> : null}
@@ -387,6 +433,18 @@ export default function MainScreen({ navigation }: Props) {
       ) : null}
       {giftGot != null ? <DailyRewardGot coins={giftGot} onDismiss={() => setGiftGot(null)} /> : null}
       {feedback ? <FeedbackCard model={feedback} onDismiss={() => setFeedback(null)} /> : null}
+      {showUnlock && unlockKey ? (
+        <AccessoryUnlockCard
+          accessory={unlockKey}
+          stage={hub.profile.stage}
+          pet={{ species: hub.profile.species, color: hub.profile.color, petName: hub.profile.petName }}
+          onDone={celebrateUnlock}
+          onAppearance={() => {
+            celebrateUnlock();
+            navigation.navigate("Appearance");
+          }}
+        />
+      ) : null}
     </View>
   );
 }

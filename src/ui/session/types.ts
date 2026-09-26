@@ -1,9 +1,11 @@
 import type { ClaimDailyRewardResult, DailyRewardView } from "../../core/dailyReward";
 import type { CatalogItem, DayBills, PlanBuckets } from "../../core/economy";
+import type { AccessoryKey } from "../../core/accessories";
 import type { Stage } from "../../core/stages";
 import type { AnswerTally, TaskStepResult } from "../../core/tasks";
 import type { GameContent } from "../../data/content";
 import type {
+  AppearanceInput,
   CollectDepositsResult,
   ConfirmPlanResult,
   DepositView,
@@ -34,6 +36,14 @@ export type SessionGame = {
   dailyRewardState(profileId: string): DailyRewardView;
   claimDailyReward(profileId: string): ClaimDailyRewardResult;
   deleteProfile(profileId: string): void;
+  /** Вид, Окрас, and an Аксессуар the current Этап has opened. Throws on a locked one. */
+  setAppearance(profileId: string, input: AppearanceInput): void;
+  /** The Аксессуар a new Этап opened that has not had its card yet. */
+  accessoryUnlock(profileId: string): AccessoryKey | null;
+  /** Card shown: remember it and put the new Аксессуар on. */
+  celebrateAccessoryUnlock(profileId: string): void;
+  /** Item ids of every Цель bought, oldest first, each once. */
+  boughtGoalIds(profileId: string): string[];
   openDay(profileId: string): OpenDayResult;
   savingsState(profileId: string): SavingsView;
   dayState(profileId: string): DayState;

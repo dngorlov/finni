@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { fireEvent, render, screen, type ReactTestInstance } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 import { VolumeControl } from "../components/VolumeControl";
 import { strings } from "../strings";
+
+type Node = ReturnType<typeof screen.getByRole>;
+type HostNode = { props: Record<string, unknown>; parent: HostNode | null; children: (HostNode | string)[] };
 
 const TRACK_WIDTH = 200;
 
@@ -39,17 +42,19 @@ function finger(pageX: number, locationX: number, stamp: number) {
   };
 }
 
-function trackHit(): ReactTestInstance {
-  const quieter = screen.getByRole("button", { name: strings.soundQuieter });
+function trackHit(): Node {
+  const quieter = screen.getByRole("button", { name: strings.soundQuieter }) as unknown as HostNode;
   const row = quieter.parent;
   if (row == null) {
     throw new Error("volume track row missing");
   }
-  const track = row.children.find((child) => typeof child.props.onLayout === "function");
+  const track = row.children.find(
+    (child): child is HostNode => typeof child !== "string" && typeof child.props.onLayout === "function",
+  );
   if (track == null) {
     throw new Error("volume track missing");
   }
-  return track;
+  return track as unknown as Node;
 }
 
 async function renderControl() {

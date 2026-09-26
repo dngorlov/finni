@@ -47,6 +47,13 @@ export const colors = {
   fill: "#ACBD33",
   /** primary-fixed */
   highlight: "#FFDDB7",
+  /**
+   * Big dark fill behind the money hero cards (Копилка, План, Банк, Итоги),
+   * the achievement plaques, and the Обязательные chart slice. The team wants
+   * it replaced; Andrei sends the new hex — change it here only. White text
+   * sits on it, so keep it dark enough for 4.5:1 against #FFFFFF.
+   */
+  heroFill: "#855400",
 } as const;
 
 export const radius = {

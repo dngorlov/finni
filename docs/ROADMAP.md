@@ -262,17 +262,19 @@ Node kinds: `choice` (default — `text` + `options`), `card` (`title?`, `text`,
 
 Rules: every option carries `explanation` (shown after the action, regardless of verdict — R8); `verdict` renders icon+text, never color-only (`UX`); `retry` = correction path back into the same node; `spawnTask` enqueues a timed correction Задание (safe-error rule, R9); runner is generic — a new task is data only.
 
-### 5.4 Designer asset drop — `assets/pets/` (expected contract)
+### 5.4 Designer asset drop — `assets/pets/` (current contract)
+
+Andrei draws one sheet per look: `design/pets/andrei/pet_{1|2|3}_{gray|orange|green}[_glasses|_hat].png` — a 15 × 8 grid of 32 px cells whose rows are animations (legend: `design/pets/for_animations.png`). Species `pet_N` = `spN`, colours gray/orange/green = `c1`/`c2`/`c3`, accessory none/glasses/hat = `a1`/`a2`/`a3`.
+
+`node scripts/slice-pet-sheets.mjs` writes, per drawn look, nearest-neighbour ×8 (256 px frames in 272 px cells, so a frame edge between physical pixels never bleeds):
 
 ```
-pets/sp{1|2|3}/c{1|2|3}/
-  idle.png  happy.png  sad.png        # base poses, transparent PNG
-pets/overlays/a{1|2|3}.png            # accessory, transparent PNG, centered
+pets/atlas/sp{N}_c{N}_a{N}.png   # IDLE, WALK, JUMP, PUSH rows + PIC and FALLS (living pet on Дом)
+pets/poses/sp{N}_c{N}_a{N}.png   # idle (PIC), happy (top of JUMP), sad (FALLS) for still PetView
+src/ui/pet/petSprites.generated.ts   # typed require map + layout, committed
 ```
 
-PetView layers base pose + accessory overlay; stage fake = reanimated scale/glow per Этап; pose switches tweened. Until assets arrive, ship gray placeholder PNGs with the same names so all screens work.
-
-Current drop (2026-09-22): Andrei's sheets live in `design/pets/sp{N}-c{N}-<colour>.png` (32 px grid, 15 × 8 cells: rows are animations). `node scripts/slice-pet-sheets.mjs` cuts one frame per pose (idle r0c0, happy r1c11, sad r4c8) into the tree above, scaled ×8 nearest-neighbour to 256 px so PetView downsizes crisp pixels. Delivered: sp1 (cat) and sp2 (hood) × c1 grey / c2 orange / c3 green. **Missing:** sp3 art (still gray placeholders) and accessory overlays — `overlays/a*.png` are transparent 256 px until the hats arrive; they must be drawn on the same 32 px cell so they line up with the body.
+A look Andrei has not drawn falls back (`resolvePetVariant`): requested accessory → same species/colour without one → same species/colour with any accessory → sp1/c1/none. Аксессуар follows Этап (Новичок none, Про очки, Миллионер шапочка) — see `src/core/accessories.ts`.
 
 ## 6. The six Задания — full scripts (RU copy)
 

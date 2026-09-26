@@ -29,6 +29,7 @@ import {
 import type { RootStackParamList } from "../navigation/types";
 import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
+import { petStrings } from "../stringsPet";
 import { colors, spacing, type } from "../theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
@@ -51,6 +52,7 @@ export default function SettingsScreen({ navigation }: Props) {
         <ScreenTitle style={styles.title}>{strings.appName}</ScreenTitle>
         <Text style={styles.body}>{strings.versionLine(APP_VERSION, APP_BUILD)}</Text>
       </Card>
+      <PrimaryButton label={petStrings.appearanceOpen} onPress={() => navigation.navigate("Appearance")} />
       <SoundSettings />
       <SettingsAchievements />
       <PrimaryButton label={strings.navAdult} onPress={() => navigation.navigate("AdultGate")} />

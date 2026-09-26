@@ -17,14 +17,15 @@ describe("loadContent", () => {
       "budget",
     ]);
     expect(content.intro.map((card) => card.title)).toEqual([
-      "Заголовок 1",
-      "Заголовок 2",
-      "Заголовок 3",
-      "Заголовок 4",
-      "Заголовок 5",
-      "Заголовок 6",
+      "Привет! Это ФинПет",
+      "Копим на мечту",
+      "Три главных решения",
+      "Какой он, твой питомец?",
+      "Давай знакомиться",
+      "Первые 100 монет",
     ]);
-    expect(content.intro.every((card) => card.body.startsWith("Описание"))).toBe(true);
+    // Short enough for a 7-year-old to read on one screen.
+    expect(content.intro.every((card) => card.body.length > 40 && card.body.length < 260)).toBe(true);
   });
 
   it("ships the shelf and nine Цели that are not sold there", () => {

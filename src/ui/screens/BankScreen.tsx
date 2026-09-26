@@ -19,14 +19,17 @@ import { usePlayChrome } from "../navigation/playChrome";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { moneyStrings } from "../stringsMoney";
-import { colors, font, minTarget, radius, spacing, type } from "../theme";
-import { HeroCard, MoneyCard, moneyColors, ProgressBar, SectionTitle } from "./moneyParts";
+import { colors, font, minTarget, spacing, type } from "../theme";
+import { HeroCard, MoneyCard, moneyColors, ProgressBar, SectionTitle, ShowAllButton } from "./moneyParts";
 
 /**
  * Банк — separate from Копилка: a вклад takes coins out of Баланс for a fixed
  * number of Игровые дни and returns them with interest (collected on Дом when
  * the day opens). No early withdrawal.
  */
+/** Банк lists this many вклады before «Показать все». */
+const DEPOSITS_SHOWN = 3;
+
 export default function BankScreen() {
   const { game, meta } = useSession();
   const { touchChrome } = usePlayChrome();
@@ -37,6 +40,7 @@ export default function BankScreen() {
   const [amount, setAmount] = useState<number>(BANK.minDeposit);
   const [confirming, setConfirming] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackModel | null>(null);
+  const [showAllDeposits, setShowAllDeposits] = useState(false);
 
   const load = useCallback(() => {
     const profileId = meta.get(META_KEYS.activeProfileId);
@@ -60,6 +64,10 @@ export default function BankScreen() {
   const canOpen = Boolean(day?.open) && check.status === "ok";
   const returnsOn = day ? maturesOnDay(day.n, offer.days) : 0;
   const locked = deposits.filter((dep) => dep.status === "open").reduce((sum, dep) => sum + dep.amount, 0);
+  // Open вклады first; a long history of returned ones folds away.
+  const ordered = [...deposits.filter((dep) => dep.status === "open"), ...deposits.filter((dep) => dep.status !== "open")];
+  const foldable = ordered.length > DEPOSITS_SHOWN;
+  const shownDeposits = foldable && !showAllDeposits ? ordered.slice(0, DEPOSITS_SHOWN) : ordered;
 
   const open = () => {
     const profileId = meta.get(META_KEYS.activeProfileId);
@@ -99,41 +107,49 @@ export default function BankScreen() {
       }
     >
       <ScreenTitle style={styles.title}>{strings.bankTitle}</ScreenTitle>
-      <HeroCard caption={moneyStrings.bankActiveCaption} value={locked} label={moneyStrings.bankActiveTotal(locked)}>
+      <HeroCard
+        compact
+        caption={moneyStrings.bankActiveCaption}
+        value={locked}
+        label={moneyStrings.bankActiveTotal(locked)}
+      >
         <CoinText text={strings.bankIntro} style={styles.heroNote} />
       </HeroCard>
-      <SectionTitle>{moneyStrings.bankOffers}</SectionTitle>
-      <View style={styles.offers}>
-        {BANK.offers.map((item) => {
-          const selected = item.id === offer.id;
-          const example = amount > 0 ? amount : BANK.minDeposit;
-          return (
-            <Pressable
-              key={item.id}
-              role="button"
-              aria-label={strings.bankOfferLabel(item.days, item.ratePercent)}
-              aria-selected={selected}
-              onPress={() => setOfferId(item.id)}
-              style={[styles.offer, selected ? styles.offerOn : null]}
-            >
-              <View style={styles.rate}>
-                <Text style={styles.rateText}>{moneyStrings.bankRate(item.ratePercent)}</Text>
-              </View>
-              <Text style={styles.term}>{moneyStrings.bankTerm(item.days)}</Text>
-              <Text style={styles.example}>
-                {moneyStrings.bankExample(example, depositPayout(example, item.ratePercent))}
-              </Text>
-              {selected ? (
-                <View style={styles.offerCheck}>
-                  <PixelIcon name="check" size={20} color={colors.onRaised} />
-                </View>
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </View>
       <MoneyCard>
-        <Text style={styles.section}>{moneyStrings.bankNew}</Text>
+        <Text role="heading" style={styles.section}>
+          {moneyStrings.bankNew}
+        </Text>
+        <View style={styles.offers}>
+          {BANK.offers.map((item) => {
+            const selected = item.id === offer.id;
+            const example = amount > 0 ? amount : BANK.minDeposit;
+            return (
+              <Pressable
+                key={item.id}
+                role="button"
+                aria-label={strings.bankOfferLabel(item.days, item.ratePercent)}
+                aria-selected={selected}
+                onPress={() => setOfferId(item.id)}
+                style={[styles.offer, selected ? styles.offerOn : null]}
+              >
+                <View style={styles.offerTop}>
+                  <Text style={styles.term}>{moneyStrings.bankTerm(item.days)}</Text>
+                  <View style={styles.rate}>
+                    <Text style={styles.rateText}>{moneyStrings.bankRate(item.ratePercent)}</Text>
+                  </View>
+                </View>
+                <Text style={styles.example}>
+                  {moneyStrings.bankExample(example, depositPayout(example, item.ratePercent))}
+                </Text>
+                {selected ? (
+                  <View style={styles.offerCheck}>
+                    <PixelIcon name="check" size={16} color={colors.onRaised} />
+                  </View>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
         <AmountStepper
           label={strings.bankAmount}
           pictogram={strings.navBankPictogram}
@@ -141,6 +157,8 @@ export default function BankScreen() {
           min={0}
           max={Math.max(balance, 0)}
           showTrack
+          dense
+          trackColor={CHART_COLORS.bank}
           onChange={setAmount}
         />
         <CoinText coin text={strings.bankPreview(amount, payout, offer.days)} style={styles.body} />
@@ -155,13 +173,15 @@ export default function BankScreen() {
       <SectionTitle>{strings.bankActive}</SectionTitle>
       <MoneyCard tight>
         {deposits.length === 0 ? <CoinText text={strings.bankEmpty} style={styles.muted} /> : null}
-        {deposits.map((dep, index) => {
+        {shownDeposits.map((dep, index) => {
           const passed = dep.status === "paid" ? dep.days : Math.max(0, dep.days - dep.daysLeft);
+          const lastRow = index === shownDeposits.length - 1 && !foldable;
           return (
-            <View key={dep.id} style={[styles.deposit, index === deposits.length - 1 ? null : styles.depositDivider]}>
+            <View key={dep.id} style={[styles.deposit, lastRow ? null : styles.depositDivider]}>
               <View style={styles.depositIcon}>
                 <PixelIcon
                   name={dep.status === "paid" ? "check" : "lock"}
+                  size={20}
                   color={dep.status === "paid" ? moneyColors.plus : CHART_COLORS.bank}
                 />
               </View>
@@ -179,6 +199,13 @@ export default function BankScreen() {
             </View>
           );
         })}
+        {foldable ? (
+          <ShowAllButton
+            expanded={showAllDeposits}
+            total={deposits.length}
+            onPress={() => setShowAllDeposits((was) => !was)}
+          />
+        ) : null}
       </MoneyCard>
       {feedback ? <FeedbackCard model={feedback} onDismiss={() => setFeedback(null)} /> : null}
     </Screen>
@@ -216,13 +243,21 @@ const styles = StyleSheet.create({
   offer: {
     backgroundColor: colors.card,
     borderColor: colors.track,
-    borderRadius: radius.card,
+    borderRadius: 16,
     borderWidth: 2,
-    flexBasis: "30%",
+    flexBasis: "40%",
     flexGrow: 1,
-    gap: 6,
+    gap: 4,
     minHeight: minTarget,
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: spacing.s,
+  },
+  offerTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.s,
+    paddingRight: 20,
   },
   offerOn: {
     backgroundColor: colors.highlight,
@@ -230,15 +265,14 @@ const styles = StyleSheet.create({
   },
   offerCheck: {
     position: "absolute",
-    right: 8,
-    top: 8,
+    right: 6,
+    top: 6,
   },
   rate: {
-    alignSelf: "flex-start",
     backgroundColor: CHART_COLORS.bank,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
   },
   rateText: {
     color: "#FFFFFF",
@@ -247,20 +281,20 @@ const styles = StyleSheet.create({
   },
   term: {
     color: colors.text,
-    fontSize: type.section,
+    fontSize: type.body,
     fontWeight: "700",
   },
   example: {
     color: colors.subtle,
     fontFamily: font.pixel,
-    fontSize: 10,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 18,
   },
   deposit: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 12,
-    paddingVertical: spacing.s,
+    gap: spacing.s,
+    paddingVertical: 6,
   },
   depositDivider: {
     borderBottomColor: colors.track,
@@ -269,14 +303,14 @@ const styles = StyleSheet.create({
   depositIcon: {
     alignItems: "center",
     backgroundColor: colors.track,
-    borderRadius: 20,
-    height: 40,
+    borderRadius: 16,
+    height: 32,
     justifyContent: "center",
-    width: 40,
+    width: 32,
   },
   depositBody: {
     flex: 1,
-    gap: 6,
+    gap: 4,
   },
   depositTitle: {
     color: colors.text,

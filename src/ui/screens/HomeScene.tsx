@@ -4,8 +4,11 @@ import { CoinText } from "../components/CoinText";
 import { Fab, FabStack } from "../components/Fab";
 import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
-import { PetView } from "../pet/PetView";
+import { useLatest } from "../components/useLatest";
+import { LivingPet } from "../pet/LivingPet";
 import { poseFromMeters } from "../pet/keys";
+import type { RoomDecoration } from "../pet/room";
+import { petStrings } from "../stringsPet";
 import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
 import { shopStrings } from "../stringsShop";
@@ -19,6 +22,10 @@ const FLOOR_SHARE = 0.3;
 const SPEECH_MS = 3500;
 /** Quiet gap before the pet starts the next line on its own. */
 const QUIET_MS = 8000;
+/** Bought Цели sit on the shelf first, then on the floor by the wall. */
+const SHELF_SLOTS = 3;
+const FLOOR_SLOTS = 3;
+const DECOR_SIZE = 48;
 
 export type HomePet = {
   species: string;
@@ -69,6 +76,9 @@ export function HomeScene({
   dropRef,
   onDropLayout,
   bottomInset = 0,
+  active = true,
+  decorations = [],
+  random,
 }: {
   pet: HomePet;
   day: number;
@@ -94,16 +104,23 @@ export function HomeScene({
   onDropLayout?: () => void;
   /** Space the pet and buttons leave at the bottom for the overlaid Этап card. */
   bottomInset?: number;
+  /** Дом is on screen. False pauses the pet's animation timers. */
+  active?: boolean;
+  /** Цели already bought, shown in the room. */
+  decorations?: readonly RoomDecoration[];
+  /** Test seam for the pet's idle choices. */
+  random?: () => number;
 }) {
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [line, setLine] = useState<string | null>(null);
-  const petRef = useRef(pet);
-  petRef.current = pet;
+  const petRef = useLatest(pet);
   const turn = useRef(0);
   const showRef = useRef<() => void>(() => {});
   const mood = speechMood(pet);
 
+  // Speech pauses with the pet while Дом is not on screen.
   useEffect(() => {
+    if (!active) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     turn.current = 0;
@@ -129,7 +146,7 @@ export function HomeScene({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [mood]);
+  }, [active, mood, petRef]);
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -150,11 +167,14 @@ export function HomeScene({
     : undefined;
 
   const say = () => showRef.current();
+  const shelf = decorations.slice(-(SHELF_SLOTS + FLOOR_SLOTS)).slice(0, SHELF_SLOTS);
+  const floorItems = decorations.slice(-(SHELF_SLOTS + FLOOR_SLOTS)).slice(SHELF_SLOTS);
+  const shownDecor = [...shelf, ...floorItems];
 
   const progress = cost > 0 ? Math.max(0, Math.min(1, accumulated / cost)) : 0;
 
   return (
-    <View style={styles.scene} onLayout={onLayout}>
+    <View testID="home-scene" style={styles.scene} onLayout={onLayout}>
       {/* Room: wall, window, skirting board, floor planks. Pure decoration. */}
       <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
         <View style={[styles.wall, { bottom: floorHeight }]} />
@@ -172,37 +192,54 @@ export function HomeScene({
           <View style={styles.plank} />
           <View style={styles.plank} />
         </View>
-        <View
-          style={[
-            styles.shadow,
-            {
-              bottom: petBottom - 10,
-              width: petSize * 0.7,
-              left: (petLeft ?? (box.width - petSize) / 2) + petSize * 0.15,
-            },
-          ]}
-        />
-      </View>
-
-      <View style={[styles.petSlot, { bottom: petBottom }, petLeft === undefined ? styles.petCentered : { left: petLeft }]}>
-        {line ? (
-          <View style={styles.bubble} accessibilityLiveRegion="polite">
-            <Text style={styles.bubbleText}>{line}</Text>
-            <View aria-hidden style={styles.bubbleTail} />
+        {floorItems.map((item, index) => (
+          <View
+            key={item.id}
+            style={[styles.decor, styles.decorFloor, { bottom: floorHeight - DECOR_SIZE + 6, left: spacing.m + index * (DECOR_SIZE + 8) }]}
+          >
+            <Text style={styles.decorIcon}>{item.icon}</Text>
           </View>
-        ) : null}
-        <Pressable role="button" aria-label={homeStrings.petTalk(pet.petName)} onPress={say}>
-          <PetView
-            species={pet.species}
-            color={pet.color}
-            accessory={pet.accessory}
-            petName={pet.petName}
-            care={pet.care}
-            mood={pet.mood}
-            size={petSize}
-          />
-        </Pressable>
+        ))}
       </View>
+      {shelf.length > 0 ? (
+        <View
+          accessible
+          role="img"
+          aria-label={petStrings.roomA11y(shownDecor.map((item) => item.name))}
+          pointerEvents="none"
+          style={[styles.shelf, { bottom: floorHeight + spacing.l + 96 }]}
+        >
+          <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.shelfRow}>
+            {shelf.map((item) => (
+              <View key={item.id} style={styles.decor}>
+                <Text style={styles.decorIcon}>{item.icon}</Text>
+              </View>
+            ))}
+          </View>
+          <View aria-hidden style={styles.shelfBoard} />
+        </View>
+      ) : null}
+
+      <LivingPet
+        pet={pet}
+        size={petSize}
+        homeLeft={petLeft}
+        homeBottom={petBottom}
+        sceneWidth={box.width}
+        sceneHeight={box.height}
+        active={active}
+        talkLabel={homeStrings.petTalk(pet.petName)}
+        onTap={say}
+        random={random}
+        bubble={
+          line ? (
+            <View style={styles.bubble} accessibilityLiveRegion="polite">
+              <Text style={styles.bubbleText}>{line}</Text>
+              <View aria-hidden style={styles.bubbleTail} />
+            </View>
+          ) : null
+        }
+      />
 
       <View pointerEvents="box-none" style={styles.hud}>
         <View style={styles.hudRow}>
@@ -354,18 +391,35 @@ const styles = StyleSheet.create({
     height: 4,
     opacity: 0.5,
   },
-  shadow: {
-    backgroundColor: colors.disabledFace,
-    borderRadius: 999,
-    height: 20,
-    position: "absolute",
-  },
-  petSlot: {
+  decor: {
     alignItems: "center",
+    height: DECOR_SIZE,
+    justifyContent: "flex-end",
+    position: "relative",
+    width: DECOR_SIZE,
+  },
+  decorFloor: {
     position: "absolute",
   },
-  petCentered: {
-    alignSelf: "center",
+  decorIcon: {
+    fontSize: 32,
+    includeFontPadding: false,
+    lineHeight: 40,
+    textAlign: "center",
+  },
+  shelf: {
+    position: "absolute",
+    right: spacing.l,
+  },
+  shelfRow: {
+    flexDirection: "row",
+    gap: 4,
+    paddingHorizontal: 4,
+  },
+  shelfBoard: {
+    backgroundColor: colors.raisedEdge,
+    borderRadius: 2,
+    height: 8,
   },
   bubble: {
     backgroundColor: colors.card,
