@@ -67,4 +67,19 @@ describe("Банк", () => {
     },
     30000,
   );
+
+  it("folds a long list of вклады behind «Показать все»", async () => {
+    const ports = createFakePorts();
+    const profileId = seedReturningChild(ports, { isDemo: true, name: "Демо", petName: "Демо" });
+    const day = ports.game.dayState(profileId);
+    for (const amount of [10, 11, 12, 13]) ports.game.openDeposit(profileId, day.dayId, "short", amount);
+    const { user } = await renderApp(ports);
+
+    await openMoney(user, "Банк");
+    expect(screen.getByLabelText("В банке 46")).toBeOnTheScreen();
+    expect(screen.getAllByText("Вернётся через 3 дня")).toHaveLength(3);
+    await user.press(screen.getByRole("button", { name: "Показать все (4)" }));
+    expect(screen.getAllByText("Вернётся через 3 дня")).toHaveLength(4);
+    expect(screen.getByRole("button", { name: "Свернуть" })).toBeExpanded();
+  });
 });

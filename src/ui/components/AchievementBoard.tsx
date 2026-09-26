@@ -1,4 +1,4 @@
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { ACHIEVEMENT_RULES, type AchievementId } from "../../core/achievements";
 import type { EarnedAchievement } from "../../data/repositories/gameRepository";
@@ -8,7 +8,7 @@ import { strings } from "../strings";
 import { ACHIEVEMENT_COPY, ACHIEVEMENT_TOTAL, achievementStrings } from "../stringsAchievements";
 import { colors, font, radius, spacing, type } from "../theme";
 import { AchievementModal } from "./AchievementModal";
-import { MoneyCard, SectionTitle, moneyColors } from "../screens/moneyParts";
+import { MoneyCard, SectionTitle, ShowAllButton, moneyColors } from "../screens/moneyParts";
 
 function copyFor(id: string) {
   if (Object.prototype.hasOwnProperty.call(ACHIEVEMENT_COPY, id)) {
@@ -124,27 +124,34 @@ export function SettingsAchievements() {
 
 /**
  * Earned Достижения on Журнал, Итоги, and Итоги дня.
- * `dayN` keeps only the ones earned that Игровой день.
+ * `dayN` keeps only the ones earned that Игровой день; `collapseAfter` shows
+ * that many and folds the rest behind «Показать все».
  */
-export function EarnedAchievements({ dayN }: { dayN?: number }) {
+export function EarnedAchievements({ dayN, collapseAfter }: { dayN?: number; collapseAfter?: number }) {
   const { rows } = useEarned();
+  const [expanded, setExpanded] = useState(false);
   const shown = rows.filter((row) => (dayN == null ? true : row.dayN === dayN));
   if (dayN != null && shown.length === 0) return null;
+  const foldable = collapseAfter != null && shown.length > collapseAfter;
+  const visible = foldable && !expanded ? shown.slice(0, collapseAfter) : shown;
   return (
     <>
       <SectionTitle>{achievementStrings.section}</SectionTitle>
       {shown.length === 0 ? <Text style={styles.empty}>{achievementStrings.empty}</Text> : null}
       {shown.length > 0 ? (
         <MoneyCard tight>
-          {shown.map((row, index) => {
+          {visible.map((row, index) => {
             const copy = copyFor(row.id);
             if (!copy) return null;
             return (
-              <View key={row.id} style={index === shown.length - 1 ? null : styles.divider}>
+              <View key={row.id} style={index === visible.length - 1 && !foldable ? null : styles.divider}>
                 <AchievementRow id={row.id as AchievementId} earned dayN={row.dayN} />
               </View>
             );
           })}
+          {foldable ? (
+            <ShowAllButton expanded={expanded} total={shown.length} onPress={() => setExpanded((was) => !was)} />
+          ) : null}
         </MoneyCard>
       ) : null}
     </>

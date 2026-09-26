@@ -98,6 +98,10 @@ describe("Достижения", () => {
     await user.press(screen.getByRole("button", { name: "Следующий день" }));
     await openTab(user, "Дом");
     await user.press(screen.getByRole("button", { name: "Итоги" }));
+    const showAll = screen.getByRole("button", { name: /^Показать все \(\d+\)$/ });
+    expect(showAll).toBeCollapsed();
+    await user.press(showAll);
+    expect(screen.getByRole("button", { name: "Свернуть" })).toBeExpanded();
     expect(screen.getByLabelText("Первая покупка. Получено. Ты купил в Магазине. День 1")).toBeOnTheScreen();
     expect(screen.getByLabelText("План есть. Получено. План подтверждён. День 1")).toBeOnTheScreen();
     expect(screen.queryByText("Неделя с Финни")).not.toBeOnTheScreen();

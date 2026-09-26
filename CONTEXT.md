@@ -53,12 +53,16 @@ The day's promised split of available coins into Обязательные, Же�
 _Avoid_: бюджет, бронь, список покупок
 
 **Итоги дня (Day summary)**:
-The screen shown when an Игровой день ends: that day's plan versus actual, and meter changes with explanations. The result of the Урок that ended the day leads here. Leaving it begins the next Игровой день, and until then this is the only screen.
+The screen shown when an Игровой день ends: that day's Разбор дня, plan versus actual, and meter changes with explanations — the same report Итоги shows for that day. The result of the Урок that ended the day leads here. Leaving it begins the next Игровой день, and until then this is the only screen.
 _Avoid_: отчёт, дневник, прогресс, очки
 
 **Итоги (Results)**:
-The reopenable record of the last closed Игровой день — its plan versus actual and meter changes — plus the counts of days played, Задания done, and Цели bought.
+The reopenable record of the last closed Игровой день — its Разбор дня, plan versus actual, and meter changes — plus the counts of days played, Задания done, and Цели bought.
 _Avoid_: Прогресс, отчёт, итоги дня, очки
+
+**Разбор дня (Day review)**:
+The automatic analysis of a closed Игровой день: what the child's actions led to and what could have gone better. At most three lines, praise first, then one tip; built only from that day's План, purchases, Счета, Копилка deposits, meter drops, and finished Уроки. Kind and specific — it never scolds.
+_Avoid_: оценка, ошибки, рейтинг
 
 **Обязательные расходы (Mandatory expenses)**:
 Purchases the pet needs (food, school supplies, transport, medicine). Every Игровой день takes 15 from Сытость and 15 from Счастье. A purchase adds its meter gain on top of that drop.
