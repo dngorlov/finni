@@ -7,6 +7,8 @@ export type RootStackParamList = {
   Results: undefined;
   Handbook: undefined;
   Settings: undefined;
+  /** Внешний вид: Вид, Окрас, and the Аксессуары this Этап opened. */
+  Appearance: undefined;
   /** Set when the lesson that just ended the day opened a money tool. */
   DaySummary: { openedTool?: "savings" | "plan" | "bank" } | undefined;
   AdultGate: undefined;

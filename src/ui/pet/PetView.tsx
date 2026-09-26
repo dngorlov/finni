@@ -1,10 +1,14 @@
-import { Image, StyleSheet, View } from "react-native";
-import { strings } from "../strings";
+import { View } from "react-native";
+import { petStrings } from "../stringsPet";
+import { petPosesSource } from "./assets";
 import { poseFromMeters, type PetPose } from "./keys";
-import { petBaseSource, petOverlaySource } from "./assets";
+import { PET_FRAME_PX, PET_PITCH_PX, PET_POSE_COLUMN, PET_POSE_COLUMNS } from "./petSprites.generated";
+import { SheetFrame } from "./SheetFrame";
 
 const DEFAULT_SIZE = 120;
+const POSES_WIDTH = PET_POSE_COLUMNS * PET_PITCH_PX;
 
+/** A still Питомец: one pose of Andrei's art for this Вид, Окрас, and Аксессуар. */
 export function PetView({
   species,
   color,
@@ -28,7 +32,6 @@ export function PetView({
 }) {
   const resolved: PetPose =
     pose ?? (care !== undefined && mood !== undefined ? poseFromMeters(care, mood) : "idle");
-  const box = { height: size, width: size };
   return (
     <View
       accessible={!accessibilityHidden}
@@ -37,28 +40,17 @@ export function PetView({
       aria-label={
         accessibilityHidden
           ? undefined
-          : strings.petA11y({ petName, species, color, accessory, pose: resolved })
+          : petStrings.petA11y({ petName, species, color, accessory, pose: resolved })
       }
-      style={[styles.frame, box]}
+      style={{ height: size, width: size }}
     >
-      <Image source={petBaseSource(species, color, resolved)} style={[styles.layer, box]} />
-      <Image source={petOverlaySource(accessory)} style={[styles.layer, box]} />
+      <SheetFrame
+        source={petPosesSource({ species, color, accessory })}
+        size={size}
+        column={PET_POSE_COLUMN[resolved]}
+        fileWidthPx={POSES_WIDTH}
+        fileHeightPx={PET_FRAME_PX}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  frame: {
-    height: DEFAULT_SIZE,
-    width: DEFAULT_SIZE,
-  },
-  layer: {
-    bottom: 0,
-    height: DEFAULT_SIZE,
-    left: 0,
-    position: "absolute",
-    right: 0,
-    top: 0,
-    width: DEFAULT_SIZE,
-  },
-});

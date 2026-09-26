@@ -25,6 +25,14 @@ import {
 } from "../../core/economy";
 import { checkDeposit, depositInterest, depositPayout, findOffer, maturesOnDay } from "../../core/bank";
 import { customGoalItemId, parseCustomGoalDraft } from "../../core/customGoal";
+import {
+  accessoryUnlocked,
+  clampAccessory,
+  isAccessoryKey,
+  newestAccessory,
+  pendingAccessoryUnlock,
+  type AccessoryKey,
+} from "../../core/accessories";
 import { applyGoalProgress, checkWithdrawal, estimateDaysToGoal, potFromTransfers } from "../../core/savings";
 import {
   applyStageStep,
@@ -44,6 +52,20 @@ import * as tables from "../schema";
 import type * as schema from "../schema";
 
 export type GameDb = BaseSQLiteDatabase<"sync", unknown, typeof schema>;
+
+/** Meta row holding how far the «Новый аксессуар» card has been shown (0 none, 1 очки, 2 шапочка). */
+export function accessorySeenKey(profileId: string): string {
+  return `accessorySeen:${profileId}`;
+}
+
+export interface AppearanceInput {
+  species: string;
+  color: string;
+  accessory: string;
+}
+
+const APPEARANCE_SPECIES = ["sp1", "sp2", "sp3"];
+const APPEARANCE_COLORS = ["c1", "c2", "c3"];
 
 export interface CreateProfileInput {
   id?: string;
@@ -620,6 +642,16 @@ export function createGameRepository(db: GameDb, clock: Clock) {
       .run();
   }
 
+  function accessorySeen(conn: GameDb, profileId: string): number {
+    const row = conn.select().from(tables.meta).where(eq(tables.meta.key, accessorySeenKey(profileId))).get();
+    const seen = row ? Number(row.value) : 0;
+    return Number.isFinite(seen) ? seen : 0;
+  }
+
+  function wearAccessory(conn: GameDb, profileId: string, accessory: AccessoryKey) {
+    conn.update(tables.profiles).set({ accessory }).where(eq(tables.profiles.id, profileId)).run();
+  }
+
   function planLessonCompleted(conn: GameDb, profileId: string): boolean {
     const row = conn
       .select()
@@ -735,13 +767,14 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     getProfile(profileId: string): ProfileView {
       const row = profile(db, profileId);
       const petRow = pet(db, profileId);
+      const stage = stageFromCode(petRow.stage);
       return {
         id: row.id,
         name: row.name,
         petName: row.petName,
         species: row.species,
         color: row.color,
-        accessory: row.accessory,
+        accessory: clampAccessory(row.accessory, stage),
         balance: row.balance,
         isDemo: row.isDemo === 1,
         care: petRow.care,
@@ -793,8 +826,57 @@ export function createGameRepository(db: GameDb, clock: Clock) {
         tx.delete(tables.goals).where(eq(tables.goals.profileId, profileId)).run();
         tx.delete(tables.petState).where(eq(tables.petState.profileId, profileId)).run();
         tx.delete(tables.days).where(eq(tables.days.profileId, profileId)).run();
+        tx.delete(tables.meta).where(eq(tables.meta.key, accessorySeenKey(profileId))).run();
         tx.delete(tables.profiles).where(eq(tables.profiles.id, profileId)).run();
       });
+    },
+
+    /** Вид, Окрас, and an Аксессуар the current Этап has opened. */
+    setAppearance(profileId: string, input: AppearanceInput): void {
+      db.transaction((tx) => {
+        profile(tx, profileId);
+        if (!APPEARANCE_SPECIES.includes(input.species)) throw new Error(`Вид ${input.species} не найден`);
+        if (!APPEARANCE_COLORS.includes(input.color)) throw new Error(`Окрас ${input.color} не найден`);
+        if (!isAccessoryKey(input.accessory)) throw new Error(`Аксессуар ${input.accessory} не найден`);
+        if (!accessoryUnlocked(input.accessory, stageFromCode(pet(tx, profileId).stage))) {
+          throw new Error("Этот аксессуар ещё не открыт");
+        }
+        tx.update(tables.profiles)
+          .set({ species: input.species, color: input.color, accessory: input.accessory })
+          .where(eq(tables.profiles.id, profileId))
+          .run();
+      });
+      publish();
+    },
+
+    /** The Аксессуар a new Этап opened that has not had its card yet. */
+    accessoryUnlock(profileId: string): AccessoryKey | null {
+      const stage = stageFromCode(pet(db, profileId).stage);
+      return pendingAccessoryUnlock(stage, accessorySeen(db, profileId));
+    },
+
+    /** The card was shown: remember it and put the new Аксессуар on. */
+    celebrateAccessoryUnlock(profileId: string): void {
+      db.transaction((tx) => {
+        profile(tx, profileId);
+        const stage = stageFromCode(pet(tx, profileId).stage);
+        const pending = pendingAccessoryUnlock(stage, accessorySeen(tx, profileId));
+        setMeta(tx, accessorySeenKey(profileId), String(STAGE_CODES[stage]));
+        if (pending) wearAccessory(tx, profileId, pending);
+      });
+      publish();
+    },
+
+    /** Item ids of every Цель bought, oldest first, each once. */
+    boughtGoalIds(profileId: string): string[] {
+      profile(db, profileId);
+      const rows = db
+        .select()
+        .from(tables.purchases)
+        .where(and(eq(tables.purchases.profileId, profileId), eq(tables.purchases.boughtAsActiveGoal, 1)))
+        .all()
+        .sort((left, right) => left.createdAt - right.createdAt);
+      return [...new Set(rows.map((row) => row.itemId))];
     },
 
     openDay(profileId: string): OpenDayResult {
@@ -1109,6 +1191,7 @@ export function createGameRepository(db: GameDb, clock: Clock) {
           .set({ stage: STAGE_CODES[step.stage], stageCredit: step.credit })
           .where(eq(tables.petState.profileId, profileId))
           .run();
+        if (step.stage !== current) wearAccessory(tx, profileId, newestAccessory(step.stage));
         const stageHeld =
           showStageThreshold({ stage: current, custom, price: item.price, threshold }) && step.stage === current;
         recordAchievements(tx, profileId);

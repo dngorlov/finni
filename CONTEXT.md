@@ -118,7 +118,7 @@ The pet's color variant — one of the three designer colors.
 _Avoid_: цвет, окрас кожи, skin
 
 **Аксессуар (Accessory)**:
-The extra item the pet wears — one of the three designer accessories.
+The extra item the pet wears. It opens with Этап — none on Новичок, очки on Про, шапочка с антенной on Миллионер — and a newly opened one is put on at once. Первый запуск does not offer it; Внешний вид lets the child change Вид, Окрас, and pick among opened Аксессуары.
 _Avoid_: украшение, шапка, hat
 
 **Сытость (Satiety)**:

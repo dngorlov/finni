@@ -142,8 +142,10 @@ describe("first-run flow (Appendix A 1–4)", () => {
     }
   });
 
-  it("starts with pet customization before Имя", async () => {
-    const { user } = await renderApp();
+  it("starts with pet customization before Имя, with Вид and Окрас only", async () => {
+    const ports = createFakePorts();
+    const complete = jest.spyOn(ports.firstRun, "complete");
+    const { user } = await renderApp(ports);
     await leaveOpeningCards(user);
 
     expect(screen.getByText("Питомец")).toBeOnTheScreen();
@@ -151,32 +153,31 @@ describe("first-run flow (Appendix A 1–4)", () => {
     expect(screen.queryByRole("button", { name: "Настройки" })).not.toBeOnTheScreen();
     expect(screen.getByText(strings.speciesLegend)).toBeOnTheScreen();
     expect(screen.getByText(strings.colorLegend)).toBeOnTheScreen();
-    expect(screen.getByText(strings.accessoryLegend)).toBeOnTheScreen();
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Окрас 1.*Аксессуар 1/ })).toBeOnTheScreen();
+    // Аксессуары open with Этап, so the first run does not offer them.
+    expect(screen.queryByText(strings.accessoryLegend)).not.toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: /Аксессуар|Очки|Шапочка/ })).not.toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Вид 1");
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Вид 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 1.*Аксессуар 1/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Вид 2");
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Окрас 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*Аксессуар 1/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Окрас 2");
     expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeDisabled();
 
-    await user.press(screen.getByRole("button", { name: "Аксессуар 3" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*Аксессуар 3/ })).toBeOnTheScreen();
-    expectSelectedAppearanceOption("Аксессуар 3");
-    expect(screen.getByRole("button", { name: "Аксессуар 1" })).not.toBeSelected();
-    expect(screen.getByRole("button", { name: "Аксессуар 1" })).not.toBeDisabled();
-
     await user.press(screen.getByRole("button", { name: "Дальше" }));
     expectNameChip("");
+    await user.type(nameField(), "Пух");
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(complete).toHaveBeenCalledWith(expect.objectContaining({ species: "sp2", color: "c2", accessory: "a1" }));
   });
 
   it("walks pet and Имя onto the hub", async () => {
