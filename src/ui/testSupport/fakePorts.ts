@@ -794,6 +794,7 @@ export function createFakePorts(): SessionPorts {
           score,
           facts: { mandatoryCovered, withinPlan, deposited },
           plan: { ...row.buckets },
+          planConfirmed: confirmed !== null,
           actual: actuals(row),
           meterDeltas,
           stage: row.stage,

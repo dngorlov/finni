@@ -73,6 +73,8 @@ export interface DaySummaryView {
   score: number;
   facts: { mandatoryCovered: boolean; withinPlan: boolean; deposited: boolean };
   plan: PlanBuckets;
+  /** The day's План was confirmed; otherwise `plan` is a draft or empty. */
+  planConfirmed: boolean;
   actual: PlanBuckets;
   meterDeltas: { care: number; mood: number; dailyMood: number; overspend: number; noPlan: number };
   stage: Stage;
@@ -563,6 +565,7 @@ export function createGameRepository(db: GameDb, clock: Clock) {
         deposited: scoreRow.deposited === 1,
       },
       plan: planBuckets(planForDay(conn, dayId)),
+      planConfirmed: planForDay(conn, dayId)?.status === "confirmed",
       actual: actualForDay(conn, dayId),
       meterDeltas: {
         care: sum("care"),

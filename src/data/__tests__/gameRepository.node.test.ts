@@ -462,6 +462,7 @@ describe("task reward", () => {
     game.saveDraftPlan(profileId, next.dayId, { mandatory: 12, optional: 0, savings: 0 });
     const closed = game.closeDay(profileId, tinyCatalog);
     expect(closed.meterDeltas).toMatchObject({ dailyMood: -15, overspend: 0, noPlan: -10, mood: -25 });
+    expect(closed.planConfirmed).toBe(false);
     expect(game.getProfile(profileId).mood).toBe(10);
   });
 
@@ -768,6 +769,7 @@ describe("day and journal reads", () => {
       score: 4,
       facts: { mandatoryCovered: true, withinPlan: true, deposited: true },
       plan: { mandatory: 12, optional: 5, savings: 15 },
+      planConfirmed: true,
       actual: { mandatory: 12, optional: 5, savings: 15 },
       meterDeltas: { care: -15, mood: -15 },
       stage: "novice",

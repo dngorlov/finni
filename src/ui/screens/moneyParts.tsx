@@ -3,16 +3,18 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
 import type { PixelIconName } from "../pixelIconXml";
+import { dayStrings } from "../stringsDay";
 import { moneyStrings } from "../stringsMoney";
 import { colors, font, minTarget, radius, spacing, type } from "../theme";
 
 /** Bank-app look shared by Копилка, План, Журнал and Банк. */
 export const moneyColors = {
-  /** Account card: dark primary with light text (white on #855400 is 6:1). */
-  heroFace: colors.raisedEdge,
+  /** Account card: the shared hero fill with light text (white on #855400 is 6:1). */
+  heroFace: colors.heroFill,
   heroText: "#FFFFFF",
   heroSubtle: colors.highlight,
-  heroTrack: "#A66F1C",
+  /** Empty part of a bar on the hero: a lighter step of `colors.heroFill`. */
+  heroTrack: "rgba(255,255,255,0.22)",
   /** Money in (≥4.5:1 on white, 7.4:1). */
   plus: "#4F5B00",
   /** Money out (≥4.5:1 on white, 7.6:1). */
@@ -365,6 +367,27 @@ export function Dropdown<T extends string>({
   );
 }
 
+/** Folds a long list: «Показать все (N)» / «Свернуть», a full-width 48 dp row. */
+export function ShowAllButton({
+  expanded,
+  total,
+  onPress,
+}: {
+  expanded: boolean;
+  total: number;
+  onPress: () => void;
+}) {
+  const label = expanded ? dayStrings.showLess : dayStrings.showAll(total);
+  return (
+    <Pressable role="button" aria-label={label} aria-expanded={expanded} onPress={onPress} style={styles.showAll}>
+      <Text style={styles.showAllText}>{label}</Text>
+      <View style={expanded ? styles.dropdownChevronOpen : null}>
+        <PixelIcon name="chevron-down" size={20} color={colors.accentText} />
+      </View>
+    </Pressable>
+  );
+}
+
 export function MoneyCard({ children, tight }: { children: ReactNode; tight?: boolean }) {
   return <View style={[styles.card, tight ? styles.cardTight : null]}>{children}</View>;
 }
@@ -647,5 +670,17 @@ const styles = StyleSheet.create({
   },
   cardTight: {
     paddingVertical: spacing.s,
+  },
+  showAll: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.s,
+    justifyContent: "center",
+    minHeight: minTarget,
+  },
+  showAllText: {
+    color: colors.accentText,
+    fontSize: type.body,
+    fontWeight: "700",
   },
 });

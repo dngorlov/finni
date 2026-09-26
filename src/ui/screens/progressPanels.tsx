@@ -3,18 +3,18 @@ import { StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { playableTasks } from "../../core/tasks";
 import { META_KEYS } from "../../data/metaKeys";
+import type { Insight } from "../../core/dayInsights";
 import type { DaySummaryView, JournalEntry, TaskProgressView } from "../../data/repositories/gameRepository";
 import { EarnedAchievements } from "../components/AchievementBoard";
 import { PixelIcon } from "../components/Pictogram";
-import type { SpriteName } from "../components/PixelSprite";
 import { StageCardPlate } from "../components/StageCard";
 import { goalFace } from "../goalLabel";
 import { useSession } from "../session/SessionProvider";
-import { dayCloseLines, strings } from "../strings";
+import { strings } from "../strings";
 import { CHART_COLORS, DonutChart } from "../components/DonutChart";
 import type { PixelIconName } from "../pixelIconXml";
 import { moneyStrings } from "../stringsMoney";
-import { colors, font, radius, spacing, type } from "../theme";
+import { colors, font, spacing, type } from "../theme";
 import {
   classify,
   groupByDay,
@@ -25,7 +25,6 @@ import {
   type JournalPeriod,
 } from "./journalStats";
 import {
-  Amount,
   amountColor,
   Legend,
   MoneyCard,
@@ -38,7 +37,7 @@ import {
   TileRow,
   type LegendRow,
 } from "./moneyParts";
-import { FactNote, MeterRow, PlanFactCard } from "./planFact";
+import { ClosedDayReport, readDayInsights, type PetLook } from "./dayReport";
 
 function journalLabel(
   entry: JournalEntry,
@@ -61,52 +60,8 @@ function journalLabel(
   return entry.labelKey;
 }
 
-type EffectSection = {
-  key: string;
-  line: string;
-  tint: string;
-  sprite: SpriteName;
-};
-
-/** One block per meter outcome. The daily drop is always a loss. */
-function effectSections(deltas: DaySummaryView["meterDeltas"]): EffectSection[] {
-  const lines = dayCloseLines(deltas);
-  const sections: EffectSection[] = [
-    {
-      key: "care",
-      line: lines[0],
-      tint: deltas.care < 0 ? moneyColors.goal : colors.fill,
-      sprite: "food",
-    },
-    {
-      key: "mood",
-      line: lines[1],
-      tint: deltas.dailyMood < 0 ? CHART_COLORS.bank : colors.fill,
-      sprite: "mood",
-    },
-  ];
-  if (deltas.overspend < 0) {
-    sections.push({
-      key: "overspend",
-      line: strings.meterReasonOverspend(deltas.overspend),
-      tint: CHART_COLORS.optional,
-      sprite: "mood",
-    });
-  }
-  if (deltas.noPlan < 0) {
-    sections.push({
-      key: "noPlan",
-      line: strings.meterReasonNoPlan(deltas.noPlan),
-      tint: CHART_COLORS.mandatory,
-      sprite: "mood",
-    });
-  }
-  return sections;
-}
-
 function markInk(tint: string) {
   if (tint === CHART_COLORS.optional || tint === CHART_COLORS.tasks) return colors.onRaised;
-  if (tint === colors.fill) return colors.text;
   return moneyColors.heroText;
 }
 
@@ -127,6 +82,8 @@ function useRecord() {
   const [goalCount, setGoalCount] = useState(0);
   const [today, setToday] = useState(1);
   const [card, setCard] = useState<CardFace | null>(null);
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [pet, setPet] = useState<PetLook | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -137,9 +94,12 @@ function useRecord() {
       const active = savings.activeGoal;
       const face = goalFace(savings, profile.stage, content.goals);
       const cost = active?.cost ?? 0;
+      const closed = game.lastClosedDay(profileId);
       setRows(game.listJournal(profileId));
       setToday(game.dayState(profileId).n);
-      setLastClosed(game.lastClosedDay(profileId));
+      setLastClosed(closed);
+      setInsights(closed ? readDayInsights(game, content, profileId, closed) : []);
+      setPet(profile);
       setTasks(game.listTaskProgress(profileId));
       setGoalCount(game.boughtAsActiveGoalCount(profileId));
       setCard({
@@ -153,7 +113,7 @@ function useRecord() {
     }, [content, game, meta]),
   );
 
-  return { content, rows, lastClosed, tasks, goalCount, today, card };
+  return { content, rows, lastClosed, tasks, goalCount, today, card, insights, pet };
 }
 
 const PERIODS: { id: JournalPeriod; label: string }[] = [
@@ -316,7 +276,7 @@ export function JournalPanel() {
 }
 
 export function ResultsBody() {
-  const { content, lastClosed, tasks, goalCount, card } = useRecord();
+  const { content, lastClosed, tasks, goalCount, card, insights, pet } = useRecord();
   const topicTasks = playableTasks(content.tasks);
   const completedTopics = tasks.filter((row) => {
     if (row.status !== "completed") return false;
@@ -329,14 +289,10 @@ export function ResultsBody() {
         <MoneyCard>
           <Text style={styles.body}>{strings.resultsEmpty}</Text>
         </MoneyCard>
-        <EarnedAchievements />
+        <EarnedAchievements collapseAfter={ACHIEVEMENTS_SHOWN} />
       </>
     );
   }
-
-  const effects = effectSections(lastClosed.meterDeltas);
-  const spent = lastClosed.actual.mandatory + lastClosed.actual.optional + lastClosed.actual.savings;
-  const planned = lastClosed.plan.mandatory + lastClosed.plan.optional + lastClosed.plan.savings;
 
   return (
     <>
@@ -349,29 +305,7 @@ export function ResultsBody() {
         accumulated={card.accumulated}
         cost={card.cost}
       />
-      <View style={styles.strip}>
-        <Text style={styles.dayLabel}>{strings.resultsLastDay(lastClosed.n)}</Text>
-        <View style={styles.stats}>
-          <View accessible aria-label={moneyStrings.statA11y(strings.daySummarySpent, spent)} style={styles.stat}>
-            <Text aria-hidden style={styles.statLabel}>
-              {strings.daySummarySpent}
-            </Text>
-            <Amount value={spent} size={14} color={moneyColors.heroText} />
-          </View>
-          <View accessible aria-label={moneyStrings.statA11y(strings.daySummaryPlanned, planned)} style={styles.stat}>
-            <Text aria-hidden style={styles.statLabel}>
-              {strings.daySummaryPlanned}
-            </Text>
-            <Amount value={planned} size={14} color={moneyColors.heroText} />
-          </View>
-        </View>
-      </View>
-      <SectionTitle>{strings.daySummaryPlan}</SectionTitle>
-      <PlanFactCard plan={lastClosed.plan} actual={lastClosed.actual} />
-      <MeterRow care={lastClosed.meterDeltas.care} mood={lastClosed.meterDeltas.mood} />
-      {effects.map((effect) => (
-        <FactNote key={effect.key} color={effect.tint} sprite={effect.sprite} text={effect.line} />
-      ))}
+      <ClosedDayReport summary={lastClosed} mode="record" insights={insights} pet={pet} />
       <SectionTitle>{strings.resultsOverall}</SectionTitle>
       <MoneyCard tight>
         <CountRow icon="clock" tint={CHART_COLORS.bank} text={strings.resultsDaysPlayed(lastClosed.n)} />
@@ -382,10 +316,13 @@ export function ResultsBody() {
         />
         <CountRow icon="star" tint={moneyColors.goal} text={strings.resultsGoalsAchieved(goalCount)} last />
       </MoneyCard>
-      <EarnedAchievements />
+      <EarnedAchievements collapseAfter={ACHIEVEMENTS_SHOWN} />
     </>
   );
 }
+
+/** Итоги lists this many Достижения before «Показать все». */
+const ACHIEVEMENTS_SHOWN = 3;
 
 function CountRow({
   icon,
@@ -401,7 +338,7 @@ function CountRow({
   return (
     <View style={[styles.count, last ? null : styles.countDivider]}>
       <View style={[styles.mark, { backgroundColor: tint }]}>
-        <PixelIcon name={icon} size={22} color={markInk(tint)} />
+        <PixelIcon name={icon} size={18} color={markInk(tint)} />
       </View>
       <Text style={styles.body}>{text}</Text>
     </View>
@@ -409,46 +346,19 @@ function CountRow({
 }
 
 const styles = StyleSheet.create({
-  strip: {
-    backgroundColor: moneyColors.heroFace,
-    borderRadius: radius.card,
-    gap: spacing.m,
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.l,
-  },
-  dayLabel: {
-    color: moneyColors.heroText,
-    fontFamily: font.pixel,
-    fontSize: 14,
-    fontWeight: "400",
-    lineHeight: 22,
-  },
-  stats: {
-    flexDirection: "row",
-    gap: spacing.m,
-    justifyContent: "space-between",
-  },
-  stat: {
-    gap: 4,
-  },
-  statLabel: {
-    color: moneyColors.heroSubtle,
-    fontSize: 13,
-    fontWeight: "700",
-  },
   mark: {
     alignItems: "center",
-    borderRadius: 20,
-    height: 40,
+    borderRadius: 14,
+    height: 28,
     justifyContent: "center",
-    width: 40,
+    width: 28,
   },
   count: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 12,
-    minHeight: 56,
-    paddingVertical: spacing.s,
+    gap: spacing.s,
+    minHeight: 44,
+    paddingVertical: 4,
   },
   countDivider: {
     borderBottomColor: colors.track,
