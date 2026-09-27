@@ -9,10 +9,10 @@ export function variantKey(variant: PetVariant): string {
 }
 
 /**
- * Which drawn sheet stands in for a requested look. Andrei has not drawn
- * every species × color × accessory, so: the requested accessory, then the
- * same species and color with none, then the same species and color with any
- * other accessory (glasses before hat), then sp1/c1 with none.
+ * Which drawn sheet stands in for a requested look. The kit is every species ×
+ * color × accessory, so a real choice hits the first candidate. A missing
+ * sheet falls back to the same species and color with none, then any other
+ * accessory (glasses before hat), then sp1/c1 with none.
  */
 export function resolvePetVariant(requested: PetVariant, available: ReadonlySet<string>): PetVariant {
   const { species, color } = requested;

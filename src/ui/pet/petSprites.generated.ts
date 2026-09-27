@@ -128,6 +128,14 @@ export const PET_SHEETS: Readonly<Record<string, PetSheet>> = {
     atlas: require("../../../assets/pets/atlas/sp3_c1_a3.png"),
     poses: require("../../../assets/pets/poses/sp3_c1_a3.png"),
   },
+  "sp3/c3/a1": {
+    atlas: require("../../../assets/pets/atlas/sp3_c3_a1.png"),
+    poses: require("../../../assets/pets/poses/sp3_c3_a1.png"),
+  },
+  "sp3/c3/a2": {
+    atlas: require("../../../assets/pets/atlas/sp3_c3_a2.png"),
+    poses: require("../../../assets/pets/poses/sp3_c3_a2.png"),
+  },
   "sp3/c3/a3": {
     atlas: require("../../../assets/pets/atlas/sp3_c3_a3.png"),
     poses: require("../../../assets/pets/poses/sp3_c3_a3.png"),

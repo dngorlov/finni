@@ -54,12 +54,11 @@ describe("resolvePetVariant", () => {
         }
       }
     }
-    // Вид 3 green still has only the hat sheet.
-    expect(borrowed).toEqual(["sp3/c3/a1", "sp3/c3/a2"]);
+    expect(borrowed).toEqual([]);
   });
 
-  it("bundles all 25 drawn looks with the animations the pet plays", () => {
-    expect(DRAWN_VARIANTS.size).toBe(25);
+  it("bundles all 27 drawn looks with the animations the pet plays", () => {
+    expect(DRAWN_VARIANTS.size).toBe(27);
     expect(PET_ATLAS_LAYOUT).toMatchObject({
       idle: { frames: 4 },
       walk: { frames: 6 },
