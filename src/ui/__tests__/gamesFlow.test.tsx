@@ -71,7 +71,11 @@ describe("Мини-игры из обновлённого сценария", () 
     await press(user, "Отложить 10", 2);
     await press(user, "Копить дальше");
     await press(user, "Отложить 10", 2);
-    expect(screen.getByLabelText("🎉 Цель достигнута! Ты накопил 50 из 50 монет.")).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText(
+        "🎉 Цель достигнута! Ты накопил 50 из 50 монет. Каждый небольшой шаг помог тебе приблизиться к цели.",
+      ),
+    ).toBeOnTheScreen();
     await press(user, "Дальше");
     await press(user, "Продолжить");
     expect(screen.getByLabelText("+35 монет")).toBeOnTheScreen();

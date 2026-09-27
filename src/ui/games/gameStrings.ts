@@ -66,7 +66,7 @@ export const gameStrings = {
   replanSteal: "Нажми банку, из которой забрать монеты на сюрприз.",
   planReady: "План готов!",
   planReadyLine: (m: number, w: number, s: number) =>
-    `Потратишь на нужное ${m}, на желания ${w}, отложишь ${s}.`,
+    `Посмотри, сколько ты решил потратить и сколько отложить. На нужное — ${m}, на желания — ${w}, в накопления — ${s}.`,
   planDone: "Готово",
   locked: "не меняется",
   replanNeed: (need: number, total: number) =>
@@ -103,7 +103,8 @@ export const gameStrings = {
   temptBoughtNothing: (name: string) => `Купили: ${name.toLowerCase()}. В этот раз отложить нечего — но цель никуда не делась.`,
   temptKept: "Ты не стал тратить. Все монеты этого раунда можно отложить!",
   skipRound: "Дальше",
-  reached: (goal: number) => `🎉 Цель достигнута! Ты накопил ${goal} из ${goal} монет.`,
+  reached: (goal: number) =>
+    `🎉 Цель достигнута! Ты накопил ${goal} из ${goal} монет. Каждый небольшой шаг помог тебе приблизиться к цели.`,
   dreamPickA11y: (name: string, price: number) => `${name}, ${coins(price)}`,
   dreamGoal: (name: string, price: number) => `Твоя цель — ${name}. Стоимость — ${coins(price)}.`,
   dreamDeposit: "Сколько добавить в накопления?",

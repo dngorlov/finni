@@ -189,12 +189,12 @@ describe("Карта заданий compact panel", () => {
     expect(screen.getByRole("button", { name: "Нужно или хочется?" })).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Готово!" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Планируем деньги" })).not.toBeOnTheScreen();
-    expect(screen.queryByText(/Пух получает монеты/)).not.toBeOnTheScreen();
+    expect(screen.queryByText(/Пух может получать монеты/)).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Из чего складывается бюджет?" }));
-    expect(screen.getByText(/Пух получает монеты/)).toBeOnTheScreen();
+    expect(screen.getByText(/Пух может получать монеты/)).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
-    expect(screen.queryByText(/Пух получает монеты/)).not.toBeOnTheScreen();
+    expect(screen.queryByText(/Пух может получать монеты/)).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Уроки" }));
     expect(screen.getByRole("button", { name: "Что такое бюджет?" })).toBeOnTheScreen();
@@ -204,7 +204,7 @@ describe("Карта заданий compact panel", () => {
 
     await user.press(screen.getByRole("button", { name: "Что такое бюджет?" }));
     expect(screen.getByText(/Бюджет — это план твоих денег/)).toBeOnTheScreen();
-    expect(screen.getByText(/Пух получает монеты/)).toBeOnTheScreen();
+    expect(screen.getByText(/Пух может получать монеты/)).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
     expect(screen.queryByText(/Бюджет — это план твоих денег/)).not.toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Что такое бюджет?" })).toBeOnTheScreen();

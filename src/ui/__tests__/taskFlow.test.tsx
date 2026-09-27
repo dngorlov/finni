@@ -28,10 +28,10 @@ async function playBudgetWhat(user: User, { mistakes = 0 }: { mistakes?: number 
   expect(screen.getByText("Что такое бюджет?")).toBeOnTheScreen();
   expect(screen.getByLabelText(/Бюджет — это план твоих денег/)).toBeOnTheScreen();
   await user.press(screen.getByRole("button", { name: "Дальше" }));
-  expect(screen.getByLabelText(/Пух получает монеты за задания/)).toBeOnTheScreen();
+  expect(screen.getByLabelText(/Пух может получать монеты за выполнение заданий/)).toBeOnTheScreen();
   await user.press(screen.getByRole("button", { name: "Дальше" }));
   await user.press(screen.getByRole("button", { name: "Начать игру" }));
-  expect(screen.getByText(/У питомца Пух есть несколько покупок/)).toBeOnTheScreen();
+  expect(screen.getByText(/У Пух есть несколько покупок/)).toBeOnTheScreen();
   await user.press(screen.getByRole("button", { name: "Начать" }));
   for (const [index, [chip, bin]] of NEED_OR_WANT.entries()) {
     expect(screen.getByText(`Осталось разложить: ${NEED_OR_WANT.length - index}`)).toBeOnTheScreen();
