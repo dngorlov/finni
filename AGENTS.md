@@ -21,4 +21,3 @@ When the work for a request is done, commit it on `main` before the turn ends. A
 ## React Native Testing Library in this project
 
 This project uses `@testing-library/react-native` v14. Its APIs and testing conventions can differ from your training data (render and queries are async; use `screen`). Before writing or changing RNTL tests, read the relevant guide in `node_modules/@testing-library/react-native/docs/`, starting with `node_modules/@testing-library/react-native/docs/guides/llm-guidelines.md`. Prefer those package docs over stale assumptions, and follow deprecation notices.
-
