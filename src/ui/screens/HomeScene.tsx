@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type Ref } from "react";
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
-import { CoinText } from "../components/CoinText";
 import { Fab, FabStack } from "../components/Fab";
 import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
@@ -22,6 +21,8 @@ const FLOOR_SHARE = 0.3;
 const SPEECH_MS = 3500;
 /** Quiet gap before the pet starts the next line on its own. */
 const QUIET_MS = 8000;
+/** Info mark is 32 dp; slop keeps the tap at the 48 dp minimum. */
+const DAY_INFO_SLOP = (minTarget - 32) / 2;
 /** Bought Цели sit on the shelf first, then on the floor by the wall. */
 const SHELF_SLOTS = 3;
 const FLOOR_SLOTS = 3;
@@ -249,10 +250,11 @@ export function HomeScene({
               role="button"
               aria-label={shopStrings.dailyDropHint}
               accessibilityState={{ expanded: dayTip }}
+              hitSlop={DAY_INFO_SLOP}
               onPress={() => onDayTip(!dayTip)}
               style={styles.dayInfo}
             >
-              <PixelIcon name="info-box" size={20} color={colors.card} />
+              <PixelIcon name="info-box" size={16} color={colors.card} />
             </Pressable>
           </View>
           {goalName ? (
@@ -267,29 +269,36 @@ export function HomeScene({
                     {goalIcon}
                   </Text>
                 ) : (
-                  <PixelIcon name="star" size={20} color={colors.accentText} />
+                  <PixelIcon name="star" size={16} color={colors.accentText} />
                 )}
-                <View style={styles.goalName}>
-                  <CoinText inline labelled={false} text={goalName} style={styles.goalTitle} />
-                </View>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.goalTitle}>
+                  {goalName}
+                </Text>
                 <Text style={styles.goalRatio}>{strings.goalRatio(accumulated, cost)}</Text>
-                <PixelSprite name="coin" size={16} />
+                <PixelSprite name="coin" size={14} />
               </View>
               <View style={styles.goalTrack}>
                 <View style={[styles.goalFill, { width: `${Math.round(progress * 100)}%` }]} />
               </View>
-              {threshold ? <Text style={styles.goalThreshold}>{threshold}</Text> : null}
+              {threshold ? (
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.goalThreshold}>
+                  {threshold}
+                </Text>
+              ) : null}
             </View>
           ) : canPickGoal ? (
             <Pressable
               role="button"
               aria-label={strings.goalEmptyPrompt}
+              hitSlop={4}
               onPress={onPickGoal}
               style={({ pressed }) => [styles.goal, pressed ? styles.goalPressed : null]}
             >
               <View style={styles.goalRow}>
-                <PixelIcon name="star" size={20} color={colors.accentText} />
-                <Text style={styles.goalTitle}>{strings.goalEmptyPrompt}</Text>
+                <PixelIcon name="star" size={16} color={colors.accentText} />
+                <Text numberOfLines={1} style={styles.goalTitle}>
+                  {strings.goalEmptyPrompt}
+                </Text>
               </View>
             </Pressable>
           ) : null}
@@ -460,30 +469,31 @@ const styles = StyleSheet.create({
   hudRow: {
     alignItems: "center",
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.s,
+    gap: 6,
   },
   dayPill: {
     alignItems: "center",
     backgroundColor: colors.raisedEdge,
-    borderRadius: 12,
+    borderRadius: 10,
     flexDirection: "row",
-    minHeight: minTarget,
-    paddingLeft: spacing.m,
+    flexShrink: 0,
+    minHeight: 36,
+    paddingLeft: spacing.s,
+    paddingRight: 2,
   },
   dayInfo: {
     alignItems: "center",
-    height: minTarget,
+    height: 32,
     justifyContent: "center",
-    width: minTarget,
+    width: 32,
   },
   dayText: {
     color: colors.card,
     fontFamily: font.pixel,
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "400",
     includeFontPadding: false,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   drop: {
     alignSelf: "flex-start",
@@ -504,40 +514,42 @@ const styles = StyleSheet.create({
   goal: {
     backgroundColor: colors.card,
     borderColor: colors.disabledFace,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 2,
     flex: 1,
-    gap: 6,
-    minHeight: 44,
-    minWidth: 160,
-    paddingHorizontal: spacing.s + 4,
-    paddingVertical: 6,
+    flexShrink: 1,
+    gap: 4,
+    minHeight: 40,
+    minWidth: 0,
+    paddingHorizontal: spacing.s,
+    paddingVertical: 4,
   },
   goalRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 6,
-  },
-  goalName: {
-    flex: 1,
-    minWidth: 0,
+    gap: 4,
   },
   goalTitle: {
     color: colors.text,
+    flex: 1,
+    flexShrink: 1,
     fontSize: 16,
     fontWeight: "700",
+    minWidth: 0,
   },
   goalEmoji: {
-    fontSize: 20,
+    fontSize: 16,
+    lineHeight: 20,
   },
   goalThreshold: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
   },
   goalRatio: {
     color: colors.text,
-    fontSize: 16,
+    flexShrink: 0,
+    fontSize: 14,
     fontWeight: "700",
   },
   goalTrack: {
