@@ -6,9 +6,9 @@ import { META_KEYS } from "../../data/metaKeys";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { ACHIEVEMENT_COPY, ACHIEVEMENT_TOTAL, achievementStrings } from "../stringsAchievements";
-import { colors, font, radius, spacing, type } from "../theme";
+import { colors, spacing, type } from "../theme";
 import { AchievementModal } from "./AchievementModal";
-import { MoneyCard, SectionTitle, ShowAllButton, moneyColors } from "../screens/moneyParts";
+import { MoneyCard, SectionTitle, ShowAllButton } from "../screens/moneyParts";
 
 function copyFor(id: string) {
   if (Object.prototype.hasOwnProperty.call(ACHIEVEMENT_COPY, id)) {
@@ -95,21 +95,26 @@ function AchievementRow({
   );
 }
 
-/** Full catalog on Настройки: gold count, then every Достижение. */
-export function SettingsAchievements() {
+export function useEarnedAchievementCount() {
+  return useEarned().rows.length;
+}
+
+/** Full catalog: «N/16» beside the title, then every Достижение. */
+export function AchievementCatalog() {
   const { rows } = useEarned();
   const earned = new Map(rows.map((row) => [row.id, row]));
   return (
     <>
-      <Text role="heading" style={styles.heading}>
-        {achievementStrings.section}
-      </Text>
-      <View accessible aria-label={achievementStrings.progressA11y(rows.length, ACHIEVEMENT_TOTAL)} style={styles.hero}>
-        <Text style={styles.heroCaption}>{achievementStrings.earned}</Text>
-        <Text aria-hidden style={styles.heroCount}>
-          {rows.length}
+      <View style={styles.titleRow}>
+        <Text role="heading" style={styles.heading}>
+          {achievementStrings.section}
         </Text>
-        <Text style={styles.heroOf}>{achievementStrings.progressOf(ACHIEVEMENT_TOTAL)}</Text>
+        <Text
+          accessibilityLabel={achievementStrings.progressA11y(rows.length, ACHIEVEMENT_TOTAL)}
+          style={styles.count}
+        >
+          {achievementStrings.progressCompact(rows.length, ACHIEVEMENT_TOTAL)}
+        </Text>
       </View>
       <MoneyCard tight>
         {ACHIEVEMENT_RULES.map((rule, index) => (
@@ -175,35 +180,21 @@ export function AchievementHost() {
 }
 
 const styles = StyleSheet.create({
+  titleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.m,
+  },
   heading: {
     color: colors.text,
+    flex: 1,
     fontSize: type.section,
     fontWeight: "700",
   },
-  hero: {
-    alignItems: "center",
-    backgroundColor: moneyColors.heroFace,
-    borderRadius: radius.card,
-    gap: 4,
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.l,
-  },
-  heroCaption: {
-    color: moneyColors.heroSubtle,
+  count: {
+    color: colors.subtle,
     fontSize: type.body,
     fontWeight: "700",
-  },
-  heroCount: {
-    color: moneyColors.heroText,
-    fontFamily: font.pixel,
-    fontSize: 28,
-    fontWeight: "400",
-    includeFontPadding: false,
-    lineHeight: 42,
-  },
-  heroOf: {
-    color: moneyColors.heroSubtle,
-    fontSize: type.body,
   },
   row: {
     alignItems: "center",

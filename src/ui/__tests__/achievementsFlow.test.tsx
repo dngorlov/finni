@@ -36,18 +36,24 @@ function closeScoredDay(ports: ReturnType<typeof createFakePorts>, profileId: st
 }
 
 describe("Достижения", () => {
-  it("lists every achievement on Настройки, including ones not earned yet", async () => {
+  it("opens the full achievement list from a compact Настройки row", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
+    expect(screen.getByRole("button", { name: "Достижения. Получено 0 из 16" })).toBeOnTheScreen();
+    expect(screen.getByText("0/16", { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.queryByRole("heading", { name: "Достижения" })).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText("Первая покупка. Купи что-нибудь в Магазине.")).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: "Достижения. Получено 0 из 16" }));
     expect(screen.getByRole("heading", { name: "Достижения" })).toBeOnTheScreen();
+    expect(screen.getByText("0/16")).toBeOnTheScreen();
     expect(screen.getByLabelText("Получено 0 из 16")).toBeOnTheScreen();
     expect(screen.getByLabelText("Первая покупка. Купи что-нибудь в Магазине.")).toBeOnTheScreen();
     expect(screen.getByLabelText("Неделя с Финни. Закрой 7 Игровых дней.")).toBeOnTheScreen();
     expect(screen.getByLabelText("Миллионер. Перейди на этап Миллионер.")).toBeOnTheScreen();
-    expect(screen.queryByText("Получено", { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
   it("opens a reward modal after a shop buy, then shows the earned ones in Журнал and Настройки", async () => {
@@ -76,6 +82,8 @@ describe("Достижения", () => {
     expect(screen.getByLabelText("Обед готов. Получено. Питомец поел. День 1")).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
+    await user.press(screen.getByRole("button", { name: "Достижения. Получено 2 из 16" }));
+    expect(screen.getByText("2/16")).toBeOnTheScreen();
     expect(screen.getByLabelText("Получено 2 из 16")).toBeOnTheScreen();
     expect(screen.getByLabelText("Первая покупка. Получено. Ты купил в Магазине.")).toBeOnTheScreen();
     expect(screen.getByLabelText("Полтинник. Положи в Копилку 50 монет.")).toBeOnTheScreen();

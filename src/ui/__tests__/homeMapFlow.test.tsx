@@ -11,6 +11,16 @@ async function renderApp(ports = createFakePorts()) {
   return { user, ports };
 }
 
+function flatText(node: unknown): string[] {
+  if (typeof node === "string") return [node];
+  if (!node || typeof node !== "object") return [];
+  if (Array.isArray(node)) return node.flatMap(flatText);
+  const children = (node as { children?: unknown }).children;
+  if (typeof children === "string") return [children];
+  if (!Array.isArray(children)) return [];
+  return children.flatMap(flatText);
+}
+
 function homeScene(pet: Partial<HomePet> = {}) {
   return (
     <HomeScene
@@ -223,18 +233,27 @@ describe("Об авторах и источниках", () => {
     }
   });
 
-  it("shows the credits on Настройки under the version line", async () => {
+  it("opens authors and sources from Настройки, with Взрослый раздел above the rest", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
+    const labels = flatText(screen.toJSON());
+    const adult = labels.indexOf("Взрослый раздел");
+    expect(adult).toBeGreaterThanOrEqual(0);
+    expect(labels.lastIndexOf("Финни")).toBeGreaterThan(adult);
+    expect(labels.indexOf("Внешний вид питомца")).toBeGreaterThan(adult);
+    expect(screen.queryByText("Drizzle ORM")).not.toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Взрослый раздел" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Об авторах и источниках" })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: "Об авторах и источниках" }));
     expect(screen.getByRole("heading", { name: "Об авторах и источниках" })).toBeOnTheScreen();
     expect(screen.getByText("Drizzle ORM")).toBeOnTheScreen();
     expect(screen.getByText("Команда hsespbteam")).toBeOnTheScreen();
     expect(screen.getByText("Сергей Гончаров")).toBeOnTheScreen();
     expect(screen.getByText("Claude (Anthropic)")).toBeOnTheScreen();
     expect(screen.getByText("Press Start 2P")).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Взрослый раздел" })).toBeOnTheScreen();
   });
 });

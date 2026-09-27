@@ -7,6 +7,10 @@ export type RootStackParamList = {
   Results: undefined;
   Handbook: undefined;
   Settings: undefined;
+  /** Full Достижения catalog, opened from Настройки. */
+  Achievements: undefined;
+  /** Об авторах и источниках, opened from Настройки. */
+  Credits: undefined;
   /** Внешний вид: Вид, Окрас, and the Аксессуары this Этап opened. */
   Appearance: undefined;
   /** Set when the lesson that just ended the day opened a money tool. */

@@ -115,7 +115,7 @@ export const achievementStrings = {
   modalCaption: "Новое достижение",
   celebrate: "Ура!",
   more: "Есть ещё.",
-  progressOf: (total: number) => `из ${total}`,
+  progressCompact: (earned: number, total: number) => `${earned}/${total}`,
   progressA11y: (earned: number, total: number) => `Получено ${earned} из ${total}`,
   rowA11y: (title: string, line: string) => `${title}. ${line}`,
 };

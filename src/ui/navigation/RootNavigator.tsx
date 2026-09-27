@@ -5,6 +5,8 @@ import FirstRunScreen from "../screens/FirstRunScreen";
 import HandbookScreen from "../screens/HandbookScreen";
 import MainScreen from "../screens/MainScreen";
 import ResultsScreen from "../screens/ResultsScreen";
+import AchievementsScreen from "../screens/AchievementsScreen";
+import CreditsScreen from "../screens/CreditsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import ShopScreen from "../screens/ShopScreen";
 import AdultGateScreen from "../screens/AdultGateScreen";
@@ -44,6 +46,8 @@ export function RootNavigator() {
         <Stack.Screen name="Results" component={ResultsScreen} />
         <Stack.Screen name="Handbook" component={HandbookScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="Achievements" component={AchievementsScreen} />
+        <Stack.Screen name="Credits" component={CreditsScreen} />
         <Stack.Screen name="Appearance" component={AppearanceScreen} />
         <Stack.Screen name="DaySummary" component={DaySummaryScreen} />
         <Stack.Screen name="AdultGate" component={AdultGateScreen} />
