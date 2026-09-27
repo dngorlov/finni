@@ -20,7 +20,7 @@ export const homeStrings = {
   creditsTitle: "Об авторах и источниках",
   creditsLibraries: "Библиотеки",
   creditsDevTools: "Инструменты разработки",
-  creditsTeam: "Команда hsespbteam",
+  creditsTeam: "HSE SPb Team",
   creditsAi: "ИИ-модели",
   creditsFonts: "Шрифты",
   creditsIcons: "Иконки",

@@ -107,13 +107,13 @@ export const DEV_TOOLS: readonly LibraryCredit[] = [
  * research, etc.) with what it was used for, before submitting the Т/З.
  */
 /**
- * Команда hsespbteam. TODO(команда): проверьте фамилии и роли — здесь только
+ * HSE SPb Team. TODO(команда): проверьте фамилии и роли — здесь только
  * то, что известно из переписки.
  */
 export const TEAM: readonly Credit[] = [
   { what: "Сергей Гончаров", source: "разработка: код приложения, карта заданий, мини-игры, банк, экраны" },
   { what: "Дмитрий Горлов", source: "разработка: архитектура, данные, экраны" },
-  { what: "Андрей", source: "дизайн: пиксель-арт, питомцы, иконки, карта Москвы, палитра" },
+  { what: "Андрей Мужевлёв", source: "дизайн: пиксель-арт, питомцы, иконки, карта Москвы, палитра" },
   { what: "Савва Власов", source: "образовательный сценарий: уроки, карточки, тесты, мини-игры" },
   { what: "Александр Лузин", source: "продукт: требования и постановка задач" },
 ];
@@ -143,16 +143,16 @@ export const FONTS: readonly Credit[] = [
 
 export const ICONS: readonly Credit[] = [
   { what: "pixelarticons", source: "Gerrit Halfmann, MIT" },
-  { what: "Пиксельные иконки и питомцы", source: "Андрей (команда hsespbteam)" },
+  { what: "Пиксельные иконки и питомцы", source: "Андрей Мужевлёв (HSE SPb Team)" },
   { what: "Эмодзи", source: "системные шрифты устройства" },
 ];
 
 export const IMAGES: readonly Credit[] = [
   {
     what: "Карта Москвы",
-    source: "Wikipedia (административные округа Москвы), перерисовка в пиксель-арт — Андрей",
+    source: "Wikipedia (административные округа Москвы), перерисовка в пиксель-арт — Андрей Мужевлёв",
   },
-  { what: "Питомцы и иконки", source: "Андрей (команда hsespbteam)" },
+  { what: "Питомцы и иконки", source: "Андрей Мужевлёв (HSE SPb Team)" },
 ];
 
 export const REFERENCES: readonly Credit[] = [
@@ -161,10 +161,10 @@ export const REFERENCES: readonly Credit[] = [
   { what: "Material Design 3", source: "палитра" },
   {
     what: "Звуки верного ответа, ошибки и конца задания",
-    source: "оригинальный синтез, команда hsespbteam (scripts/generate-sfx.mjs)",
+    source: "оригинальный синтез, HSE SPb Team (scripts/generate-sfx.mjs)",
   },
 ];
 
 export const EDUCATIONAL_CONTENT: readonly Credit[] = [
-  { what: "Сценарий уроков", source: "Савва Власов (команда hsespbteam)" },
+  { what: "Сценарий уроков", source: "Савва Власов (HSE SPb Team)" },
 ];
