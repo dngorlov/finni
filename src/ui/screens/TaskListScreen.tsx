@@ -1,5 +1,5 @@
-import { useCallback, useState, type ReactNode } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
@@ -372,10 +372,20 @@ function rememberHeight(current: number, next: number): number {
 }
 
 /**
+ * Layout events are pooled: `nativeEvent` is null once the handler returns.
+ * Read the height here. A state updater runs later and must not touch the event.
+ */
+function rememberLayout(event: LayoutChangeEvent, setHeight: Dispatch<SetStateAction<number>>) {
+  const height = event.nativeEvent?.layout.height;
+  if (height == null) return;
+  setHeight((current) => rememberHeight(current, height));
+}
+
+/**
  * Lesson card under the map. Copy and games scroll once they pass `cap`;
  * «Начать» stays pinned so a long description cannot shrink the map.
  */
-function LessonDock({
+export function LessonDock({
   cap,
   copy,
   action,
@@ -405,7 +415,7 @@ function LessonDock({
     <View
       collapsable={false}
       style={styles.copy}
-      onLayout={(event) => setCopyHeight((current) => rememberHeight(current, event.nativeEvent.layout.height))}
+      onLayout={(event) => rememberLayout(event, setCopyHeight)}
     >
       {copy}
     </View>
@@ -414,7 +424,7 @@ function LessonDock({
     <View
       collapsable={false}
       style={styles.dockAction}
-      onLayout={(event) => setActionHeight((current) => rememberHeight(current, event.nativeEvent.layout.height))}
+      onLayout={(event) => rememberLayout(event, setActionHeight)}
     >
       {action}
     </View>
@@ -423,7 +433,7 @@ function LessonDock({
     <View
       collapsable={false}
       style={styles.extras}
-      onLayout={(event) => setExtrasHeight((current) => rememberHeight(current, event.nativeEvent.layout.height))}
+      onLayout={(event) => rememberLayout(event, setExtrasHeight)}
     >
       {extras}
     </View>
