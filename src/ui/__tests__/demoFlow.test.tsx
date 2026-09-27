@@ -56,7 +56,7 @@ describe("Демо-режим panel", () => {
       const { user } = await renderApp(ports);
       expect(screen.getByLabelText("Баланс 98")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Карта" }));
-      expect(screen.getByText("Планирование бюджета")).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Планирование бюджета, открыто" })).toBeOnTheScreen();
       await openTab(user, "Дом");
       expect(screen.queryByText("Демо: дни идут подряд")).not.toBeOnTheScreen();
       expect(screen.queryByText("Охота за ценником")).not.toBeOnTheScreen();
@@ -70,7 +70,6 @@ describe("Демо-режим panel", () => {
       expect(screen.getByLabelText(/Питомец Демо/)).toBeOnTheScreen();
       expect(screen.queryByText("Охота за ценником")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Карта" }));
-      expect(screen.getByText("Что такое бюджет?")).toBeOnTheScreen();
       expectSameChain();
       await openTab(user, "Дом");
       expect(ports.game.getProfile(childId)).toEqual(childBefore);
@@ -97,7 +96,6 @@ describe("Демо-режим panel", () => {
       expect(screen.getByLabelText("Баланс 100")).toBeOnTheScreen();
       expect(screen.queryByText("Охота за ценником")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Карта" }));
-      expect(screen.getByText("Что такое бюджет?")).toBeOnTheScreen();
       expectSameChain();
       await openTab(user, "Дом");
 

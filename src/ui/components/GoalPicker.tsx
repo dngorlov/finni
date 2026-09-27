@@ -1,16 +1,17 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type Role } from "react-native";
-import { CUSTOM_GOAL_PRICE_MAX } from "../../core/customGoal";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View, type Role } from "react-native";
+import { CUSTOM_GOAL_MOOD, CUSTOM_GOAL_PRICE_MAX } from "../../core/customGoal";
 import { showStageThreshold, stageGoalFloor } from "../../core/stages";
 import type { CatalogItemContent, GoalContent } from "../../data/content";
 import type { JournalEntry } from "../../data/repositories/gameRepository";
 import { META_KEYS } from "../../data/metaKeys";
 import { DEFAULT_GOAL_EMOJI, GOAL_EMOJI_GROUPS } from "../goalEmojis";
+import { goalThresholdLabel } from "../goalLabel";
+import { GoalRow, OwnGoalRow } from "../screens/shopParts";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { colors, minTarget, radius, spacing, type } from "../theme";
 import { AmountStepper } from "./AmountStepper";
-import { Chip } from "./Chip";
 import { CoinText } from "./CoinText";
 import { ScreenTitle } from "./ScreenTitle";
 import { PrimaryButton } from "./PrimaryButton";
@@ -54,6 +55,8 @@ export function GoalPicker({
   onChanged?: () => void;
 }) {
   const { game, meta, content } = useSession();
+  const { height: windowHeight } = useWindowDimensions();
+  const listMaxHeight = Math.round(windowHeight * 0.62);
   const [pending, setPending] = useState<GoalContent | null>(null);
   const [draft, setDraft] = useState<CustomDraft | null>(null);
   const [confirmDraft, setConfirmDraft] = useState<CustomDraft | null>(null);
@@ -185,7 +188,7 @@ export function GoalPicker({
           ) : draft && pickingIcon ? (
             <>
               <ScreenTitle style={styles.title}>{strings.goalIcon(draft.icon)}</ScreenTitle>
-              <ScrollView style={styles.list} contentContainerStyle={styles.emojiList}>
+              <ScrollView style={[styles.list, { maxHeight: listMaxHeight }]} contentContainerStyle={styles.emojiList}>
                 {GOAL_EMOJI_GROUPS.map((group) => (
                   <View key={group.title} style={styles.emojiGroup}>
                     <Text style={styles.groupTitle}>{group.title}</Text>
@@ -255,20 +258,39 @@ export function GoalPicker({
           ) : (
             <>
               <ScreenTitle style={styles.title}>{strings.goalPickerTitle}</ScreenTitle>
-              <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+              <ScrollView style={[styles.list, { maxHeight: listMaxHeight }]} contentContainerStyle={styles.listContent}>
                 {activeCustom?.name ? (
-                  <Chip label={activeCustom.name} selected onPress={close} />
-                ) : null}
-                {items.map((item) => (
-                  <Chip
-                    key={item.id}
-                    label={item.name}
-                    selected={activeKey === item.id}
-                    onPress={() => choose(item)}
+                  <GoalRow
+                    goal={{
+                      name: activeCustom.name,
+                      icon: activeCustom.icon || DEFAULT_GOAL_EMOJI,
+                      price: activeCustom.cost,
+                      description: (savings ? goalThresholdLabel(savings, stage) : null) ?? strings.customGoalLead,
+                      effect: { meter: "mood", delta: CUSTOM_GOAL_MOOD },
+                    }}
+                    selected
+                    onChoose={close}
                   />
-                ))}
+                ) : null}
+                {items.map((item) => {
+                  const selected = activeKey === item.id;
+                  return (
+                    <GoalRow
+                      key={item.id}
+                      goal={{
+                        name: item.name,
+                        icon: item.icon,
+                        price: item.price,
+                        description: item.description,
+                        effect: item.effect,
+                      }}
+                      selected={selected}
+                      onChoose={selected ? close : () => choose(item)}
+                    />
+                  );
+                })}
+                <OwnGoalRow onPress={openCustom} />
               </ScrollView>
-              <TextButton label={strings.customGoal} onPress={openCustom} />
               <TextButton label={strings.goalDrop} onPress={drop} />
               <TextButton label={strings.close} onPress={close} />
             </>
@@ -286,11 +308,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.35)",
   },
   sheet: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.background,
     borderTopLeftRadius: radius.card,
     borderTopRightRadius: radius.card,
-    gap: spacing.s,
-    maxHeight: "80%",
+    gap: spacing.m,
+    maxHeight: "92%",
     padding: spacing.l,
   },
   title: {
@@ -304,11 +326,11 @@ const styles = StyleSheet.create({
   },
   list: {
     flexGrow: 0,
+    flexShrink: 1,
   },
   listContent: {
-    gap: spacing.s,
+    gap: 12,
     paddingVertical: spacing.s,
-    minHeight: minTarget,
   },
   input: {
     borderColor: colors.track,

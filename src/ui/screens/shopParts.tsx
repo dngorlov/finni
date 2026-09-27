@@ -65,8 +65,34 @@ export function rowAnnouncement(item: CatalogItemContent, balance: number, flags
   return parts.join(". ");
 }
 
+/** Spoken name for one Цель card: name, price, what the pet gains, and the line that says what it is. */
+export function goalAnnouncement(
+  goal: {
+    name: string;
+    price: number;
+    description: string;
+    effect: { meter: "care" | "mood"; delta: number };
+  },
+  selected: boolean,
+) {
+  const parts = [
+    goal.name,
+    strings.shopPrice(goal.price),
+    strings.shopMeterA11y(meterWord(goal.effect.meter), goal.effect.delta),
+  ];
+  if (goal.description) parts.push(goal.description);
+  if (selected) parts.push(strings.shopGoalChip);
+  return parts.join(". ");
+}
+
 /** Big square picture of the item on a tile tinted by its kind. */
-export function ItemTile({ item, size = 72 }: { item: CatalogItemContent; size?: number }) {
+export function ItemTile({
+  item,
+  size = 72,
+}: {
+  item: { icon: string; kind?: "mandatory" | "optional" };
+  size?: number;
+}) {
   return (
     <View
       {...hiddenFromReader}
@@ -107,7 +133,7 @@ function Tag({ label, fill, icon }: { label: string; fill: string; icon?: PixelI
  * сегодня» (Дима, 2026-09-26): the tab already says the category, and the
  * day's drop is stated once above the list.
  */
-export function ItemTags({ item, flags }: { item: CatalogItemContent; flags: RowFlags }) {
+export function ItemTags({ item, flags }: { item: { once?: boolean }; flags: RowFlags }) {
   if (!flags.goal && !flags.bought && !item.once && !flags.postponed) return null;
   return (
     <View style={styles.tags}>
@@ -123,7 +149,13 @@ export function ItemTags({ item, flags }: { item: CatalogItemContent; flags: Row
  * Pet effects with Andrei's food / mood sprites. `announce` gives each line its
  * own spoken name (drawer); in a row the row label already says it all.
  */
-export function ItemEffects({ item, announce }: { item: CatalogItemContent; announce: boolean }) {
+export function ItemEffects({
+  item,
+  announce,
+}: {
+  item: { effect: { meter: "care" | "mood"; delta: number }; also?: { meter: "care" | "mood"; delta: number } };
+  announce: boolean;
+}) {
   return (
     <View style={styles.effects} {...(announce ? {} : hiddenFromReader)}>
       {itemMeterEffects(item).map((effect) => (
@@ -278,6 +310,78 @@ export function ShopRow({
           onPress={onBuy}
         />
       </View>
+    </View>
+  );
+}
+
+export type GoalFace = {
+  name: string;
+  icon: string;
+  price: number;
+  description: string;
+  effect: { meter: "care" | "mood"; delta: number };
+};
+
+/** One Цель, laid out like a Магазин row: picture, name, what it is, the gain, and the price. */
+export function GoalRow({
+  goal,
+  selected,
+  onChoose,
+}: {
+  goal: GoalFace;
+  selected: boolean;
+  onChoose: () => void;
+}) {
+  return (
+    <View style={[styles.row, selected ? styles.rowMarked : null]}>
+      <Pressable
+        role="button"
+        aria-label={goalAnnouncement(goal, selected)}
+        aria-selected={selected}
+        onPress={onChoose}
+        style={styles.rowInfo}
+      >
+        <ItemTile item={{ icon: goal.icon, kind: "optional" }} />
+        <View style={styles.rowMiddle}>
+          <Text style={styles.name}>{goal.name}</Text>
+          <View {...hiddenFromReader} style={styles.rowDetails}>
+            {goal.description ? <Text style={styles.goalDescription}>{goal.description}</Text> : null}
+            <ItemTags item={{ once: false }} flags={{ due: false, goal: selected, bought: false, postponed: false }} />
+            <ItemEffects item={goal} announce={false} />
+          </View>
+        </View>
+        <View style={styles.rowPrice}>
+          <CoinPrice amount={goal.price} />
+        </View>
+      </Pressable>
+      {selected ? null : (
+        <View style={styles.rowActions}>
+          <RowButton
+            label={strings.shopMakeGoal}
+            spoken={strings.shopMakeGoalA11y(goal.name)}
+            icon="star"
+            primary
+            onPress={onChoose}
+          />
+        </View>
+      )}
+    </View>
+  );
+}
+
+/** The «write your own» entry under the preset Цели. */
+export function OwnGoalRow({ onPress }: { onPress: () => void }) {
+  return (
+    <View style={styles.row}>
+      <Pressable role="button" aria-label={strings.customGoal} onPress={onPress} style={styles.rowInfo}>
+        <ItemTile item={{ icon: "✨", kind: "optional" }} />
+        <View style={styles.rowMiddle}>
+          <Text style={styles.name}>{strings.customGoal}</Text>
+          <Text {...hiddenFromReader} style={styles.goalDescription}>
+            {strings.customGoalLead}
+          </Text>
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -468,6 +572,10 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 18,
     fontWeight: "700",
+  },
+  goalDescription: {
+    color: colors.subtle,
+    fontSize: type.body,
   },
   rowPrice: {
     alignItems: "flex-end",

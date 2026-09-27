@@ -177,6 +177,7 @@ export const strings = {
   shopBuy: "Купить",
   shopPostpone: "Отложить",
   shopMakeGoal: "Сделать целью",
+  shopMakeGoalA11y: (name: string) => `Сделать целью ${name}`,
   shopBuyFromSavings: "Купить из копилки",
   shopOnceLabel: "Можно купить один раз",
   shopConfirmBuy: (name: string, price: number) => `Купить ${name} за ${price}?`,
@@ -187,6 +188,7 @@ export const strings = {
 
   goalPickerTitle: "Выбери цель",
   customGoal: "Своя цель",
+  customGoalLead: "Своё название, значок и цена",
   customGoalName: "Название цели",
   customGoalNameHint: "Например, мяч",
   customGoalPrice: "Цена",

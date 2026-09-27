@@ -36,7 +36,7 @@ describe("Задания combined loop", () => {
       const { user } = await renderApp(ports);
 
       await user.press(screen.getByRole("button", { name: "Карта" }));
-      expect(screen.getByText("Что такое бюджет?")).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
       expect(screen.getByText("Карта заданий")).toBeOnTheScreen();
       expect(screen.getAllByRole("button", { name: /, закрыто$/ })).toHaveLength(6);
       expect(screen.queryByRole("button", { name: /, скоро$/ })).not.toBeOnTheScreen();

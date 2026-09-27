@@ -112,6 +112,16 @@ export default function SavingsScreen() {
     }, [load]),
   );
 
+  // A buy from the overlay spends the pot and clears the Цель without this screen acting.
+  useEffect(
+    () =>
+      game.subscribe(() => {
+        load();
+        setPhase((current) => (current.name === "celebration" ? { name: "home" } : current));
+      }),
+    [game, load],
+  );
+
   const [seenFocus, setSeenFocus] = useState<typeof focus>(null);
   if (focus !== seenFocus) {
     setSeenFocus(focus);
@@ -166,6 +176,8 @@ export default function SavingsScreen() {
   const activeName = activeItem?.name ?? null;
   const accumulated = savings.activeGoal ? savings.activeGoal.cost - savings.activeGoal.remaining : 0;
   const funded = Boolean(savings.activeGoal?.achieved);
+  const canBuyFromPot = Boolean(activeItem && funded && savings.pot >= activeItem.price);
+  const celebrating = phase.name === "celebration" && canBuyFromPot;
   const savingsLeftover = confirmedLeftover(day, "savings");
   const leftoverAfterDeposit =
     phase.name === "deposit" ? leftoverAfterTap(savingsLeftover, phase.amount) : null;
@@ -245,7 +257,7 @@ export default function SavingsScreen() {
 
   const footer = (() => {
     if (feedback) return null;
-    if (phase.name === "celebration") {
+    if (celebrating) {
       return (
         <>
           <TextButton
@@ -262,7 +274,7 @@ export default function SavingsScreen() {
     }
     if (phase.name === "home") {
       if (offerPickGoal) return <PrimaryButton label={strings.savingsChooseNewGoal} onPress={openPicker} />;
-      if (funded) {
+      if (canBuyFromPot) {
         return (
           <PrimaryButton
             highlighted={focus?.kind === "buy-goal"}
@@ -279,7 +291,7 @@ export default function SavingsScreen() {
   const ops = savingsOps(journal, lookup).slice(0, RECENT_OPS);
   const stats = savingsStats(journal);
   const goalCost = savings.activeGoal?.cost ?? 0;
-  const showHome = phase.name !== "celebration";
+  const showHome = !celebrating;
   const transferOpen =
     phase.name === "deposit" || phase.name === "withdraw" || phase.name === "withdrawPreview";
   const itemName = (id: string | null) => itemTitle(id, content.catalog, content.goals);
@@ -370,7 +382,7 @@ export default function SavingsScreen() {
             />
           </ActionRow>
         ) : null}
-        {phase.name === "celebration" ? (
+        {celebrating ? (
           <Card>
             <GlyphLabel glyph={strings.savingsConfetti} label={strings.savingsAchieved} labelStyle={styles.section} />
           </Card>

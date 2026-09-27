@@ -64,6 +64,9 @@ export const moneyStrings = {
   planCaption: "Можно распределить",
   /** Draft heading: the job, not a chart title. */
   planHow: "Раздели на три кучки",
+  planJobMandatory: "Сначала счета и всё нужное.",
+  planJobOptional: "Что хочется купить.",
+  planLocked: "Обещание на сегодня. Менять уже нельзя.",
   planSplit: "Как делим",
   planFree: "Свободно",
   planChartA11y: (parts: readonly ShareLine[]) =>

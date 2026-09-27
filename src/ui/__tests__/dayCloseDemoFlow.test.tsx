@@ -73,7 +73,6 @@ describe("Итоги дня + Демо-режим combined loop", () => {
       expect(screen.getByText("День 1")).toBeOnTheScreen();
       expect(screen.queryByText("Охота за ценником")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Карта" }));
-      expect(screen.getByText("Что такое бюджет?")).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Планирование бюджета, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Что такое сбережения, открыто" })).toBeOnTheScreen();
@@ -113,7 +112,6 @@ describe("Итоги дня + Демо-режим combined loop", () => {
       expect(screen.getByLabelText("Баланс 100")).toBeOnTheScreen();
       expect(screen.queryByText("Охота за ценником")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Карта" }));
-      expect(screen.getByText("Что такое бюджет?")).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Планирование бюджета, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Что такое сбережения, открыто" })).toBeOnTheScreen();

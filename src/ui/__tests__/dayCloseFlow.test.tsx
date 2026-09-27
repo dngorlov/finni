@@ -42,6 +42,7 @@ describe("Итоги дня", () => {
 
       await user.press(screen.getByRole("button", { name: "Карта" }));
       expect(screen.getByText("Карта заданий")).toBeOnTheScreen();
+      await user.press(screen.getByRole("button", { name: "Что такое бюджет?, открыто" }));
       await user.press(screen.getByRole("button", { name: "Начать" }));
       await user.press(screen.getByRole("button", { name: "Дальше" }));
       await user.press(screen.getByRole("button", { name: "Дальше" }));

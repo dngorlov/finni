@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Animated, AppState, Easing, PanResponder, Pressable, StyleSheet, View } from "react-native";
 import { useLatest } from "../components/useLatest";
 import { petStrings } from "../stringsPet";
-import { colors } from "../theme";
 import { petAtlasSource } from "./assets";
 import { poseFromMeters } from "./keys";
 import {
@@ -328,70 +327,53 @@ export function LivingPet({
   const pose = poseFromMeters(pet.care, pet.mood);
 
   return (
-    <>
-      <Animated.View
-        pointerEvents="none"
-        aria-hidden
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={[
-          styles.shadow,
-          {
-            bottom: homeBottom - 10,
-            width: size * 0.7,
-            transform: [{ translateX: offset.x }],
-          },
-          homeLeft === undefined ? styles.centered : { left: homeLeft + size * 0.15 },
-        ]}
-      />
-      <Animated.View
-        {...pan.panHandlers}
-        style={[
-          styles.body,
-          { bottom: homeBottom, width: size, height: size },
-          homeLeft === undefined ? styles.centered : { left: homeLeft },
-          { transform: [{ translateX: offset.x }, { translateY: lift }] },
-        ]}
+    <Animated.View
+      {...pan.panHandlers}
+      style={[
+        styles.body,
+        { bottom: homeBottom, width: size, height: size },
+        homeLeft === undefined ? styles.centered : { left: homeLeft },
+        { transform: [{ translateX: offset.x }, { translateY: lift }] },
+      ]}
+    >
+      {bubble ? (
+        <View pointerEvents="none" style={[styles.bubbleSlot, { bottom: size }]}>
+          {bubble}
+        </View>
+      ) : null}
+      <Pressable
+        role="button"
+        aria-label={talkLabel}
+        onPress={() => {
+          if (dragging.current) return;
+          jump();
+          latest.current.onTap();
+        }}
       >
-        {bubble ? (
-          <View pointerEvents="none" style={[styles.bubbleSlot, { bottom: size }]}>
-            {bubble}
-          </View>
-        ) : null}
-        <Pressable
-          role="button"
-          aria-label={talkLabel}
-          onPress={() => {
-            if (dragging.current) return;
-            jump();
-            latest.current.onTap();
-          }}
+        <View
+          accessible
+          role="img"
+          aria-label={petStrings.petA11y({
+            petName: pet.petName,
+            species: pet.species,
+            color: pet.color,
+            accessory: pet.accessory,
+            pose,
+          })}
+          testID={`living-pet-${shown.clip}`}
         >
-          <View
-            accessible
-            role="img"
-            aria-label={petStrings.petA11y({
-              petName: pet.petName,
-              species: pet.species,
-              color: pet.color,
-              accessory: pet.accessory,
-              pose,
-            })}
-            testID={`living-pet-${shown.clip}`}
-          >
-            <SheetFrame
-              source={petAtlasSource(pet)}
-              size={size}
-              column={cell.column}
-              row={cell.row}
-              fileWidthPx={ATLAS_WIDTH}
-              fileHeightPx={ATLAS_HEIGHT}
-              flipped={shown.faceLeft}
-            />
-          </View>
-        </Pressable>
-      </Animated.View>
-    </>
+          <SheetFrame
+            source={petAtlasSource(pet)}
+            size={size}
+            column={cell.column}
+            row={cell.row}
+            fileWidthPx={ATLAS_WIDTH}
+            fileHeightPx={ATLAS_HEIGHT}
+            flipped={shown.faceLeft}
+          />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -401,12 +383,6 @@ const styles = StyleSheet.create({
   },
   centered: {
     alignSelf: "center",
-  },
-  shadow: {
-    backgroundColor: colors.disabledFace,
-    borderRadius: 999,
-    height: 20,
-    position: "absolute",
   },
   bubbleSlot: {
     alignItems: "center",

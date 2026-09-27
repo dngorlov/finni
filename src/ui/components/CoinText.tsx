@@ -54,6 +54,7 @@ export function CoinText({
   coin = false,
   inline = false,
   label,
+  numberOfLines,
 }: {
   text: string;
   style?: StyleProp<TextStyle>;
@@ -65,15 +66,22 @@ export function CoinText({
   inline?: boolean;
   /** Spoken name when it should differ from the visible sentence. */
   label?: string;
+  numberOfLines?: number;
 }) {
   const parts = splitMoney(text);
   const words = hasCoinWord(parts);
   const amountLine = coin && /\d/.test(text);
   if (!words && !amountLine) {
     // A spelled «монеты» / «деньги» stays one sentence for the screen reader.
-    if (!labelled || !mentionsMoney(text)) return <Text style={style}>{text}</Text>;
+    if (!labelled || !mentionsMoney(text)) {
+      return (
+        <Text style={style} numberOfLines={numberOfLines}>
+          {text}
+        </Text>
+      );
+    }
     return (
-      <Text style={style} accessibilityLabel={label ?? text}>
+      <Text style={style} numberOfLines={numberOfLines} accessibilityLabel={label ?? text}>
         {text}
       </Text>
     );
@@ -83,23 +91,56 @@ export function CoinText({
   const color = typeof flat?.color === "string" ? flat.color : colors.text;
   const size = typeof flat?.fontSize === "number" ? flat.fontSize : type.body;
   const spoken = labelled ? { accessible: true as const, accessibilityLabel: label ?? text } : {};
+  // Flex belongs to the row. On each word it collapses the word to a zero-width
+  // column, so «Разбор дня» becomes tall empty text and one coin icon.
+  const wordStyle = withoutFlex(style);
 
   return (
-    <View {...spoken} style={[styles.line, inline ? styles.inline : styles.block]}>
+    <View
+      {...spoken}
+      style={[
+        styles.line,
+        inline ? styles.inline : styles.block,
+        flexLayout(style),
+        numberOfLines === 1 ? styles.oneLine : null,
+      ]}
+    >
       {words ? (
         parts.map((part, index) =>
           part.kind === "coin" ? (
             <Pictogram key={index} glyph={strings.balanceIcon} size={size} color={color} />
           ) : (
-            <Fragment key={index}>{renderWords(part.value, style, index)}</Fragment>
+            <Fragment key={index}>{renderWords(part.value, wordStyle, index)}</Fragment>
           ),
         )
       ) : (
-        <Text style={style}>{text}</Text>
+        <Text style={wordStyle}>{text}</Text>
       )}
       {!words && amountLine ? <Pictogram glyph={strings.balanceIcon} size={size} color={color} /> : null}
     </View>
   );
+}
+
+function flexLayout(style: StyleProp<TextStyle> | undefined): TextStyle | undefined {
+  const flat = StyleSheet.flatten(style);
+  if (!flat) return undefined;
+  const layout: TextStyle = {};
+  if (flat.flex != null) layout.flex = flat.flex;
+  if (flat.flexGrow != null) layout.flexGrow = flat.flexGrow;
+  if (flat.flexShrink != null) layout.flexShrink = flat.flexShrink;
+  if (flat.flexBasis != null) layout.flexBasis = flat.flexBasis;
+  return Object.keys(layout).length > 0 ? layout : undefined;
+}
+
+function withoutFlex(style: StyleProp<TextStyle> | undefined): StyleProp<TextStyle> {
+  const flat = StyleSheet.flatten(style);
+  if (!flat) return style;
+  const next: TextStyle = { ...flat };
+  delete next.flex;
+  delete next.flexGrow;
+  delete next.flexShrink;
+  delete next.flexBasis;
+  return next;
 }
 
 /** One text node per word so the row can wrap mid-sentence. */
@@ -125,5 +166,9 @@ const styles = StyleSheet.create({
   inline: {
     flexGrow: 1,
     flexShrink: 1,
+  },
+  oneLine: {
+    flexWrap: "nowrap",
+    overflow: "hidden",
   },
 });

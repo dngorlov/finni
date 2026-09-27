@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, StyleSheet, View } from "react-native";
 import { CUSTOM_GOAL_MOOD, readCustomGoalItem } from "../../core/customGoal";
 import { meterDeltaMap } from "../../core/economy";
@@ -20,7 +20,10 @@ export function BuyGoalPrompt() {
   const { revision, focus, setFocus, touchChrome } = usePlayChrome();
   const [hiddenKey, setHiddenKey] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackModel | null>(null);
+  const [gameTick, setGameTick] = useState(0);
   void revision;
+  void gameTick;
+  useEffect(() => game.subscribe(() => setGameTick((n) => n + 1)), [game]);
 
   const profileId = meta.get(META_KEYS.activeProfileId);
   const task = profileId ? resolveCurrentTask(game, content, profileId) : null;
@@ -84,8 +87,9 @@ export function BuyGoalPrompt() {
     });
   };
 
+  const pot = profileId ? game.savingsState(profileId).pot : 0;
   if (feedback) return <FeedbackCard model={feedback} onDismiss={() => setFeedback(null)} />;
-  if (!goal || hiddenKey === goal.id) return null;
+  if (!goal || hiddenKey === goal.id || pot < goal.price) return null;
 
   return (
     <Modal animationType="slide" transparent visible onRequestClose={dismiss}>

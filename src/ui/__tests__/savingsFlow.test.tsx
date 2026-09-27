@@ -103,10 +103,36 @@ describe("Копилка", () => {
     expect(screen.getByLabelText("В копилке 0")).toBeOnTheScreen();
     expect(ports.game.boughtAsActiveGoalCount(profileId)).toBe(1);
     await user.press(screen.getByRole("button", { name: "Выбрать новую цель" }));
-    expect(screen.getByRole("button", { name: "Самокат" })).toBeOnTheScreen();
-    await user.press(screen.getByRole("button", { name: "Самокат" }));
+    expect(
+      screen.getByRole("button", { name: "Самокат. 160 монет. Счастье +14. Доехать до парка самому" }),
+    ).toBeOnTheScreen();
+    expect(screen.getByText("Доехать до парка самому", { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByText("+14 счастье", { includeHiddenElements: true })).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Сделать целью Самокат" }));
     expect(screen.getAllByText("Самокат")).toHaveLength(2);
     expect(screen.getByLabelText("160 монет")).toBeOnTheScreen();
+  });
+
+  it("drops Купить из копилки once the goal is bought, with no goal and an empty pot", async () => {
+    const ports = createFakePorts();
+    const profileId = seedReturningChild(ports, { unlockMoney: true });
+    const day = ports.game.dayState(profileId);
+    ports.game.transferToSavings(profileId, day.dayId, 89);
+    const { user } = await renderApp(ports);
+
+    await openMoney(user, "Копилка");
+    await user.press(screen.getByRole("button", { name: "Положить" }));
+    await user.press(screen.getByRole("button", { name: "Сумма, больше" }));
+    await user.press(screen.getByRole("button", { name: "Положить" }));
+
+    const buy = screen.getAllByRole("button", { name: "Купить из копилки" });
+    expect(buy.length).toBeGreaterThan(1);
+    await user.press(buy[buy.length - 1]!);
+    await user.press(screen.getByRole("button", { name: "Понятно" }));
+
+    expect(screen.queryByRole("button", { name: "Купить из копилки" })).not.toBeOnTheScreen();
+    expect(screen.getByLabelText("В копилке 0")).toBeOnTheScreen();
+    expect(screen.getAllByText("Выбери цель").length).toBeGreaterThan(0);
   });
 });
 

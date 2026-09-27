@@ -89,7 +89,7 @@ export function HomeScene({
   threshold?: string | null;
   accumulated: number;
   cost: number;
-  /** Копилка is open, so an empty Цель can offer «Выбери цель». */
+  /** Копилка is open, so the Цель pill can open «Выбери цель». */
   canPickGoal?: boolean;
   onPickGoal?: () => void;
   onShop: () => void;
@@ -173,6 +173,33 @@ export function HomeScene({
   const shownDecor = [...shelf, ...floorItems];
 
   const progress = cost > 0 ? Math.max(0, Math.min(1, accumulated / cost)) : 0;
+  const goalLabel = `${homeStrings.goalA11y(goalName, accumulated, cost)}${threshold ? `. ${threshold}` : ""}`;
+  const goalBody = (
+    <>
+      <View style={styles.goalRow}>
+        {goalIcon ? (
+          <Text aria-hidden style={styles.goalEmoji}>
+            {goalIcon}
+          </Text>
+        ) : (
+          <PixelIcon name="star" size={16} color={colors.accentText} />
+        )}
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.goalTitle}>
+          {goalName}
+        </Text>
+        <Text style={styles.goalRatio}>{strings.goalRatio(accumulated, cost)}</Text>
+        <PixelSprite name="coin" size={14} />
+      </View>
+      <View style={styles.goalTrack}>
+        <View style={[styles.goalFill, { width: `${Math.round(progress * 100)}%` }]} />
+      </View>
+      {threshold ? (
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.goalThreshold}>
+          {threshold}
+        </Text>
+      ) : null}
+    </>
+  );
 
   return (
     <View testID="home-scene" style={styles.scene} onLayout={onLayout}>
@@ -258,34 +285,21 @@ export function HomeScene({
             </Pressable>
           </View>
           {goalName ? (
-            <View
-              accessible
-              aria-label={`${homeStrings.goalA11y(goalName, accumulated, cost)}${threshold ? `. ${threshold}` : ""}`}
-              style={styles.goal}
-            >
-              <View style={styles.goalRow}>
-                {goalIcon ? (
-                  <Text aria-hidden style={styles.goalEmoji}>
-                    {goalIcon}
-                  </Text>
-                ) : (
-                  <PixelIcon name="star" size={16} color={colors.accentText} />
-                )}
-                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.goalTitle}>
-                  {goalName}
-                </Text>
-                <Text style={styles.goalRatio}>{strings.goalRatio(accumulated, cost)}</Text>
-                <PixelSprite name="coin" size={14} />
+            canPickGoal ? (
+              <Pressable
+                role="button"
+                aria-label={goalLabel}
+                hitSlop={4}
+                onPress={onPickGoal}
+                style={({ pressed }) => [styles.goal, pressed ? styles.goalPressed : null]}
+              >
+                {goalBody}
+              </Pressable>
+            ) : (
+              <View accessible aria-label={goalLabel} style={styles.goal}>
+                {goalBody}
               </View>
-              <View style={styles.goalTrack}>
-                <View style={[styles.goalFill, { width: `${Math.round(progress * 100)}%` }]} />
-              </View>
-              {threshold ? (
-                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.goalThreshold}>
-                  {threshold}
-                </Text>
-              ) : null}
-            </View>
+            )
           ) : canPickGoal ? (
             <Pressable
               role="button"

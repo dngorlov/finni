@@ -124,24 +124,32 @@ describe("Дом shortcuts", () => {
     await user.press(prompts[prompts.length - 1]);
     expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
   });
+
+  it("opens Цель from the current goal", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports, { unlockMoney: true });
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Цель: Скейтборд, 0 из 90" }));
+    expect(screen.getByRole("button", { name: "Копилка" })).toBeSelected();
+    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+  });
 });
 
-describe("Карта заданий compact panel", () => {
-  it("shows reward and «Начать» in the panel and the rest in «Подробнее»", async () => {
+describe("Карта заданий", () => {
+  it("opens a pin in a sheet with the lesson and «Начать»", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Карта" }));
+    expect(screen.getByText("Карта заданий")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Начать" })).not.toBeOnTheScreen();
+
     await user.press(screen.getByRole("button", { name: "Что такое бюджет?, открыто" }));
     expect(screen.getByLabelText("Награда: до 30 монет")).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Начать" })).toBeOnTheScreen();
-    expect(screen.queryByText(/Район: ЦАО/)).not.toBeOnTheScreen();
-
-    await user.press(screen.getByRole("button", { name: "Подробнее: Что такое бюджет?" }));
     expect(screen.getByText(/Район: ЦАО/)).toBeOnTheScreen();
-    await user.press(screen.getByRole("button", { name: "Понятно" }));
-    expect(screen.queryByText(/Район: ЦАО/)).not.toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Начать" })).toBeOnTheScreen();
   });
 
   it("lists every mini-game from Мини-игры, still locked until its lesson is done", async () => {

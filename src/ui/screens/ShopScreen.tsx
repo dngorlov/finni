@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -97,6 +97,8 @@ export default function ShopScreen({ navigation }: Props) {
       setPostponed(new Set());
     }, [load]),
   );
+
+  useEffect(() => game.subscribe(load), [game, load]);
 
   const closeDrawer = () => {
     setDrawer({ name: "closed" });

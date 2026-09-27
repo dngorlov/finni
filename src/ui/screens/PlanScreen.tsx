@@ -7,8 +7,8 @@ import type { DayState } from "../../data/repositories/gameRepository";
 import { AmountStepper } from "../components/AmountStepper";
 import { CoinText } from "../components/CoinText";
 import { CHART_COLORS } from "../components/DonutChart";
+import { Pictogram, PixelIcon } from "../components/Pictogram";
 import { ScreenTitle } from "../components/ScreenTitle";
-import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { TextButton } from "../components/TextButton";
@@ -18,12 +18,54 @@ import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { dayStrings } from "../stringsDay";
 import { moneyStrings } from "../stringsMoney";
-import { colors, spacing, type } from "../theme";
+import { colors, radius, spacing, type } from "../theme";
 import { bucketSpendOnDay, itemLookup } from "./journalStats";
 import { Amount, HeroCard, MoneyCard, moneyColors, ProgressBar } from "./moneyParts";
+import { bucketInk } from "./planFact";
 import { daysToGoalAt, incomeToday, todayBills, wantsThatFit } from "./planDraft";
 
 const EMPTY: PlanBuckets = { mandatory: 0, optional: 0, savings: 0 };
+
+/** Order of decisions: счета, then the goal, then wants. */
+const PILES: readonly {
+  id: keyof PlanBuckets;
+  step: string;
+  label: string;
+  color: string;
+  pictogram: string;
+  job: string;
+}[] = [
+  {
+    id: "mandatory",
+    step: "1",
+    label: strings.bucketMandatory,
+    color: CHART_COLORS.mandatory,
+    pictogram: strings.navPlanPictogram,
+    job: moneyStrings.planJobMandatory,
+  },
+  {
+    id: "savings",
+    step: "2",
+    label: strings.bucketSavings,
+    color: CHART_COLORS.savings,
+    pictogram: strings.navSavingsPictogram,
+    job: strings.planSavingsExtra,
+  },
+  {
+    id: "optional",
+    step: "3",
+    label: strings.bucketOptional,
+    color: CHART_COLORS.optional,
+    pictogram: strings.navShopPictogram,
+    job: moneyStrings.planJobOptional,
+  },
+];
+
+const hidden = {
+  "aria-hidden": true as const,
+  accessibilityElementsHidden: true as const,
+  importantForAccessibility: "no-hide-descendants" as const,
+};
 
 export default function PlanScreen() {
   const { game, meta, content } = useSession();
@@ -127,111 +169,97 @@ export default function PlanScreen() {
       footer={
         confirmed ? null : askingConfirm ? (
           <>
+            <View style={styles.confirmSheet}>
+              <CoinText text={strings.confirmPlanTitle} style={styles.section} />
+              <CoinText text={strings.confirmPlanBody} style={styles.body} />
+              <View {...hidden} style={styles.confirmPiles}>
+                {PILES.map((pile) => (
+                  <View key={pile.id} style={styles.confirmPile}>
+                    <View style={[styles.dot, { backgroundColor: pile.color }]} />
+                    <Text style={styles.confirmPileLabel}>{pile.label}</Text>
+                    <Amount value={shown[pile.id]} size={14} />
+                  </View>
+                ))}
+              </View>
+            </View>
             <TextButton label={strings.close} onPress={() => setAskingConfirm(false)} />
             <PrimaryButton highlighted={focus?.kind === "plan"} label={strings.confirmPlan} onPress={confirm} />
           </>
         ) : (
-          <PrimaryButton highlighted={focus?.kind === "plan"} label={strings.confirmPlan} disabled={!check.ok} onPress={askConfirm} />
+          <PrimaryButton
+            highlighted={focus?.kind === "plan"}
+            label={strings.confirmPlan}
+            disabled={!check.ok}
+            onPress={askConfirm}
+          />
         )
       }
     >
       <ScreenTitle style={styles.title}>{strings.navPlan}</ScreenTitle>
       <HeroCard caption={moneyStrings.planCaption} value={day.available} label={strings.planAvailable(day.available)}>
         {confirmed || income <= 0 ? null : <Text style={styles.income}>{strings.planIncomeToday(income)}</Text>}
+        {confirmed ? null : <Text style={styles.promise}>{strings.planPromise}</Text>}
       </HeroCard>
       <MoneyCard>
         <Text style={styles.section}>{confirmed ? moneyStrings.planSplit : moneyStrings.planHow}</Text>
+        {confirmed ? (
+          <View style={styles.lockedRow}>
+            <PixelIcon name="lock" size={20} color={moneyColors.plus} />
+            <Text style={styles.locked}>{moneyStrings.planLocked}</Text>
+          </View>
+        ) : null}
         <SplitBar
           slices={slices.map((row) => ({ id: row.id, value: row.amount, color: row.color }))}
           label={moneyStrings.planChartA11y(chartParts.map((row) => ({ label: row.label, amount: row.amount, percent: 0 })))}
         />
         {confirmed ? null : <Leftover remainder={check.remainder} />}
-        {confirmed ? (
-          <>
-            <BucketActual
-              label={strings.bucketMandatory}
-              color={CHART_COLORS.mandatory}
-              plan={day.plan.buckets.mandatory}
-              actual={day.actual.mandatory}
-              yesterday={yesterday?.mandatory}
+      </MoneyCard>
+      {confirmed
+        ? PILES.map((pile) => (
+            <FactPile
+              key={pile.id}
+              pile={pile}
+              plan={day.plan.buckets[pile.id]}
+              actual={day.actual[pile.id]}
             />
-            <BucketActual
-              divided
-              label={strings.bucketSavings}
-              color={CHART_COLORS.savings}
-              plan={day.plan.buckets.savings}
-              actual={day.actual.savings}
-              yesterday={yesterday?.savings}
-            />
-            <BucketActual
-              divided
-              label={strings.bucketOptional}
-              color={CHART_COLORS.optional}
-              plan={day.plan.buckets.optional}
-              actual={day.actual.optional}
-              yesterday={yesterday?.optional}
-            />
-          </>
-        ) : (
-          <>
-            {/* Order = order of decisions: Счета → себе на Цель → желаемое на остаток. */}
-            <DraftBucket
-              label={strings.bucketMandatory}
-              pictogram={strings.navPlanPictogram}
-              color={CHART_COLORS.mandatory}
-              value={buckets.mandatory}
-              min={floor}
+          ))
+        : PILES.map((pile) => (
+            <DraftPile
+              key={pile.id}
+              pile={pile}
+              value={buckets[pile.id]}
               max={day.available}
-              yesterday={yesterday?.mandatory}
+              min={pile.id === "mandatory" ? floor : 0}
+              yesterday={yesterday?.[pile.id]}
+              hint={
+                pile.id === "savings"
+                  ? goal
+                    ? goalDays == null
+                      ? strings.planGoalNoSavings(goal.name)
+                      : strings.planGoalForecast(goal.name, goalDays)
+                    : undefined
+                  : pile.id === "optional"
+                    ? strings.planWantsHint(wantsThatFit(content.catalog, buckets.optional))
+                    : undefined
+              }
               details={
-                bills.parts.length === 0 ? null : (
+                pile.id === "mandatory" && bills.parts.length > 0 ? (
                   <View style={styles.bills}>
                     <CoinText coin text={dayStrings.planBillsMin(bills.total)} style={styles.billTitle} />
                     {bills.note ? <CoinText text={bills.note} style={styles.small} /> : null}
                     <CoinText coin text={strings.planBillsLine(bills.parts, bills.total)} style={styles.small} />
                     {billsShort > 0 ? <CoinText text={strings.planBillsShort(billsShort)} style={styles.small} /> : null}
                   </View>
-                )
+                ) : null
               }
-              onChange={(mandatory) => persist({ ...buckets, mandatory: Math.max(floor, mandatory) })}
-            />
-            <DraftBucket
-              divided
-              label={strings.bucketSavings}
-              pictogram={strings.navSavingsPictogram}
-              color={CHART_COLORS.savings}
-              value={buckets.savings}
-              max={day.available}
-              yesterday={yesterday?.savings}
-              hint={
-                goal
-                  ? goalDays == null
-                    ? strings.planGoalNoSavings(goal.name)
-                    : strings.planGoalForecast(goal.name, goalDays)
-                  : undefined
+              onChange={(value) =>
+                persist({
+                  ...buckets,
+                  [pile.id]: pile.id === "mandatory" ? Math.max(floor, value) : value,
+                })
               }
-              onChange={(savings) => persist({ ...buckets, savings })}
             />
-            <DraftBucket
-              divided
-              label={strings.bucketOptional}
-              pictogram={strings.navShopPictogram}
-              color={CHART_COLORS.optional}
-              value={buckets.optional}
-              max={day.available}
-              yesterday={yesterday?.optional}
-              hint={strings.planWantsHint(wantsThatFit(content.catalog, buckets.optional))}
-              onChange={(optional) => persist({ ...buckets, optional })}
-            />
-          </>
-        )}
-      </MoneyCard>
-      {askingConfirm ? (
-        <Card>
-          <CoinText text={strings.confirmPlanTitle} style={styles.section} />
-          <CoinText text={strings.confirmPlanBody} style={styles.body} />
-        </Card>
-      ) : null}
+          ))}
     </Screen>
   );
 }
@@ -242,7 +270,7 @@ function compareLine(today: number, yesterday: number): string {
   return moneyStrings.planCompareSame;
 }
 
-/** «Вчера: N» chip and how today's number compares; nothing on day 1. */
+/** «Вчера: N» and how today's number compares; nothing on day 1. */
 function Yesterday({ today, yesterday }: { today: number; yesterday?: number }) {
   if (yesterday == null) return null;
   return (
@@ -253,17 +281,32 @@ function Yesterday({ today, yesterday }: { today: number; yesterday?: number }) 
   );
 }
 
-/** «Осталось разложить N» under the bar; red when the piles hold more than there is. */
+/** How many coins are still not in a pile; red when the piles hold more than there is. */
 function Leftover({ remainder }: { remainder: number }) {
-  if (remainder < 0) {
-    return <CoinText text={dayStrings.planTooMuch(-remainder)} style={[styles.remainder, styles.remainderOver]} />;
-  }
+  const over = remainder < 0;
+  const done = remainder === 0;
+  const text = over
+    ? dayStrings.planTooMuch(-remainder)
+    : remainder > 0
+      ? dayStrings.planLeft(remainder)
+      : dayStrings.planAllPlaced;
   return (
-    <CoinText
-      coin={remainder > 0}
-      text={remainder > 0 ? dayStrings.planLeft(remainder) : dayStrings.planAllPlaced}
-      style={[styles.remainder, remainder === 0 ? styles.remainderDone : null]}
-    />
+    <View style={[styles.status, over ? styles.statusOver : done ? styles.statusDone : styles.statusLeft]}>
+      <View {...hidden}>
+        <PixelIcon
+          name={over ? "warning-diamond" : done ? "check" : "coins"}
+          size={22}
+          color={over ? moneyColors.minus : done ? moneyColors.plus : colors.accentText}
+        />
+      </View>
+      <View style={styles.statusText}>
+        <CoinText
+          coin={!over && remainder > 0}
+          text={text}
+          style={[styles.remainder, over ? styles.remainderOver : done ? styles.remainderDone : null]}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -288,86 +331,84 @@ function SplitBar({
   );
 }
 
-function BucketHeader({ label, color }: { label: string; color: string }) {
+function PileShell({ color, children }: { color: string; children: ReactNode }) {
   return (
-    <View style={styles.bucketHead}>
-      <View style={[styles.bucketDot, { backgroundColor: color }]} />
-      <Text style={styles.bucketLabel}>{label}</Text>
+    <View style={styles.pile}>
+      <View style={[styles.stripe, { backgroundColor: color }]} />
+      <View style={styles.pileBody}>{children}</View>
     </View>
   );
 }
 
-function DraftBucket({
-  label,
-  pictogram,
-  color,
+function DraftPile({
+  pile,
   value,
   max,
+  min,
   yesterday,
   hint,
   details,
-  min,
-  divided,
   onChange,
 }: {
-  label: string;
-  pictogram: string;
-  color: string;
+  pile: (typeof PILES)[number];
   value: number;
   max: number;
+  min: number;
   yesterday?: number;
   hint?: string;
   details?: ReactNode;
-  min?: number;
-  divided?: boolean;
   onChange: (next: number) => void;
 }) {
   return (
-    <View style={[styles.bucket, { borderLeftColor: color }, divided ? styles.divided : null]}>
+    <PileShell color={pile.color}>
+      <View style={styles.jobRow}>
+        <View {...hidden} style={[styles.badge, { backgroundColor: pile.color }]}>
+          <Text style={[styles.badgeText, { color: bucketInk(pile.color) }]}>{pile.step}</Text>
+        </View>
+        <Text style={styles.job}>{pile.job}</Text>
+      </View>
       <AmountStepper
-        label={label}
-        pictogram={pictogram}
+        label={pile.label}
+        pictogram={pile.pictogram}
         value={value}
         min={min}
         max={max}
         dense
         showTrack
-        trackColor={color}
-        amountLabel={moneyStrings.legendRow(label, value)}
+        trackColor={pile.color}
+        amountLabel={moneyStrings.legendRow(pile.label, value)}
         onChange={onChange}
       />
-      <Yesterday today={value} yesterday={yesterday} />
       {details}
       {hint ? <CoinText text={hint} style={styles.small} /> : null}
-    </View>
+      <Yesterday today={value} yesterday={yesterday} />
+    </PileShell>
   );
 }
 
-function BucketActual({
-  label,
-  color,
+function FactPile({
+  pile,
   plan,
   actual,
-  yesterday,
-  divided,
 }: {
-  label: string;
-  color: string;
+  pile: (typeof PILES)[number];
   plan: number;
   actual: number;
-  yesterday?: number;
-  divided?: boolean;
 }) {
   return (
-    <View style={[styles.bucket, { borderLeftColor: color }, divided ? styles.divided : null]}>
-      <View style={styles.bucketTop}>
-        <BucketHeader label={label} color={color} />
-        <Amount value={actual} size={14} />
+    <PileShell color={pile.color}>
+      <View style={styles.factTop}>
+        <View {...hidden} style={[styles.mark, { backgroundColor: pile.color }]}>
+          <Pictogram glyph={pile.pictogram} size={22} color={bucketInk(pile.color)} />
+        </View>
+        <View style={styles.factText}>
+          <Text style={styles.bucketLabel}>{pile.label}</Text>
+          <CoinText coin text={strings.planVsActual(plan, actual)} style={styles.small} />
+        </View>
+        <Amount value={actual} size={16} />
       </View>
-      <ProgressBar value={actual} max={plan} color={color} />
-      <CoinText coin text={strings.planVsActual(plan, actual)} style={styles.small} />
-      <Yesterday today={plan} yesterday={yesterday} />
-    </View>
+      <ProgressBar value={actual} max={Math.max(plan, actual, 1)} color={pile.color} />
+    </PileShell>
   );
 }
 
@@ -385,27 +426,67 @@ const styles = StyleSheet.create({
   body: {
     color: colors.text,
     fontSize: type.body,
+    lineHeight: 22,
   },
   income: {
     color: moneyColors.heroSubtle,
     fontSize: type.body,
     fontWeight: "700",
   },
+  promise: {
+    color: moneyColors.heroText,
+    fontSize: type.body,
+    lineHeight: 22,
+  },
+  lockedRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.s,
+  },
+  locked: {
+    color: colors.text,
+    flex: 1,
+    fontSize: type.body,
+    lineHeight: 22,
+  },
   small: {
     color: colors.subtle,
     fontSize: type.body,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   remainder: {
     color: colors.text,
+    flexShrink: 1,
     fontSize: type.body,
     fontWeight: "700",
+    lineHeight: 22,
   },
   remainderOver: {
     color: moneyColors.minus,
   },
   remainderDone: {
     color: moneyColors.plus,
+  },
+  status: {
+    alignItems: "center",
+    borderRadius: 16,
+    flexDirection: "row",
+    gap: spacing.s,
+    padding: 12,
+  },
+  statusLeft: {
+    backgroundColor: colors.highlight,
+  },
+  statusDone: {
+    backgroundColor: colors.track,
+  },
+  statusOver: {
+    backgroundColor: colors.card,
+    borderColor: moneyColors.minus,
+    borderWidth: 2,
+  },
+  statusText: {
+    flex: 1,
   },
   bar: {
     backgroundColor: colors.track,
@@ -417,57 +498,115 @@ const styles = StyleSheet.create({
   barSeg: {
     height: 24,
   },
+  dot: {
+    borderRadius: 6,
+    height: 12,
+    width: 12,
+  },
   bills: {
-    gap: 0,
+    backgroundColor: colors.highlight,
+    borderRadius: 16,
+    gap: 4,
+    padding: spacing.s + 4,
   },
   billTitle: {
     color: colors.text,
     fontSize: type.body,
     fontWeight: "700",
+    lineHeight: 22,
   },
-  bucket: {
-    borderLeftWidth: 4,
-    gap: 4,
-    paddingLeft: spacing.s,
-    paddingVertical: 4,
+  pile: {
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    overflow: "hidden",
   },
-  divided: {
-    borderTopColor: colors.track,
-    borderTopWidth: 1,
+  stripe: {
+    height: 8,
   },
-  bucketTop: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
+  pileBody: {
+    gap: spacing.s,
+    padding: spacing.m,
   },
-  bucketHead: {
+  jobRow: {
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.s,
   },
-  bucketDot: {
-    borderRadius: 6,
-    height: 12,
-    width: 12,
+  badge: {
+    alignItems: "center",
+    borderRadius: 16,
+    height: 32,
+    justifyContent: "center",
+    width: 32,
+  },
+  badgeText: {
+    fontSize: type.body,
+    fontWeight: "700",
+  },
+  job: {
+    color: colors.text,
+    flex: 1,
+    fontSize: type.body,
+    fontWeight: "700",
+    lineHeight: 22,
+  },
+  yesterday: {
+    backgroundColor: colors.track,
+    borderRadius: 16,
+    gap: 2,
+    paddingHorizontal: spacing.s + 4,
+    paddingVertical: spacing.s,
+  },
+  yesterdayText: {
+    color: colors.text,
+    fontSize: type.body,
+    fontWeight: "700",
+  },
+  compare: {
+    color: colors.subtle,
+    fontSize: type.body,
+    lineHeight: 22,
+  },
+  factTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.s,
+  },
+  factText: {
+    flex: 1,
+    gap: 2,
+  },
+  mark: {
+    alignItems: "center",
+    borderRadius: 20,
+    height: 40,
+    justifyContent: "center",
+    width: 40,
   },
   bucketLabel: {
     color: colors.text,
     fontSize: type.body,
     fontWeight: "700",
   },
-  yesterday: {
-    alignItems: "center",
+  confirmSheet: {
+    backgroundColor: colors.highlight,
+    borderRadius: radius.card,
+    gap: spacing.s,
+    padding: spacing.m,
+  },
+  confirmPiles: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.s,
   },
-  yesterdayText: {
-    color: colors.subtle,
-    fontSize: type.body,
+  confirmPile: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+    minHeight: 28,
   },
-  compare: {
-    color: colors.subtle,
-    flexShrink: 1,
+  confirmPileLabel: {
+    color: colors.text,
     fontSize: type.body,
   },
 });

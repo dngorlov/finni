@@ -1,3 +1,4 @@
+import { StyleSheet } from "react-native";
 import { render, screen } from "@testing-library/react-native";
 import { CoinText, splitMoney } from "./CoinText";
 
@@ -58,5 +59,23 @@ describe("CoinText", () => {
   it("spells the word when a coin line has no number", async () => {
     await render(<CoinText coin text="Ты собрал все монеты за это задание" />);
     expect(screen.getByText("Ты собрал все монеты за это задание")).toBeOnTheScreen();
+  });
+
+  it("keeps a flexed amount sentence as words beside the icon", async () => {
+    await render(
+      <CoinText
+        coin
+        labelled={false}
+        text="Ты отложил 10 монет в Копилку."
+        style={{ flex: 1, fontSize: 16, lineHeight: 22 }}
+      />,
+    );
+
+    const word = screen.getByText("отложил");
+    expect(word).toBeOnTheScreen();
+    expect(screen.getByText("10")).toBeOnTheScreen();
+    expect(screen.queryByText("монет")).not.toBeOnTheScreen();
+    expect(StyleSheet.flatten(word.props.style).flex).toBeUndefined();
+    expect(StyleSheet.flatten(word.parent?.props.style).flex).toBe(1);
   });
 });
