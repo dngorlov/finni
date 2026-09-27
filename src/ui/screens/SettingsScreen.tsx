@@ -28,11 +28,11 @@ export default function SettingsScreen({ navigation }: Props) {
   return (
     <Screen>
       <BackButton />
-      <PrimaryButton label={strings.navAdult} onPress={() => navigation.navigate("AdultGate")} />
       <Card>
         <ScreenTitle style={styles.title}>{strings.appName}</ScreenTitle>
         <Text style={styles.body}>{strings.versionLine(APP_VERSION, APP_BUILD)}</Text>
       </Card>
+      <PrimaryButton label={strings.navAdult} onPress={() => navigation.navigate("AdultGate")} />
       <PrimaryButton label={petStrings.appearanceOpen} onPress={() => navigation.navigate("Appearance")} />
       <SoundSettings />
       <View style={styles.links}>

@@ -233,7 +233,7 @@ describe("Об авторах и источниках", () => {
     }
   });
 
-  it("opens authors and sources from Настройки, with Взрослый раздел above the rest", async () => {
+  it("opens authors and sources from Настройки, with Взрослый раздел under the game info", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
     const { user } = await renderApp(ports);
@@ -242,7 +242,7 @@ describe("Об авторах и источниках", () => {
     const labels = flatText(screen.toJSON());
     const adult = labels.indexOf("Взрослый раздел");
     expect(adult).toBeGreaterThanOrEqual(0);
-    expect(labels.lastIndexOf("Финни")).toBeGreaterThan(adult);
+    expect(adult).toBeGreaterThan(labels.lastIndexOf("Финни"));
     expect(labels.indexOf("Внешний вид питомца")).toBeGreaterThan(adult);
     expect(screen.queryByText("Drizzle ORM")).not.toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Взрослый раздел" })).toBeOnTheScreen();
