@@ -52,6 +52,10 @@ export const PET_SHEETS: Readonly<Record<string, PetSheet>> = {
     atlas: require("../../../assets/pets/atlas/sp1_c1_a2.png"),
     poses: require("../../../assets/pets/poses/sp1_c1_a2.png"),
   },
+  "sp1/c1/a3": {
+    atlas: require("../../../assets/pets/atlas/sp1_c1_a3.png"),
+    poses: require("../../../assets/pets/poses/sp1_c1_a3.png"),
+  },
   "sp1/c3/a1": {
     atlas: require("../../../assets/pets/atlas/sp1_c3_a1.png"),
     poses: require("../../../assets/pets/poses/sp1_c3_a1.png"),
@@ -60,6 +64,10 @@ export const PET_SHEETS: Readonly<Record<string, PetSheet>> = {
     atlas: require("../../../assets/pets/atlas/sp1_c3_a2.png"),
     poses: require("../../../assets/pets/poses/sp1_c3_a2.png"),
   },
+  "sp1/c3/a3": {
+    atlas: require("../../../assets/pets/atlas/sp1_c3_a3.png"),
+    poses: require("../../../assets/pets/poses/sp1_c3_a3.png"),
+  },
   "sp1/c2/a1": {
     atlas: require("../../../assets/pets/atlas/sp1_c2_a1.png"),
     poses: require("../../../assets/pets/poses/sp1_c2_a1.png"),
@@ -67,6 +75,14 @@ export const PET_SHEETS: Readonly<Record<string, PetSheet>> = {
   "sp1/c2/a2": {
     atlas: require("../../../assets/pets/atlas/sp1_c2_a2.png"),
     poses: require("../../../assets/pets/poses/sp1_c2_a2.png"),
+  },
+  "sp1/c2/a3": {
+    atlas: require("../../../assets/pets/atlas/sp1_c2_a3.png"),
+    poses: require("../../../assets/pets/poses/sp1_c2_a3.png"),
+  },
+  "sp2/c1/a1": {
+    atlas: require("../../../assets/pets/atlas/sp2_c1_a1.png"),
+    poses: require("../../../assets/pets/poses/sp2_c1_a1.png"),
   },
   "sp2/c1/a2": {
     atlas: require("../../../assets/pets/atlas/sp2_c1_a2.png"),
@@ -88,6 +104,10 @@ export const PET_SHEETS: Readonly<Record<string, PetSheet>> = {
     atlas: require("../../../assets/pets/atlas/sp2_c3_a3.png"),
     poses: require("../../../assets/pets/poses/sp2_c3_a3.png"),
   },
+  "sp2/c2/a1": {
+    atlas: require("../../../assets/pets/atlas/sp2_c2_a1.png"),
+    poses: require("../../../assets/pets/poses/sp2_c2_a1.png"),
+  },
   "sp2/c2/a2": {
     atlas: require("../../../assets/pets/atlas/sp2_c2_a2.png"),
     poses: require("../../../assets/pets/poses/sp2_c2_a2.png"),
@@ -95,6 +115,14 @@ export const PET_SHEETS: Readonly<Record<string, PetSheet>> = {
   "sp2/c2/a3": {
     atlas: require("../../../assets/pets/atlas/sp2_c2_a3.png"),
     poses: require("../../../assets/pets/poses/sp2_c2_a3.png"),
+  },
+  "sp3/c1/a1": {
+    atlas: require("../../../assets/pets/atlas/sp3_c1_a1.png"),
+    poses: require("../../../assets/pets/poses/sp3_c1_a1.png"),
+  },
+  "sp3/c1/a2": {
+    atlas: require("../../../assets/pets/atlas/sp3_c1_a2.png"),
+    poses: require("../../../assets/pets/poses/sp3_c1_a2.png"),
   },
   "sp3/c1/a3": {
     atlas: require("../../../assets/pets/atlas/sp3_c1_a3.png"),
@@ -107,6 +135,10 @@ export const PET_SHEETS: Readonly<Record<string, PetSheet>> = {
   "sp3/c2/a1": {
     atlas: require("../../../assets/pets/atlas/sp3_c2_a1.png"),
     poses: require("../../../assets/pets/poses/sp3_c2_a1.png"),
+  },
+  "sp3/c2/a2": {
+    atlas: require("../../../assets/pets/atlas/sp3_c2_a2.png"),
+    poses: require("../../../assets/pets/poses/sp3_c2_a2.png"),
   },
   "sp3/c2/a3": {
     atlas: require("../../../assets/pets/atlas/sp3_c2_a3.png"),

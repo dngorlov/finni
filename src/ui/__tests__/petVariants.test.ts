@@ -41,20 +41,25 @@ describe("resolvePetVariant", () => {
   });
 
   it("resolves every species × color × accessory to a sheet that is bundled", () => {
+    const borrowed: string[] = [];
     for (const species of SPECIES_KEYS) {
       for (const color of COLOR_KEYS) {
         for (const accessory of ACCESSORY_KEYS) {
-          const resolved = resolvePetVariant({ species, color, accessory }, DRAWN_VARIANTS);
+          const requested = { species, color, accessory };
+          const resolved = resolvePetVariant(requested, DRAWN_VARIANTS);
           expect(PET_SHEETS[variantKey(resolved)]).toBeDefined();
-          // Andrei drew every species × color in some form, so the look never changes species or color.
+          // Every species × color is drawn in some form, so the look never changes species or color.
           expect(resolved).toMatchObject({ species, color });
+          if (variantKey(resolved) !== variantKey(requested)) borrowed.push(variantKey(requested));
         }
       }
     }
+    // Вид 3 green still has only the hat sheet.
+    expect(borrowed).toEqual(["sp3/c3/a1", "sp3/c3/a2"]);
   });
 
-  it("bundles all 17 drawn looks with the animations the pet plays", () => {
-    expect(DRAWN_VARIANTS.size).toBe(17);
+  it("bundles all 25 drawn looks with the animations the pet plays", () => {
+    expect(DRAWN_VARIANTS.size).toBe(25);
     expect(PET_ATLAS_LAYOUT).toMatchObject({
       idle: { frames: 4 },
       walk: { frames: 6 },
