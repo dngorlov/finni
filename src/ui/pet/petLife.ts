@@ -1,4 +1,4 @@
-import { PET_ATLAS_LAYOUT } from "./petSprites.generated";
+import { PET_CLIPS } from "./petSprites.generated";
 import { poseFromMeters } from "./keys";
 
 /**
@@ -18,14 +18,21 @@ export const LANDING_MS = 450;
 /** Finger travel (dp) that turns a touch into a drag instead of a tap. */
 export const DRAG_SLOP = 10;
 
-export type PetClip = "idle" | "walk" | "jump" | "push" | "held" | "fall";
+export type PetClip = "idle" | "walk" | "jump" | "push" | "attack" | "held" | "fall";
 export type IdleAction = "walk" | "jump" | "push";
+/** What a tap makes the pet do. */
+export type TapMove = "jump" | "attack";
 
 /** Ticks a one-shot clip plays before the pet goes back to IDLE. */
 const ONE_SHOT_TICKS: Partial<Record<PetClip, number>> = {
-  jump: PET_ATLAS_LAYOUT.jump.frames,
-  push: PET_ATLAS_LAYOUT.push.frames * 2,
+  jump: PET_CLIPS.jump.frames,
+  push: PET_CLIPS.push.frames * 2,
+  // A playful one-two punch.
+  attack: PET_CLIPS.attack.frames * 2,
 };
+
+/** Share of taps answered with a punch instead of a hop. */
+export const TAP_ATTACK_SHARE = 0.35;
 
 /** The frame of the JUMP row where the pet is highest — used while it is held. */
 export const JUMP_APEX_FRAME = 4;
@@ -34,15 +41,16 @@ export const JUMP_TAKEOFF_TICKS = 3;
 /** Ticks of JUMP in the air. */
 export const JUMP_AIR_TICKS = 3;
 
-export function atlasCell(clip: PetClip, tick: number): { row: number; column: number } {
+/** Index into a look's `frames` for `clip` at `tick`. */
+export function clipFrame(clip: PetClip, tick: number): number {
   switch (clip) {
     case "held":
-      return { row: PET_ATLAS_LAYOUT.jump.row, column: JUMP_APEX_FRAME };
+      return PET_CLIPS.jump.start + JUMP_APEX_FRAME;
     case "fall":
-      return { row: PET_ATLAS_LAYOUT.still.row, column: 1 };
+      return PET_CLIPS.still.start + 1;
     default: {
-      const layout = PET_ATLAS_LAYOUT[clip];
-      return { row: layout.row, column: tick % layout.frames };
+      const layout = PET_CLIPS[clip];
+      return layout.start + (tick % layout.frames);
     }
   }
 }
@@ -68,7 +76,12 @@ function pick<T>(items: readonly T[], random: () => number): T {
   return items[index] as T;
 }
 
-/** Something to do after a quiet spell. Never ATTACK or GOT HURT. */
+/** A tap mostly makes the pet hop; now and then it throws a playful punch instead. */
+export function pickTapMove(random: () => number): TapMove {
+  return random() < TAP_ATTACK_SHARE ? "attack" : "jump";
+}
+
+/** Something to do after a quiet spell. Never ATTACK or GOT HURT: a punch only answers a tap. */
 export function pickIdleAction(random: () => number, calm: boolean): IdleAction {
   return pick<IdleAction>(calm ? ["walk", "push"] : ["walk", "jump", "push"], random);
 }

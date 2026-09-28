@@ -52,7 +52,7 @@ describe("Задания combined loop", () => {
       await user.press(screen.getByRole("button", { name: "Желаемое" }));
       await user.press(screen.getByRole("button", { name: /^Мороженое/ }));
       expect(screen.queryByRole("button", { name: "Купить" })).not.toBeOnTheScreen();
-      expect(screen.getByText(/Не хватает/)).toBeOnTheScreen();
+      expect(screen.getByLabelText(/Не хватает/)).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Выполнить задание" }));
       expect(screen.getByText("Карта заданий")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Дом" }));

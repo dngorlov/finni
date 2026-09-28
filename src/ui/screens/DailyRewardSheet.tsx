@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { DailyRewardCell } from "../../core/dailyReward";
 import { AppModal } from "../components/AppModal";
 import { BottomSheet } from "../components/BottomSheet";
+import { CoinAmount, CoinText } from "../components/CoinText";
 import { PixelSprite } from "../components/PixelSprite";
 import { PixelIcon } from "../components/Pictogram";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -40,10 +41,7 @@ function RewardCell({ cell, onClaim }: { cell: DailyRewardCell; onClaim: () => v
   );
   const face =
     cell.status === "current" ? (
-      <View style={styles.prize}>
-        <Text style={styles.prizeText}>{cell.coins}</Text>
-        <PixelSprite name="coin" size={18} />
-      </View>
+      <CoinAmount value={cell.coins} style={styles.prizeText} size={18} />
     ) : (
       <PixelIcon
         name={cell.status === "claimed" ? "check" : "lock"}
@@ -91,7 +89,7 @@ export function DailyRewardGot({ coins, onDismiss }: { coins: number; onDismiss:
           <Text style={styles.title}>{homeStrings.giftGotTitle}</Text>
           <View style={styles.got}>
             <PixelSprite name="coin" size={48} />
-            <Text style={styles.gotText}>{homeStrings.giftGot(coins)}</Text>
+            <CoinText text={homeStrings.giftGot(coins)} style={styles.gotText} inline />
           </View>
           <PrimaryButton label={strings.gotIt} onPress={onDismiss} />
         </View>
@@ -141,11 +139,6 @@ const styles = StyleSheet.create({
     color: colors.subtle,
     fontSize: 13,
     fontWeight: "700",
-  },
-  prize: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 4,
   },
   prizeText: {
     color: colors.text,

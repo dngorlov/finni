@@ -6,6 +6,7 @@ import { PET_FRAME_MS } from "../pet/petLife";
 import { HomeScene, type HomePet } from "../screens/HomeScene";
 import { SessionProvider } from "../session/SessionProvider";
 import { achievementStrings } from "../stringsAchievements";
+import { homeStrings } from "../stringsHome";
 import { petStrings } from "../stringsPet";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 
@@ -103,18 +104,21 @@ describe("Аксессуар opens with Этап", () => {
     expect(screen.getByRole("button", { name: "Очки" })).toBeSelected();
     expect(screen.getByText("Откроется на этапе «Миллионер»")).toBeOnTheScreen();
 
+    const beads = screen.getAllByRole("button", { name: /^(Зелёный|Оранжевый|Серый)$/ });
+    ["Зелёный", "Оранжевый", "Серый"].forEach((name, index) => expect(beads[index]).toHaveAccessibleName(name));
+    expect(screen.queryByText("🐣", { includeHiddenElements: true })).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Вид 3" }));
-    await user.press(screen.getByRole("button", { name: "Окрас 2" }));
+    await user.press(screen.getByRole("button", { name: "Оранжевый" }));
     await user.press(screen.getByRole("button", { name: "Без аксессуара" }));
     await user.press(hat);
 
     expect(ports.game.getProfile(profileId)).toMatchObject({ species: "sp3", color: "c2", accessory: "a1" });
     expect(screen.getByRole("button", { name: "Без аксессуара" })).toBeSelected();
-    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Окрас 2, без аксессуара/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Оранжевый, без аксессуара/ })).toBeOnTheScreen();
 
     await user.press(screen.getAllByRole("button", { name: "Назад" })[0]!);
     await user.press(screen.getByRole("button", { name: "Назад" }));
-    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Окрас 2, без аксессуара/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Оранжевый, без аксессуара/ })).toBeOnTheScreen();
   });
 });
 
@@ -209,10 +213,23 @@ describe("living pet on Дом", () => {
     await advance(PET_FRAME_MS * 3);
     expect(petClip()).toBe("idle");
 
+    expect(screen.getByText("Привет!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
     expect(petClip()).toBe("jump");
-    expect(screen.getByText("Пойдём на карту?")).toBeOnTheScreen();
+    expect(screen.queryByText("Привет!")).not.toBeOnTheScreen();
+    expect(screen.getByText(homeStrings.petLinesAny.at(-1)!)).toBeOnTheScreen();
     await advance(PET_FRAME_MS * 9);
+    expect(petClip()).toBe("idle");
+  });
+
+  it("sometimes answers a tap with a one-two punch, then goes back to IDLE", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await render(homeScene({}, { random: () => 0.1 }));
+    await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
+    expect(petClip()).toBe("attack");
+    await advance(PET_FRAME_MS * 7);
+    expect(petClip()).toBe("attack");
+    await advance(PET_FRAME_MS * 2);
     expect(petClip()).toBe("idle");
   });
 

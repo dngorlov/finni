@@ -73,9 +73,9 @@ describe("Прогресс", () => {
       screen.queryByText("Итоги появятся после первого закрытого игрового дня."),
     ).not.toBeOnTheScreen();
     expect(screen.getByText("Игровой день 1")).toBeOnTheScreen();
-    expect(screen.getByText("план 12 · потрачено 12")).toBeOnTheScreen();
-    expect(screen.getByText("план 5 · потрачено 5")).toBeOnTheScreen();
-    expect(screen.getByText("план 15 · потрачено 15")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 12 · потрачено 12")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 5 · потрачено 5")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 15 · потрачено 15")).toBeOnTheScreen();
     expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
     expect(screen.getByText("Каждый день: Счастье -15")).toBeOnTheScreen();
     expect(screen.getByLabelText("Этап 1 из 3, Новичок. Цель: Скейтборд, 15 из 90")).toBeOnTheScreen();

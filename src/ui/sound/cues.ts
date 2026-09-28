@@ -19,6 +19,20 @@ export function readSoundVolume(raw: string | null | undefined): number {
   return clampVolume(parsed);
 }
 
+/** Loudness range the slider spans: 100 is full level, 1 is about 30 dB quieter. */
+const VOLUME_RANGE_DB = 30;
+
+/**
+ * Slider 0–100 → player gain 0–1 on a decibel curve, so each step sounds like
+ * the same change. A straight line (the first version) did almost nothing
+ * above 50 and jumped near the bottom, because loudness is heard in decibels.
+ */
+export function gainForVolume(percent: number): number {
+  const volume = clampVolume(percent);
+  if (volume <= 0) return 0;
+  return Math.pow(10, (-(100 - volume) / 100) * (VOLUME_RANGE_DB / 20));
+}
+
 export function stepVolume(value: number, direction: -1 | 1): number {
   return clampVolume(value + direction * SOUND_VOLUME_STEP);
 }

@@ -8,10 +8,11 @@ const SPECIES_NAMES: Record<string, string> = {
   sp3: "Вид 3",
 };
 
+/** Stored keys stay c1/c2/c3; the child sees the colour itself. */
 const COLOR_NAMES: Record<string, string> = {
-  c1: "Окрас 1",
-  c2: "Окрас 2",
-  c3: "Окрас 3",
+  c1: "Серый",
+  c2: "Оранжевый",
+  c3: "Зелёный",
 };
 
 const ACCESSORY_NAMES: Record<string, string> = {
@@ -102,7 +103,8 @@ export const strings = {
   taskTopicSavingsIcon: "🐷",
   taskTopicPaymentsIcon: "🪙",
   mapTitle: "Карта заданий",
-  mapHint: "Нажми на точку, чтобы узнать о задании.",
+  mapHint: "Нажми на точку, чтобы узнать о задании. Двумя пальцами карту можно приблизить.",
+  mapZoomReset: "Вся карта",
   missionStart: "Начать",
   missionReplay: "Пройти ещё раз",
   missionDistrict: (district: string) => `Район: ${district}`,
@@ -122,6 +124,11 @@ export const strings = {
   missionPlayGame: (title: string) => `Играть: ${title}`,
   missionCorrections: "Исправить ошибку",
   taskCardNext: "Дальше",
+  taskRestart: "Начать заново",
+  taskRestartTitle: "Начать заново?",
+  taskRestartBody: "Задание начнётся с первого шага, ответы этого раза сотрутся. Монеты дадут, только если новый результат будет лучше.",
+  taskRestartConfirm: "Да, начать заново",
+  taskRestartKeep: "Продолжить",
   taskSortPrompt: "Куда это отнести?",
   taskSortProgress: (n: number, total: number) => `${n} из ${total}`,
   taskScore: (points: string, total: number) => `Верно с первого раза: ${points} из ${total}`,
@@ -183,29 +190,27 @@ export const strings = {
   shopMakeGoalA11y: (name: string) => `Сделать целью ${name}`,
   shopBuyFromSavings: "Купить из копилки",
   shopOnceLabel: "Можно купить один раз",
-  shopConfirmBuy: (name: string, price: number) => `Купить ${name} за ${price}?`,
+  /** «Купить за 5 🪙?» — the coin sits right after the number; the drawer head already names the item. */
+  shopConfirmBuy: (price: number) => `Купить за ${price} 🪙?`,
+  shopConfirmBuyA11y: (price: number) => `Купить за ${price} ${coinsWord(price)}?`,
   shopConfirmReplaceGoal: (name: string, pot: number) => `Цель станет ${name}. В копилке останется ${pot}.`,
   shopBuyActiveGoalWarn: (pot: number) => `Это твоя Цель. После покупки Цель снимется, в копилке останется ${pot}.`,
   shopBlockedAlreadyGoal: "Это уже твоя Цель. Копи дальше в Копилке.",
   shopDoTask: "Выполнить задание",
 
   goalPickerTitle: "Выбери цель",
-  customGoal: "Своя цель",
-  customGoalLead: "Своё название, значок и цена",
-  customGoalName: "Название цели",
-  customGoalNameHint: "Например, мяч",
-  customGoalPrice: "Цена",
-  goalIcon: (emoji: string) => `Значок ${emoji}`,
-  goalIconPick: (emoji: string) => `Выбрать значок ${emoji}`,
   stageThreshold: (credit: number, floor: number) => `До следующего этапа: ${credit} из ${floor}`,
   cheapGoalHeld: "Одна такая цель не открывает следующий этап. Купи ещё, чтобы набрать сумму.",
-  goalDrop: "Без цели",
   goalEmptyPrompt: "Выбери цель",
+  /** Under each Цель in the picker: buying it is the Этап step. */
+  goalStepNote: (stage: string) => `Купишь — питомец перейдёт на этап «${stage}»`,
   currentTaskCaption: "Текущая задача",
   currentTaskSetGoal: "Текущая задача: выбрать цель",
   currentTaskBuyGoal: (name: string) => `Текущая задача: купить «${name}»`,
   currentTaskPlan: "Текущая задача: спланировать день",
   currentTaskShop: "Текущая задача: купить нужное в Магазине",
+  /** «Текущая задача: купить обед и проезд» — today's unpaid Счета by name. */
+  currentTaskBills: (items: string) => `Текущая задача: купить ${items}`,
   currentTaskLesson: (title: string) => `Текущая задача: урок «${title}»`,
   pickNewGoal: "Выбрать новую цель",
 
@@ -304,9 +309,7 @@ export const strings = {
   nameValidation: "Введи от 1 до 20 символов",
   firstRunSaveFailed: "Не получилось начать игру. Попробуй ещё раз.",
   speciesLegend: "Вид",
-  speciesPictogram: "🐣",
   colorLegend: "Окрас",
-  colorPictogram: "🎨",
   accessoryLegend: "Аксессуар",
   accessoryPictogram: "🎀",
   speciesName: (key: string) => SPECIES_NAMES[key] ?? key,

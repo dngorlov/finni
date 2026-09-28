@@ -2,6 +2,7 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 import { FinPetApp } from "../FinPetApp";
 import { DEV_TOOLS, RUNTIME_LIBRARIES } from "../credits";
 import { HomeScene, type HomePet } from "../screens/HomeScene";
+import { speechPool } from "../screens/petSpeech";
 import { homeStrings } from "../stringsHome";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 
@@ -21,9 +22,15 @@ function flatText(node: unknown): string[] {
   return children.flatMap(flatText);
 }
 
-function homeScene(pet: Partial<HomePet> = {}) {
+/** Speech input for the default scene below. */
+function speechOf() {
+  return { care: 50, mood: 50, goalName: "", accumulated: 0, cost: 0, canPickGoal: false };
+}
+
+function homeScene(pet: Partial<HomePet> = {}, random?: () => number) {
   return (
     <HomeScene
+      random={random}
       pet={{
         species: "sp1",
         color: "c1",
@@ -55,11 +62,11 @@ describe("Главная scene", () => {
     expect(screen.getByText("День 1")).toBeOnTheScreen();
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
-    expect(screen.getByText("Каждый день сытость -15 и счастье -15. Покупка в Магазине это компенсирует.")).toBeOnTheScreen();
+    expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Закрыть подсказку", includeHiddenElements: true }));
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
-    expect(screen.getByText("Каждый день сытость -15 и счастье -15. Покупка в Магазине это компенсирует.")).toBeOnTheScreen();
+    expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Магазин" })).toBeEnabled();
@@ -67,7 +74,71 @@ describe("Главная scene", () => {
     expect(screen.getByText(homeStrings.petLinesIdle[0])).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
-    expect(screen.getByText(homeStrings.petLinesIdle[1])).toBeOnTheScreen();
+    expect(screen.queryByText(homeStrings.petLinesIdle[0])).not.toBeOnTheScreen();
+  });
+
+  it("keeps the whole «День N» label readable: it holds its width on one line", async () => {
+    await render(homeScene());
+    const label = screen.getByText("День 1");
+    // Press Start 2P is one em per glyph: 6 glyphs at 12 sp.
+    expect(label).toHaveStyle({ minWidth: 6 * 12 + 2, flexShrink: 0 });
+    expect(label).toHaveProp("numberOfLines", 1);
+  });
+
+  it("changes the phrase when the speech bubble itself is tapped", async () => {
+    const user = userEvent.setup();
+    await render(homeScene({}, () => 0));
+    const pool = speechPool({ ...speechOf(), hour: new Date().getHours() });
+
+    await user.press(screen.getByRole("button", { name: "Привет!" }));
+    expect(screen.queryByText("Привет!")).not.toBeOnTheScreen();
+    expect(screen.getByText(pool[1]!)).toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: pool[1]! }));
+    expect(screen.queryByText(pool[1]!)).not.toBeOnTheScreen();
+    expect(screen.getByText(pool[0]!)).toBeOnTheScreen();
+  });
+
+  it("has plenty of short, kind lines that react to hunger, mood, the Цель, and the time of day", () => {
+    const all = new Set<string>();
+    for (const [care, mood] of [
+      [10, 80],
+      [80, 10],
+      [80, 80],
+      [50, 50],
+    ]) {
+      for (const hour of [8, 14, 19, 23]) {
+        for (const goal of [
+          { goalName: "", accumulated: 0, cost: 0, canPickGoal: true },
+          { goalName: "Скейтборд", accumulated: 0, cost: 90 },
+          { goalName: "Скейтборд", accumulated: 20, cost: 90 },
+          { goalName: "Скейтборд", accumulated: 60, cost: 90 },
+          { goalName: "Скейтборд", accumulated: 90, cost: 90 },
+        ]) {
+          const pool = speechPool({ canPickGoal: false, ...goal, care: care!, mood: mood!, hour });
+          expect(new Set(pool).size).toBe(pool.length);
+          pool.forEach((line) => all.add(line));
+        }
+      }
+    }
+    expect(all.size).toBeGreaterThanOrEqual(25);
+    for (const line of all) {
+      expect(line.length).toBeLessThanOrEqual(40);
+      expect(line).not.toMatch(/плох|стыдно|глуп|зря|опять ты|ленив/i);
+    }
+    // Hunger, sadness, and joy each open with their own line.
+    expect(speechPool({ ...speechOf(), care: 10, hour: 12 })[0]).toBe(homeStrings.petLinesHungry[0]);
+    expect(speechPool({ ...speechOf(), mood: 10, hour: 12 })[0]).toBe(homeStrings.petLinesSad[0]);
+    expect(speechPool({ ...speechOf(), care: 80, mood: 80, hour: 12 })[0]).toBe(homeStrings.petLinesHappy[0]);
+    expect(speechPool({ ...speechOf(), hour: 7 })).toContain(homeStrings.petLineMorning);
+    expect(speechPool({ ...speechOf(), hour: 23 })).toContain(homeStrings.petLineNight);
+    expect(speechPool({ ...speechOf(), goalName: "Самокат", cost: 160, accumulated: 150, hour: 12 })).toContain(
+      homeStrings.petLineGoalHalf,
+    );
+    expect(speechPool({ ...speechOf(), goalName: "Самокат", cost: 160, accumulated: 20, hour: 12 })).toContain(
+      "До цели ещё 140 монет!",
+    );
+    expect(homeStrings.petLineGoalLeft(3)).toBe("До цели ещё 3 монеты!");
   });
 
   it("switches the line when the pet gets hungry or sad", async () => {
@@ -115,14 +186,16 @@ describe("Дом shortcuts", () => {
     await user.press(screen.getByRole("button", { name: "Дом" }));
     await user.press(screen.getByRole("button", { name: "Выбери цель" }));
     expect(screen.getByRole("button", { name: "Копилка" })).toBeSelected();
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет/ })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Закрыть" }));
     await user.press(screen.getByRole("button", { name: "Дом" }));
     await user.press(screen.getByRole("button", { name: "Этап 1 из 3, Новичок. Выбери цель" }));
     const prompts = screen.getAllByRole("button", { name: "Выбери цель" });
     await user.press(prompts[prompts.length - 1]);
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет/ })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
   });
 
   it("opens Цель from the current goal", async () => {
@@ -132,7 +205,8 @@ describe("Дом shortcuts", () => {
 
     await user.press(screen.getByRole("button", { name: "Цель: Скейтборд, 0 из 90" }));
     expect(screen.getByRole("button", { name: "Копилка" })).toBeSelected();
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет/ })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
   });
 });
 

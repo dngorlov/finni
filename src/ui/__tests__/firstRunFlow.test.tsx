@@ -177,22 +177,33 @@ describe("first-run flow (Appendix A 1–4)", () => {
     // Аксессуары open with Этап, so the first run does not offer them.
     expect(screen.queryByText(strings.accessoryLegend)).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: /Аксессуар|Очки|Шапочка/ })).not.toBeOnTheScreen();
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
+    // A new pet starts green, like the app icon; the Окрас beads read зелёный, оранжевый, серый.
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Зелёный.*без аксессуара/ })).toBeOnTheScreen();
+    const beads = screen.getAllByRole("button", { name: /^(Зелёный|Оранжевый|Серый)$/ });
+    expect(beads).toHaveLength(3);
+    ["Зелёный", "Оранжевый", "Серый"].forEach((name, index) => expect(beads[index]).toHaveAccessibleName(name));
+    expectSelectedAppearanceOption("Зелёный");
+    // No emoji or pictogram before the «Вид» and «Окрас» labels.
+    expect(screen.queryByText("🐣", { includeHiddenElements: true })).not.toBeOnTheScreen();
+    for (const legend of [strings.speciesLegend, strings.colorLegend]) {
+      const label = screen.getByText(legend);
+      expect(label.parent?.children[0]).toBe(label);
+    }
     expectSelectedAppearanceOption("Вид 1");
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Вид 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Зелёный.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Вид 2");
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeDisabled();
 
-    await user.press(screen.getByRole("button", { name: "Окрас 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*без аксессуара/ })).toBeOnTheScreen();
-    expectSelectedAppearanceOption("Окрас 2");
-    expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeSelected();
-    expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeDisabled();
+    await user.press(screen.getByRole("button", { name: "Оранжевый" }));
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Оранжевый.*без аксессуара/ })).toBeOnTheScreen();
+    expectSelectedAppearanceOption("Оранжевый");
+    expect(screen.getByRole("button", { name: "Зелёный" })).not.toBeSelected();
+    expect(screen.getByRole("button", { name: "Зелёный" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Дальше" }));
     expectNameChip("");
@@ -237,7 +248,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
 
     expect(screen.getByText(finnyScript.pickTitle)).toBeOnTheScreen();
     expect(screen.getByText(finnyScript.pickLine)).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Закрыть" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Без цели" })).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Сделать целью Конструктор" }));
@@ -303,12 +314,13 @@ describe("first-run flow (Appendix A 1–4)", () => {
     expect(screen.getByText("Новичок")).toBeOnTheScreen();
     expectMainChrome();
     expect(screen.queryByText("Выбери цель")).not.toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Текущая задача: купить нужное в Магазине" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Текущая задача: купить обед и проезд" })).toBeOnTheScreen();
     expect(screen.queryByText("Что такое бюджет?")).not.toBeOnTheScreen();
     expect(screen.getByLabelText(/Питомец Пух.*Вид 2.*спокойный/)).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Деньги" }));
-    expect(screen.getByRole("button", { name: "Журнал" })).toBeSelected();
+    // Журнал is the only section, so there is no switcher to press.
+    expect(screen.queryByRole("button", { name: "Журнал" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Копилка" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "План" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Банк" })).not.toBeOnTheScreen();

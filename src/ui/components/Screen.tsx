@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { colors, spacing } from "../theme";
+import { useBottomInset } from "./safeBottom";
 
 export function Screen({
   children,
@@ -13,6 +14,8 @@ export function Screen({
   header?: ReactNode;
   keyboardShouldPersistTaps?: "always" | "handled" | "never";
 }) {
+  // Inside a modal the navigation bar overlaps the window; lift the buttons above it.
+  const bottomInset = useBottomInset();
   return (
     <View style={styles.root}>
       {header}
@@ -23,7 +26,11 @@ export function Screen({
       >
         <View style={styles.content}>{children}</View>
       </ScrollView>
-      {footer ? <View style={styles.footer}>{footer}</View> : null}
+      {footer ? (
+        <View style={[styles.footer, bottomInset > 0 ? { paddingBottom: spacing.l + bottomInset } : null]}>
+          {footer}
+        </View>
+      ) : null}
     </View>
   );
 }

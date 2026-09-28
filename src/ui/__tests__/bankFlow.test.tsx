@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
@@ -42,12 +42,12 @@ describe("Банк", () => {
       expect(screen.getByLabelText(/Забрать раньше нельзя/)).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "3 дня · +10%" }));
       for (let i = 0; i < 10; i += 1) await user.press(screen.getByRole("button", { name: "Сумма, больше" }));
-      expect(screen.getByText("Положишь 20 — через 3 дня вернётся 22.")).toBeOnTheScreen();
+      expect(screen.getByLabelText("Положишь 20 — через 3 дня вернётся 22.")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Открыть вклад" }));
       expect(screen.getByText("Открыть вклад?")).toBeOnTheScreen();
       expect(screen.getByLabelText(/вернутся с процентами в Игровой день 4/)).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Открыть вклад" }));
-      expect(screen.getByText("Баланс -20")).toBeOnTheScreen();
+      expect(screen.getByLabelText("Баланс -20")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Понятно" }));
       expect(screen.getByLabelText("Баланс 80")).toBeOnTheScreen();
       expect(screen.getByLabelText("20 монет · +10% → 22")).toBeOnTheScreen();
@@ -57,10 +57,12 @@ describe("Банк", () => {
       for (let n = 0; n < 3; n += 1) {
         await user.press(screen.getByRole("button", { name: "Дом" }));
         await user.press(screen.getByRole("button", { name: "Магазин" }));
-        ports.game.closeDay(profileId, content.catalog, content.bills);
+        await act(async () => {
+          ports.game.closeDay(profileId, content.catalog, content.bills);
+        });
         await user.press(screen.getByRole("button", { name: "Назад" }));
       }
-      expect(screen.getByText("Вклад вернулся: +22 (из них 2 — проценты).")).toBeOnTheScreen();
+      expect(screen.getByLabelText(/Вклад вернулся: \+22 \(из них 2 — проценты\)\./)).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: /Понятно|Дальше/ }));
       await openMoney(user, "Банк");
       expect(screen.getByText("Вернулся")).toBeOnTheScreen();

@@ -133,6 +133,14 @@ export function StageCard({
   const { cardHeight } = cardSize(width);
   const motion = useAnimationsOn();
   const [shift] = useState(() => new Animated.Value(tuckedOffset(Dimensions.get("window").width)));
+  // A tuck slides the open card back down the way it came; it stays drawn, deaf to taps and the reader, until it lands.
+  const [closing, setClosing] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    setClosing(!open && motion);
+  }
+  const shown = open || closing;
   const goalRef = useRef<View>(null);
   const reportGoal = () => {
     if (!spotlight || !open) return;
@@ -157,6 +165,17 @@ export function StageCard({
       useNativeDriver: true,
     }).start();
   }, [cardHeight, motion, open, shift]);
+
+  useEffect(() => {
+    if (!closing) return;
+    const tuck = Animated.timing(shift, {
+      toValue: Math.max(cardHeight - minTarget, 0),
+      duration: 200,
+      useNativeDriver: true,
+    });
+    tuck.start(() => setClosing(false));
+    return () => tuck.stop();
+  }, [cardHeight, closing, shift]);
 
   const faceProps = {
     face,
@@ -204,8 +223,13 @@ export function StageCard({
           style={styles.scrim}
         />
       ) : null}
-      {open ? (
+      {shown ? (
         <Animated.View
+          aria-hidden={!open}
+          accessibilityElementsHidden={!open}
+          importantForAccessibility={open ? "auto" : "no-hide-descendants"}
+          pointerEvents={open ? "auto" : "none"}
+          testID={open ? undefined : "stage-card-tucking"}
           style={[
             styles.openCard,
             faceShell(face),

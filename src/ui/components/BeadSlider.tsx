@@ -9,7 +9,6 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { colors, minTarget, spacing, type } from "../theme";
-import { Pictogram } from "./Pictogram";
 
 const DRAG_THRESHOLD = 8;
 const BEAD_SIZE = 20;
@@ -44,14 +43,12 @@ function nearestStopIndex(x: number, centers: number[]): number {
 
 export function BeadSlider<K extends string>({
   legend,
-  pictogram,
   keys,
   value,
   onChange,
   labelOf,
 }: {
   legend: string;
-  pictogram: string;
   keys: readonly K[];
   value: K;
   onChange: (key: K) => void;
@@ -157,10 +154,7 @@ export function BeadSlider<K extends string>({
 
   return (
     <View style={styles.block}>
-      <View style={styles.labelRow}>
-        <Pictogram glyph={pictogram} />
-        <Text style={styles.legend}>{legend}</Text>
-      </View>
+      <Text style={styles.legend}>{legend}</Text>
       <View
         ref={trackRef}
         style={styles.track}
@@ -228,11 +222,6 @@ export function BeadSlider<K extends string>({
 
 const styles = StyleSheet.create({
   block: {
-    gap: spacing.s,
-  },
-  labelRow: {
-    alignItems: "center",
-    flexDirection: "row",
     gap: spacing.s,
   },
   legend: {

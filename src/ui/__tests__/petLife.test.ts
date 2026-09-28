@@ -1,7 +1,8 @@
+import { PET_CLIPS } from "../pet/petSprites.generated";
 import {
-  atlasCell,
   clampOffset,
   clipFinished,
+  clipFrame,
   dragBounds,
   idleActionDelay,
   IDLE_ACTION_MAX_MS,
@@ -10,7 +11,9 @@ import {
   isDragMove,
   landingPlan,
   pickIdleAction,
+  pickTapMove,
   planWalk,
+  TAP_ATTACK_SHARE,
 } from "../pet/petLife";
 const scene = { sceneWidth: 400, sceneHeight: 600, homeLeft: 100, homeBottom: 60, size: 200 };
 
@@ -40,6 +43,26 @@ describe("living pet rules", () => {
     expect(high.durationMs).toBeLessThanOrEqual(700);
     expect(low.durationMs).toBeGreaterThanOrEqual(120);
     expect(landingPlan({ x: 999, y: 0 }, bounds)).toEqual({ x: 100, fromY: 0, durationMs: 0 });
+  });
+
+  it("drops straight down where it was let go, never outside the room and never below the floor", () => {
+    const bounds = dragBounds(scene);
+    // Let go up and to the left: same x, falls from that height to y = 0.
+    expect(landingPlan({ x: -70, y: -200 }, bounds)).toMatchObject({ x: -70, fromY: -200 });
+    // Past a wall or the ceiling: pinned inside first, then falls.
+    expect(landingPlan({ x: -400, y: -900 }, bounds)).toMatchObject({ x: bounds.minX, fromY: bounds.minY });
+    expect(landingPlan({ x: 400, y: -120 }, bounds)).toMatchObject({ x: bounds.maxX, fromY: -120 });
+    // Pushed under the floor line: stands on it, no fall.
+    expect(landingPlan({ x: 30, y: 25 }, bounds)).toEqual({ x: 30, fromY: 0, durationMs: 0 });
+  });
+
+  it("answers a tap with a hop, and now and then a playful punch", () => {
+    expect(pickTapMove(() => 0)).toBe("attack");
+    expect(pickTapMove(() => TAP_ATTACK_SHARE - 0.01)).toBe("attack");
+    expect(pickTapMove(() => TAP_ATTACK_SHARE)).toBe("jump");
+    expect(pickTapMove(() => 0.99)).toBe("jump");
+    expect(TAP_ATTACK_SHARE).toBeGreaterThan(0);
+    expect(TAP_ATTACK_SHARE).toBeLessThan(0.5);
   });
 
   it("tells a tap from a drag by how far the finger moved", () => {
@@ -77,12 +100,15 @@ describe("living pet rules", () => {
     expect(planWalk(0, { minX: 0, maxX: 0 }, 200, () => 0.1)).toBeNull();
   });
 
-  it("maps clips to atlas cells: JUMP apex while held, FALLS after a drop", () => {
-    expect(atlasCell("idle", 5)).toEqual({ row: 0, column: 1 });
-    expect(atlasCell("held", 0)).toEqual({ row: 2, column: 4 });
-    expect(atlasCell("fall", 3)).toEqual({ row: 4, column: 1 });
+  it("maps clips to frames: JUMP apex while held, FALLS after a drop", () => {
+    expect(clipFrame("idle", 5)).toBe(PET_CLIPS.idle.start + 1);
+    expect(clipFrame("held", 0)).toBe(PET_CLIPS.jump.start + 4);
+    expect(clipFrame("fall", 3)).toBe(PET_CLIPS.still.start + 1);
+    expect(clipFrame("attack", 5)).toBe(PET_CLIPS.attack.start + 1);
     expect(clipFinished("jump", 7)).toBe(false);
     expect(clipFinished("jump", 8)).toBe(true);
+    expect(clipFinished("attack", 7)).toBe(false);
+    expect(clipFinished("attack", 8)).toBe(true);
     expect(clipFinished("idle", 100)).toBe(false);
     expect(clipFinished("walk", 100)).toBe(false);
   });

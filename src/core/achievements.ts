@@ -24,18 +24,22 @@ export type AchievementFacts = {
   daysBillsPaid: number;
 };
 
+/**
+ * One Достижение per distinct step. Dropped as near-duplicates (2026-09-28):
+ * «Обед готов» (the first buy is Обед, so it always came with «Первая покупка»),
+ * «День позади» (the first finished Урок is what closes day 1, so it always came
+ * with «Первый урок»), and «Своя цель» (Своя цель is gone, ADR-0015). Rows
+ * already stored under those ids stay in the table and are no longer listed.
+ */
 export const ACHIEVEMENT_RULES = [
   { id: "first_buy", met: (facts: AchievementFacts) => facts.shopBuys >= 1 },
-  { id: "lunch", met: (facts: AchievementFacts) => facts.lunchBuys >= 1 },
   { id: "treat", met: (facts: AchievementFacts) => facts.optionalBuys >= 1 },
   { id: "first_save", met: (facts: AchievementFacts) => facts.savingsIns >= 1 },
   { id: "save_50", met: (facts: AchievementFacts) => facts.savedTotal >= 50 },
   { id: "plan", met: (facts: AchievementFacts) => facts.plansConfirmed >= 1 },
-  { id: "day_done", met: (facts: AchievementFacts) => facts.daysClosed >= 1 },
   { id: "week", met: (facts: AchievementFacts) => facts.daysClosed >= 7 },
   { id: "lesson", met: (facts: AchievementFacts) => facts.lessonsCompleted >= 1 },
   { id: "goal", met: (facts: AchievementFacts) => facts.goalsBought >= 1 },
-  { id: "own_goal", met: (facts: AchievementFacts) => facts.customGoalsBought >= 1 },
   { id: "bank", met: (facts: AchievementFacts) => facts.bankOpens >= 1 },
   { id: "word", met: (facts: AchievementFacts) => facts.daysWithinPlan >= 1 },
   { id: "bills", met: (facts: AchievementFacts) => facts.daysBillsPaid >= 1 },

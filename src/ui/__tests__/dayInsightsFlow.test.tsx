@@ -93,7 +93,7 @@ describe("Итоги and Итоги дня share one report", () => {
     expect(screen.getByText("Игровой день 1")).toBeOnTheScreen();
     for (const name of daySections) expect(screen.getAllByRole("heading", { name })).toHaveLength(1);
     expect(spokenInsights()).toEqual(onDaySummary);
-    expect(screen.getByText("план 13 · потрачено 13")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 13 · потрачено 13")).toBeOnTheScreen();
     expect(screen.getByLabelText("Сытость -15")).toBeOnTheScreen();
     expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
     expect(screen.getByRole("heading", { name: "Всего" })).toBeOnTheScreen();

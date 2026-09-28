@@ -1,5 +1,14 @@
 import { METERS } from "../core/config";
 
+/**
+ * «Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!»
+ * Reads the configured drops; two different numbers name each meter.
+ */
+export function dailyRuleText(care: number, mood: number): string {
+  const drop = care === mood ? `Сытость и Счастье уменьшаются на ${care}` : `Сытость уменьшается на ${care}, а Счастье — на ${mood}`;
+  return `Каждый день ${drop}. Совершая покупки, можно их восполнить!`;
+}
+
 /** Магазин copy added with the shop-row redesign. Older shop strings stay in strings.ts. */
 export const shopStrings = {
   tagPostponed: "Отложено",
@@ -13,7 +22,7 @@ export const shopStrings = {
   /** Invisible catch over Дом. A tap anywhere but the tip closes it. */
   dailyDropClose: "Закрыть подсказку",
   /** Standing rule under the Магазин tabs and in the Дом day tip. The drop always lands; a purchase offsets it. */
-  dailyRule: `Каждый день сытость -${METERS.dailyCareDrop} и счастье -${METERS.dailyMoodDrop}. Покупка в Магазине это компенсирует.`,
+  dailyRule: dailyRuleText(METERS.dailyCareDrop, METERS.dailyMoodDrop),
   dailyCare: (n: number) => `сытость -${n}`,
   dailyMood: (n: number) => `счастье -${n}`,
 
@@ -31,6 +40,10 @@ export const shopStrings = {
   postponeKeepPlan: "Деньги останутся в плане. Потратишь их позже или на другое.",
   postponeKeep: "Деньги останутся у тебя.",
   postponeNoEffect: "Питомец ничего не потеряет.",
+  /** The «i» beside «Отложить» on a row. */
+  postponeInfoA11y: "Что значит «Отложить»",
+  postponeInfoTitle: "Отложить",
+  postponeInfo: "«Отложить» — значит пока не покупать: монеты останутся у тебя, а вещь можно вернуть кнопкой «Вернуть».",
 
   /** Receipt after a Магазин purchase. */
   resultBought: "Куплено",

@@ -57,7 +57,7 @@ export function resolveCurrentTask(
     .map((task) => task.id);
 
   const activeGoal = game.savingsState(profileId).activeGoal;
-  return currentTask({
+  const task = currentTask({
     savingsOpen,
     planOpen,
     hasGoal: Boolean(activeGoal) || goalsLeft(game, content, profileId, profile.stage) === 0,
@@ -69,6 +69,15 @@ export function resolveCurrentTask(
     lessonPool,
     pickLesson: pinLesson,
   });
+  if (task?.kind === "buy-bills") return { ...task, itemIds: due.filter((id) => !purchased.has(id)) };
+  return task;
+}
+
+/** «обед», «обед и проезд», «обед, проезд и лекарство» from catalog names. */
+export function billsPhrase(itemIds: readonly string[], content: GameContent): string {
+  const names = itemIds.map((id) => (content.catalog.find((item) => item.id === id)?.name ?? id).toLowerCase());
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} и ${names[names.length - 1]}`;
 }
 
 export function currentTaskLabel(task: CurrentTask, content: GameContent): string {
@@ -78,7 +87,10 @@ export function currentTaskLabel(task: CurrentTask, content: GameContent): strin
     return strings.currentTaskBuyGoal(name);
   }
   if (task.kind === "confirm-plan") return strings.currentTaskPlan;
-  if (task.kind === "buy-bills") return strings.currentTaskShop;
+  if (task.kind === "buy-bills") {
+    const phrase = billsPhrase(task.itemIds ?? [], content);
+    return phrase ? strings.currentTaskBills(phrase) : strings.currentTaskShop;
+  }
   const title = content.tasks.find((row) => row.id === task.taskId)?.title ?? task.taskId;
   return strings.currentTaskLesson(title);
 }

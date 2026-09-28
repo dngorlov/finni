@@ -52,7 +52,8 @@ function yip(buf, t0, f0, f1, dur, amp) {
 function writeWav(name, samples) {
   let peak = 0;
   for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
-  const gain = peak > 0 ? 0.82 / peak : 0;
+  // Headroom: at full volume a cue should sit well under phone notifications (−7 dB peak).
+  const gain = peak > 0 ? 0.45 / peak : 0;
   const data = Buffer.alloc(samples.length * 2);
   const fade = Math.floor(0.008 * SR);
   for (let i = 0; i < samples.length; i += 1) {
@@ -79,18 +80,17 @@ function writeWav(name, samples) {
   writeFileSync(join(outDir, name), Buffer.concat([header, data]));
 }
 
+/** Soft two-note «ding»: an octave lower than the first draft, no squeak or 2.6 kHz sparkle (2026-09-28: it hurt ears). */
 function correct() {
-  const buf = buffer(0.55);
-  yip(buf, 0, 620, 1100, 0.09, 0.22);
-  mallet(buf, 0.02, 1046.5, 0.22, 0.7, 1);
-  mallet(buf, 0.1, 1318.5, 0.36, 0.85, 1);
-  mallet(buf, 0.1, 2637, 0.12, 0.18, 1);
+  const buf = buffer(0.5);
+  mallet(buf, 0, 523.25, 0.22, 0.6, 0.35);
+  mallet(buf, 0.09, 659.25, 0.36, 0.75, 0.35);
   return buf;
 }
 
 function wrong() {
   const buf = buffer(0.48);
-  yip(buf, 0, 420, 210, 0.22, 0.28);
+  yip(buf, 0, 420, 210, 0.22, 0.14);
   mallet(buf, 0, 392, 0.2, 0.55, 0.25);
   mallet(buf, 0.12, 311.13, 0.3, 0.62, 0.2);
   return buf;
@@ -103,15 +103,13 @@ function almost() {
   return buf;
 }
 
+/** Gentle arpeggio G–C–E–G, low brightness, no yip. */
 function complete() {
-  const buf = buffer(1.05);
-  mallet(buf, 0, 523.25, 0.28, 0.55, 0.8);
-  mallet(buf, 0.12, 659.25, 0.28, 0.6, 0.85);
-  mallet(buf, 0.24, 783.99, 0.3, 0.65, 0.9);
-  mallet(buf, 0.36, 1046.5, 0.55, 0.8, 1);
-  mallet(buf, 0.36, 1318.5, 0.4, 0.28, 1);
-  mallet(buf, 0.36, 1567.98, 0.35, 0.16, 1);
-  yip(buf, 0.52, 700, 1500, 0.16, 0.3);
+  const buf = buffer(1.0);
+  mallet(buf, 0, 392.0, 0.28, 0.5, 0.35);
+  mallet(buf, 0.12, 523.25, 0.28, 0.55, 0.35);
+  mallet(buf, 0.24, 659.25, 0.3, 0.6, 0.35);
+  mallet(buf, 0.36, 783.99, 0.55, 0.7, 0.4);
   return buf;
 }
 

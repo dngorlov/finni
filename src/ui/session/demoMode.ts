@@ -1,6 +1,7 @@
 import { META_KEYS } from "../../data/metaKeys";
 import type { GameContent } from "../../data/content";
 import type { CreateProfileInput } from "../../data/repositories/gameRepository";
+import { DEFAULT_COLOR } from "../pet/keys";
 import { strings } from "../strings";
 import type { SessionGame, SessionMeta } from "./types";
 
@@ -9,7 +10,7 @@ function demoInput(content: GameContent): CreateProfileInput {
     name: strings.demoName,
     petName: strings.demoName,
     species: "sp1",
-    color: "c1",
+    color: DEFAULT_COLOR,
     accessory: "a1",
     isDemo: true,
     contentVersion: content.contentVersion,

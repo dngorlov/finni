@@ -47,8 +47,8 @@ describe("Итоги дня + Демо-режим combined loop", () => {
       expect(screen.queryByRole("button", { name: "Закончить день" })).not.toBeOnTheScreen();
 
       await user.press(screen.getByRole("button", { name: "Итоги" }));
-      expect(screen.getByText("план 21 · потрачено 0")).toBeOnTheScreen();
-      expect(screen.getAllByText("план 1 · потрачено 0")).toHaveLength(2);
+      expect(screen.getByLabelText("план 21 · потрачено 0")).toBeOnTheScreen();
+      expect(screen.getAllByLabelText("план 1 · потрачено 0")).toHaveLength(2);
       expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
       expect(screen.getByText("Каждый день: Счастье -15")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Назад" }));

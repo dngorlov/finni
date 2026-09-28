@@ -12,7 +12,7 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { TextButton } from "../components/TextButton";
 import type { RootStackParamList } from "../navigation/types";
-import { COLOR_KEYS, SPECIES_KEYS, type ColorKey, type SpeciesKey } from "../pet/keys";
+import { COLOR_KEYS, DEFAULT_COLOR, SPECIES_KEYS, type ColorKey, type SpeciesKey } from "../pet/keys";
 import { PetView } from "../pet/PetView";
 import { useSession } from "../session/SessionProvider";
 import { finnyScript } from "../finnyScript";
@@ -39,7 +39,7 @@ export default function FirstRunScreen({ navigation }: Props) {
   const [draft, setDraft] = useState<FirstRunDraft>(() => ({
     profileId: createLocalId("profile"),
     species: "sp1",
-    color: "c1",
+    color: DEFAULT_COLOR,
     petName: "",
   }));
   const [petNameTouched, setPetNameTouched] = useState(false);
@@ -195,7 +195,6 @@ function PetPhase({
       <View style={styles.sliders}>
         <BeadSlider
           legend={strings.speciesLegend}
-          pictogram={strings.speciesPictogram}
           keys={SPECIES_KEYS}
           labelOf={strings.speciesName}
           value={draft.species}
@@ -203,7 +202,6 @@ function PetPhase({
         />
         <BeadSlider
           legend={strings.colorLegend}
-          pictogram={strings.colorPictogram}
           keys={COLOR_KEYS}
           labelOf={strings.colorName}
           value={draft.color}

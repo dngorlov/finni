@@ -5,11 +5,11 @@ import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
 import { useLatest } from "../components/useLatest";
 import { LivingPet } from "../pet/LivingPet";
-import { poseFromMeters } from "../pet/keys";
 import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
 import { shopStrings } from "../stringsShop";
 import { colors, font, minTarget, radius, spacing } from "../theme";
+import { nextSpeechLine, speechMood, speechPool } from "./petSpeech";
 
 /** Before the first layout pass (and in jest, which never lays out). */
 const FALLBACK_PET = 240;
@@ -31,18 +31,12 @@ export type HomePet = {
   mood: number;
 };
 
-function petLines(pet: HomePet): readonly string[] {
-  if (pet.care < 30) return homeStrings.petLinesHungry;
-  const pose = poseFromMeters(pet.care, pet.mood);
-  if (pose === "sad") return homeStrings.petLinesSad;
-  if (pose === "happy") return homeStrings.petLinesHappy;
-  return homeStrings.petLinesIdle;
-}
+/** Press Start 2P is monospaced: every glyph is one em wide. */
+const DAY_FONT = 12;
 
-/** Which pool the pet is speaking from. Hungry wins over the pose. */
-function speechMood(pet: HomePet) {
-  if (pet.care < 30) return "hungry" as const;
-  return poseFromMeters(pet.care, pet.mood);
+/** Room for the whole «День N» label so it is never cut, whatever the goal chip needs. */
+function dayLabelWidth(label: string): number {
+  return Math.ceil(label.length * DAY_FONT + 2);
 }
 
 /**
@@ -107,26 +101,31 @@ export function HomeScene({
   random?: () => number;
 }) {
   const [box, setBox] = useState({ width: 0, height: 0 });
-  const [line, setLine] = useState<string | null>(null);
-  const petRef = useLatest(pet);
-  const turn = useRef(0);
+  const [said, setLine] = useState<string | null>(null);
+  // Speech pauses with the pet: nothing hangs in the air while Дом is hidden or the tour speaks.
+  const line = active && !quiet ? said : null;
+  const speech = useLatest({
+    input: { care: pet.care, mood: pet.mood, goalName, accumulated, cost, canPickGoal },
+    random: random ?? Math.random,
+  });
+  const lineRef = useRef<string | null>(null);
   const showRef = useRef<() => void>(() => {});
-  const mood = speechMood(pet);
+  const mood = speechMood(pet.care, pet.mood);
 
   // Speech pauses with the pet while Дом is not on screen.
   useEffect(() => {
-    if (!active || quiet) {
-      setLine(null);
-      return;
-    }
+    if (!active || quiet) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    turn.current = 0;
+    let first = true;
 
     const show = () => {
-      const lines = petLines(petRef.current);
-      setLine(lines[turn.current % lines.length] ?? null);
-      turn.current += 1;
+      const pool = speechPool({ ...speech.current.input, hour: new Date().getHours() });
+      // Each visit (and each change of mood) opens with that mood's first line.
+      const next = first ? (pool[0] ?? null) : nextSpeechLine(pool, lineRef.current, speech.current.random);
+      first = false;
+      lineRef.current = next;
+      setLine(next);
       clearTimeout(timer);
       timer = setTimeout(() => {
         if (cancelled) return;
@@ -144,7 +143,7 @@ export function HomeScene({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [active, quiet, mood, petRef]);
+  }, [active, quiet, mood, speech]);
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -229,10 +228,18 @@ export function HomeScene({
         random={random}
         bubble={
           line ? (
-            <View style={styles.bubble} accessibilityLiveRegion="polite">
+            <Pressable
+              role="button"
+              aria-label={line}
+              accessibilityHint={homeStrings.petBubbleHint}
+              accessibilityLiveRegion="polite"
+              hitSlop={8}
+              onPress={say}
+              style={styles.bubble}
+            >
               <Text style={styles.bubbleText}>{line}</Text>
               <View aria-hidden style={styles.bubbleTail} />
-            </View>
+            </Pressable>
           ) : null
         }
       />
@@ -240,7 +247,9 @@ export function HomeScene({
       <View pointerEvents="box-none" style={styles.hud}>
         <View style={styles.hudRow}>
           <View style={styles.dayPill}>
-            <Text style={styles.dayText}>{strings.journalDay(day)}</Text>
+            <Text numberOfLines={1} style={[styles.dayText, { minWidth: dayLabelWidth(strings.journalDay(day)) }]}>
+              {strings.journalDay(day)}
+            </Text>
             <Pressable
               role="button"
               aria-label={shopStrings.dailyDropHint}
@@ -394,8 +403,12 @@ const styles = StyleSheet.create({
   },
   bubbleText: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: "700",
+    fontFamily: font.pixel,
+    fontSize: 12,
+    fontWeight: "400",
+    includeFontPadding: false,
+    // Press Start 2P draws a whole em above the baseline; the extra room keeps Й and Ё clear of the line above.
+    lineHeight: 20,
     textAlign: "center",
   },
   bubbleTail: {
@@ -441,8 +454,9 @@ const styles = StyleSheet.create({
   },
   dayText: {
     color: colors.card,
+    flexShrink: 0,
     fontFamily: font.pixel,
-    fontSize: 12,
+    fontSize: DAY_FONT,
     fontWeight: "400",
     includeFontPadding: false,
     lineHeight: 20,

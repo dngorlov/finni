@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { factFromSpending } from "../../core/budgetGames";
@@ -20,11 +20,14 @@ import {
 } from "../../core/tasks";
 import { META_KEYS } from "../../data/metaKeys";
 import type { ProfileView } from "../../data/repositories/gameRepository";
+import { AppModal } from "../components/AppModal";
 import { BackButton } from "../components/BackButton";
 import { CoinText } from "../components/CoinText";
 import { FeedbackCard, type FeedbackModel } from "../components/FeedbackCard";
+import { PixelIcon } from "../components/Pictogram";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { TextButton } from "../components/TextButton";
 import type { RootStackParamList } from "../navigation/types";
 import { PetView } from "../pet/PetView";
 import type { PetPose } from "../pet/keys";
@@ -32,7 +35,7 @@ import { useSession } from "../session/SessionProvider";
 import { cueForVerdict } from "../sound/cues";
 import { playStoredCue } from "../sound/playCue";
 import { strings } from "../strings";
-import { colors, radius, spacing, type } from "../theme";
+import { colors, minTarget, radius, spacing, type } from "../theme";
 import { AllocateBoard, ReplanBoard } from "../games/BudgetBoard";
 import { CompareBoard } from "../games/CompareBoard";
 import { OptionTiles, SceneTiles, VerdictBanner } from "../games/GameParts";
@@ -51,6 +54,11 @@ function poseForVerdict(verdict: Verdict): PetPose {
 
 function coinDelta(effects: readonly TaskEffect[]): number {
   return effects.reduce((sum, effect) => sum + (effect.coins && effect.coins > 0 ? effect.coins : 0), 0);
+}
+
+/** A scene already paid its coins this visit: after «Начать заново» it teaches, but pays nothing again. */
+export function withoutSceneCoins(step: TaskStepResult): TaskStepResult {
+  return { ...step, effects: step.effects.map(({ coins: _coins, ...effect }) => effect) };
 }
 
 export default function TaskRunScreen({ navigation, route }: Props) {
@@ -76,6 +84,25 @@ export default function TaskRunScreen({ navigation, route }: Props) {
   const [pose, setPose] = useState<ShopPose | null>(null);
   /** The last shop buy was handed back. */
   const [returned, setReturned] = useState(false);
+  /** «Начать заново» count this visit; part of each board key so boards start fresh. */
+  const [attempt, setAttempt] = useState(0);
+  const [confirmRestart, setConfirmRestart] = useState(false);
+  /** Scenes whose coins went to Баланс this visit. A restart does not pay them twice. */
+  const [paidScenes, setPaidScenes] = useState<Record<string, true>>({});
+
+  /** Back to the first node with a clean score and clean game state (plan, spent, purse). */
+  const resetProgress = (visit: ReturnType<typeof dealTask>) => {
+    setNodeId(startTask(visit).nodeId);
+    setResult(null);
+    setSceneFeedback(null);
+    setFirstVerdicts({});
+    setPlan(null);
+    setSpent({});
+    setCleared(0);
+    setKept(0);
+    setPose(null);
+    setReturned(false);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -90,17 +117,9 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       const shelved = alreadyPlayed ? replayVariety(dealt.nodes, seed) : dealt.nodes;
       const visit = { ...dealt, nodes: shuffleAnswers(shelved, seed) };
       setRun(visit);
-      const start = startTask(visit);
-      setNodeId(start.nodeId);
-      setResult(null);
-      setSceneFeedback(null);
-      setFirstVerdicts({});
-      setPlan(null);
-      setSpent({});
-      setCleared(0);
-      setKept(0);
-      setPose(null);
-      setReturned(false);
+      resetProgress(visit);
+      setPaidScenes({});
+      setConfirmRestart(false);
     }, [game, meta, task]),
   );
 
@@ -161,11 +180,19 @@ export default function TaskRunScreen({ navigation, route }: Props) {
     setPose(null);
   };
 
+  const restart = () => {
+    setConfirmRestart(false);
+    resetProgress(run);
+    setAttempt((current) => current + 1);
+  };
+
   const choose = (optionIndex: number) => {
     const profileId = meta.get(META_KEYS.activeProfileId);
     if (!profileId || !node) return;
     const day = game.dayState(profileId);
-    const step = chooseOption(run, node.id, optionIndex);
+    const dealt = chooseOption(run, node.id, optionIndex);
+    const step = paidScenes[node.id] ? withoutSceneCoins(dealt) : dealt;
+    if (coinDelta(step.effects) > 0) setPaidScenes((current) => ({ ...current, [node.id]: true }));
     const purse = node.options?.[optionIndex]?.kept ?? 0;
     if (step.next !== "retry") {
       if (step.verdict === "good") setCleared((current) => current + 1);
@@ -236,11 +263,22 @@ export default function TaskRunScreen({ navigation, route }: Props) {
     <Screen footer={footer}>
       <View style={styles.top}>
         <BackButton />
-        {node?.title === task.title ? null : (
+        {node?.title === task.title ? (
+          <View style={styles.topSpacer} />
+        ) : (
           <Text style={styles.taskTitle} numberOfLines={1}>
             {task.title}
           </Text>
         )}
+        <Pressable
+          role="button"
+          aria-label={strings.taskRestart}
+          onPress={() => setConfirmRestart(true)}
+          style={({ pressed }) => [styles.restart, pressed ? styles.restartPressed : null]}
+        >
+          <PixelIcon name="reload" size={20} color={colors.accentText} />
+          <Text style={styles.restartLabel}>{strings.taskRestart}</Text>
+        </Pressable>
       </View>
       <View style={isCard ? styles.cardHero : styles.petRow}>
         <PetView
@@ -284,7 +322,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       {kind === "choice" && node?.scene && !(pickMode && !explaining) ? <SceneTiles tiles={node.scene} /> : null}
       {pickMode && node?.scene && node.options && !explaining ? (
         <PickBoard
-          key={node.id}
+          key={`${node.id}#${attempt}`}
           tiles={node.scene}
           options={node.options}
           onChoose={choose}
@@ -297,7 +335,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       ) : null}
       {kind === "sort" && node ? (
         <SortBoard
-          key={node.id}
+          key={`${node.id}#${attempt}`}
           bins={node.bins ?? []}
           items={node.items ?? []}
           withPet={withPet}
@@ -311,7 +349,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       ) : null}
       {kind === "allocate" && node ? (
         <AllocateBoard
-          key={node.id}
+          key={`${node.id}#${attempt}`}
           total={node.total ?? 100}
           onDone={(split) => {
             setPlan(split);
@@ -323,7 +361,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       ) : null}
       {kind === "compare" && node ? (
         <CompareBoard
-          key={node.id}
+          key={`${node.id}#${attempt}`}
           plan={plan ?? { mandatory: 0, wants: 0, savings: node.total ?? 100 }}
           fact={factFromSpending(node.total ?? 100, spent)}
           onDone={goNext}
@@ -331,7 +369,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       ) : null}
       {kind === "replan" && node && node.plan && node.event ? (
         <ReplanBoard
-          key={node.id}
+          key={`${node.id}#${attempt}`}
           total={node.total ?? 100}
           plan={node.plan}
           event={node.event}
@@ -343,7 +381,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       ) : null}
       {kind === "steps" && node && node.goal ? (
         <StepsGame
-          key={node.id}
+          key={`${node.id}#${attempt}`}
           goal={node.goal}
           saved={node.saved ?? 0}
           amounts={node.amounts ?? [5]}
@@ -356,7 +394,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
       ) : null}
       {kind === "dream" && node ? (
         <DreamGame
-          key={node.id}
+          key={`${node.id}#${attempt}`}
           goals={node.goals ?? []}
           saved={node.saved ?? 0}
           amounts={node.amounts ?? [5, 10]}
@@ -380,11 +418,66 @@ export default function TaskRunScreen({ navigation, route }: Props) {
         </View>
       ) : null}
       {sceneFeedback ? <FeedbackCard model={sceneFeedback} onDismiss={() => setSceneFeedback(null)} /> : null}
+      {confirmRestart ? <RestartConfirm onRestart={restart} onKeep={() => setConfirmRestart(false)} /> : null}
     </Screen>
   );
 }
 
+/** «Начать заново?» — asked first so a stray tap never wipes a half-played task. */
+function RestartConfirm({ onRestart, onKeep }: { onRestart: () => void; onKeep: () => void }) {
+  return (
+    <AppModal animation="fade" transparent visible onRequestClose={onKeep}>
+      <View style={styles.backdrop}>
+        <View style={styles.sheet}>
+          <Text style={styles.section}>{strings.taskRestartTitle}</Text>
+          <Text style={styles.body}>{strings.taskRestartBody}</Text>
+          <PrimaryButton label={strings.taskRestartConfirm} onPress={onRestart} />
+          <TextButton label={strings.taskRestartKeep} onPress={onKeep} />
+        </View>
+      </View>
+    </AppModal>
+  );
+}
+
 const styles = StyleSheet.create({
+  backdrop: {
+    alignItems: "center",
+    backgroundColor: "rgba(62, 42, 28, 0.45)",
+    flex: 1,
+    justifyContent: "center",
+    padding: spacing.l,
+  },
+  sheet: {
+    alignSelf: "stretch",
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    gap: spacing.s,
+    maxWidth: 360,
+    padding: spacing.l,
+  },
+  topSpacer: {
+    flex: 1,
+  },
+  restart: {
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderColor: colors.accentText,
+    borderRadius: radius.card,
+    borderWidth: 2,
+    flexDirection: "row",
+    flexShrink: 0,
+    gap: 6,
+    minHeight: minTarget,
+    paddingHorizontal: spacing.s,
+  },
+  restartPressed: {
+    opacity: 0.7,
+  },
+  restartLabel: {
+    color: colors.accentText,
+    fontSize: type.body,
+    fontWeight: "700",
+  },
   section: {
     color: colors.text,
     fontSize: type.section,
