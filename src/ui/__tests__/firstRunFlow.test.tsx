@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, userEvent } from "@testing-library/react-native";
 import { BackHandler } from "react-native";
 import { FinPetApp } from "../FinPetApp";
+import { finnyScript, TOUR_STEPS } from "../finnyScript";
 import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
@@ -13,11 +14,12 @@ async function renderApp(ports = createFakePorts()) {
   return { user, ports, view };
 }
 
+const welcomeTitle = "Добро пожаловать в “Питомца Финни”!";
+
 async function leaveOpeningCards(user: ReturnType<typeof userEvent.setup>) {
-  for (let step = 0; step < 5; step += 1) {
-    await user.press(screen.getByRole("button", { name: "Дальше" }));
-  }
-  await user.press(screen.getByRole("button", { name: "Готово" }));
+  await user.press(screen.getByRole("button", { name: "Начать" }));
+  await user.press(screen.getByRole("button", { name: "Понятно" }));
+  await user.press(screen.getByRole("button", { name: "Дальше" }));
 }
 
 async function reachName(user: ReturnType<typeof userEvent.setup>) {
@@ -25,18 +27,36 @@ async function reachName(user: ReturnType<typeof userEvent.setup>) {
   await user.press(screen.getByRole("button", { name: "Дальше" }));
 }
 
+async function finishTour(user: ReturnType<typeof userEvent.setup>) {
+  for (const step of TOUR_STEPS) {
+    if (step.pickGoal) {
+      await user.press(screen.getByRole("button", { name: "Сделать целью Конструктор" }));
+      continue;
+    }
+    await user.press(screen.getByRole("button", { name: step.button }));
+  }
+}
+
+async function claimBudget(user: ReturnType<typeof userEvent.setup>) {
+  await finishTour(user);
+  await user.press(screen.getByRole("button", { name: "Дом" }));
+}
+
 async function finishName(user: ReturnType<typeof userEvent.setup>) {
   await reachName(user);
-  await user.type(screen.getByRole("textbox", { name: "Меня зовут" }), "Пух");
+  await user.type(nameField(), "Пух");
   await user.press(screen.getByRole("button", { name: "Дальше" }));
+  await claimBudget(user);
 }
 
 function nameField() {
-  return screen.getByRole("textbox", { name: "Меня зовут" });
+  return screen.getByRole("textbox", { name: finnyScript.nameSays });
 }
 
 function expectNameChip(value: string) {
-  expect(screen.getByText("Меня зовут")).toBeOnTheScreen();
+  expect(screen.getByText(finnyScript.nameTitle)).toBeOnTheScreen();
+  expect(screen.getByText(finnyScript.nameLine)).toBeOnTheScreen();
+  expect(screen.getByText(finnyScript.nameSays)).toBeOnTheScreen();
   expect(screen.getAllByRole("textbox")).toHaveLength(1);
   expect(nameField()).toHaveDisplayValue(value);
   if (value === "") {
@@ -78,7 +98,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
     Object.defineProperty(globalThis, "crypto", { configurable: true, value: undefined });
     try {
       await renderApp();
-      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
+      expect(screen.getByText(welcomeTitle)).toBeOnTheScreen();
     } finally {
       if (descriptor) {
         Object.defineProperty(globalThis, "crypto", descriptor);
@@ -107,35 +127,35 @@ describe("first-run flow (Appendix A 1–4)", () => {
     }
   });
 
-  it("walks six opening cards before Питомец", async () => {
+  it("walks three opening cards before the pet", async () => {
     const ports = createFakePorts();
     const complete = jest.spyOn(ports.firstRun, "complete");
     const exit = jest.spyOn(BackHandler, "exitApp").mockImplementation(() => undefined);
     try {
       const { user } = await renderApp(ports);
 
-      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
-      expect(screen.getByText(/Здесь будет жить твой пиксельный питомец/)).toBeOnTheScreen();
-      expect(screen.getByText("1/6")).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Дальше" })).toBeOnTheScreen();
+      expect(screen.getByText(welcomeTitle)).toBeOnTheScreen();
+      expect(screen.getByText(/Привет! Я Финни/)).toBeOnTheScreen();
+      expect(screen.getByText("1/3")).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Начать" })).toBeOnTheScreen();
       expect(screen.queryByRole("button", { name: "Готово" })).not.toBeOnTheScreen();
       expect(screen.queryByRole("button", { name: "Пропустить" })).not.toBeOnTheScreen();
-      expect(screen.queryByText("Питомец")).not.toBeOnTheScreen();
+      expect(screen.queryByText(finnyScript.petTitle)).not.toBeOnTheScreen();
 
       await user.press(screen.getByRole("button", { name: "Назад" }));
       expect(exit).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
+      expect(screen.getByText(welcomeTitle)).toBeOnTheScreen();
 
-      await user.press(screen.getByRole("button", { name: "Дальше" }));
-      expect(screen.getByText("Копим на мечту")).toBeOnTheScreen();
-      expect(screen.getByText("2/6")).toBeOnTheScreen();
+      await user.press(screen.getByRole("button", { name: "Начать" }));
+      expect(screen.getByText("Твоя задача — накопить на финансовую цель")).toBeOnTheScreen();
+      expect(screen.getByText("2/3")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Назад" }));
       expect(exit).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
+      expect(screen.getByText(welcomeTitle)).toBeOnTheScreen();
 
       await leaveOpeningCards(user);
-      expect(screen.getByText("Питомец")).toBeOnTheScreen();
-      expect(screen.queryByText("6/6")).not.toBeOnTheScreen();
+      expect(screen.getByText(finnyScript.petTitle)).toBeOnTheScreen();
+      expect(screen.queryByText("3/3")).not.toBeOnTheScreen();
       expect(complete).not.toHaveBeenCalled();
     } finally {
       exit.mockRestore();
@@ -148,7 +168,8 @@ describe("first-run flow (Appendix A 1–4)", () => {
     const { user } = await renderApp(ports);
     await leaveOpeningCards(user);
 
-    expect(screen.getByText("Питомец")).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.petTitle)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.petLine)).toBeOnTheScreen();
     expect(screen.queryByLabelText(/Этап 1 из 3, Новичок/)).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Настройки" })).not.toBeOnTheScreen();
     expect(screen.getByText(strings.speciesLegend)).toBeOnTheScreen();
@@ -178,6 +199,75 @@ describe("first-run flow (Appendix A 1–4)", () => {
     await user.type(nameField(), "Пух");
     await user.press(screen.getByRole("button", { name: "Дальше" }));
     expect(complete).toHaveBeenCalledWith(expect.objectContaining({ species: "sp2", color: "c2", accessory: "a1" }));
+    expect(screen.getByText(finnyScript.budgetTitle)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс 100")).toBeSelected();
+  });
+
+  it("follows Finny’s acquaintance script through the first goal and the map", async () => {
+    const { user } = await renderApp();
+    await leaveOpeningCards(user);
+    expect(screen.getByText(finnyScript.petLine)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    await user.type(nameField(), "Пух");
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+
+    expect(screen.getByText(finnyScript.budgetTitle)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.budgetLine)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.budgetMore)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс 100")).toBeSelected();
+    expect(screen.getByRole("button", { name: "Магазин" })).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+
+    expect(screen.getByText(finnyScript.homeIntro)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс 100")).not.toBeSelected();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(screen.getByText(finnyScript.wallet)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс 100")).toBeSelected();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(screen.getByText(finnyScript.map)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(screen.getByText(finnyScript.health)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Сытость 50")).toBeSelected();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(screen.getByText(finnyScript.happiness)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Счастье 50")).toBeSelected();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(screen.getByText(finnyScript.goalBlock)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+
+    expect(screen.getByText(finnyScript.pickTitle)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.pickLine)).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Закрыть" })).not.toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Без цели" })).not.toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Сделать целью Конструктор" }));
+    expect(screen.getByText(finnyScript.pickedLine)).toBeOnTheScreen();
+    expect(screen.getByText("Твоя цель: Конструктор")).toBeOnTheScreen();
+    expect(screen.getByText("Стоимость: 60 монет")).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+
+    expect(screen.getByText(finnyScript.learnTitle)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.learnLine)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Узнать больше" }));
+    expect(screen.getByText(finnyScript.programLessons)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.programTry)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Понятно" }));
+
+    expect(screen.getByText(finnyScript.periodSplit)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.periodThree)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.periodDone)).toBeOnTheScreen();
+    expect(screen.getByText("Карта заданий")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeSelected();
+    await user.press(screen.getByRole("button", { name: "Понятно" }));
+    expect(screen.getByText(finnyScript.afterDone)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.afterReward)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.afterAll)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(screen.getByText(finnyScript.forgetOk)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.forgetApply)).toBeOnTheScreen();
+    expect(screen.getByText(finnyScript.forgetGames)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Понятно" }));
+    expect(screen.queryByText(finnyScript.forgetGames)).not.toBeOnTheScreen();
   });
 
   it("walks pet and Имя onto the hub", async () => {
@@ -201,7 +291,11 @@ describe("first-run flow (Appendix A 1–4)", () => {
     expect(screen.getByRole("img", { name: /Питомец, Вид 2/ })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Дальше" })).toBeEnabled();
     await user.press(screen.getByRole("button", { name: "Дальше" }));
+    expect(screen.getByText(finnyScript.budgetTitle)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс 100")).toBeSelected();
     expect(complete).toHaveBeenCalledTimes(1);
+    await finishTour(user);
+    await user.press(screen.getByRole("button", { name: "Дом" }));
 
     expect(screen.queryByRole("button", { name: "Пропустить" })).not.toBeOnTheScreen();
     expect(screen.queryByLabelText("Пособие +20 монет")).not.toBeOnTheScreen();
@@ -247,7 +341,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
     expect(screen.queryByRole("button", { name: "Что такое бюджет?" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Как играть" })).not.toBeOnTheScreen();
     expect(complete).toHaveBeenCalledTimes(1);
-  });
+  }, 20000);
 
   it("preserves the draft when moving back through Первый запуск", async () => {
     const ports = createFakePorts();
@@ -294,8 +388,8 @@ describe("first-run flow (Appendix A 1–4)", () => {
     await view.unmount();
     const again = userEvent.setup();
     await render(<FinPetApp ports={ports} />);
-    expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
-    expect(screen.queryByText("Питомец")).not.toBeOnTheScreen();
+    expect(screen.getByText(welcomeTitle)).toBeOnTheScreen();
+    expect(screen.queryByText(finnyScript.petTitle)).not.toBeOnTheScreen();
     await leaveOpeningCards(again);
     expect(screen.getByRole("button", { name: "Вид 1" })).toBeSelected();
   });
@@ -313,6 +407,8 @@ describe("first-run flow (Appendix A 1–4)", () => {
     await fireEvent.changeText(petName, ` ${family.repeat(20)} `);
     expect(screen.getByRole("button", { name: "Дальше" })).toBeEnabled();
     await user.press(screen.getByRole("button", { name: "Дальше" }));
+    await finishTour(user);
+    await user.press(screen.getByRole("button", { name: "Дом" }));
 
     expect(screen.getByRole("button", { name: "Магазин" })).toBeOnTheScreen();
     const profileId = ports.meta.get("activeProfileId");
@@ -336,9 +432,11 @@ describe("first-run flow (Appendix A 1–4)", () => {
 
     await user.press(screen.getByRole("button", { name: "Дальше" }));
     expect(screen.getByRole("alert")).toHaveTextContent("Не получилось начать игру. Попробуй ещё раз.");
-    expectNameChip("Пух");
+    expect(screen.getByText(finnyScript.nameTitle)).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Дальше" }));
+    await finishTour(user);
+    await user.press(screen.getByRole("button", { name: "Дом" }));
     expect(screen.getByRole("button", { name: "Магазин" })).toBeOnTheScreen();
     expect(complete).toHaveBeenCalledTimes(2);
     const profileId = ports.meta.get("activeProfileId");

@@ -7,6 +7,7 @@ import { BANK, FEATURES } from "../../core/config";
 import { META_KEYS } from "../../data/metaKeys";
 import type { DayState, ProfileView, SavingsView } from "../../data/repositories/gameRepository";
 import { AccessoryUnlockCard } from "../components/AccessoryUnlockCard";
+import { GoalPicker } from "../components/GoalPicker";
 import { PixelSprite } from "../components/PixelSprite";
 import { FeedbackCard, type FeedbackModel } from "../components/FeedbackCard";
 import { Screen } from "../components/Screen";
@@ -16,15 +17,17 @@ import type { MoneySection } from "../navigation/playChrome";
 import { usePlayChrome } from "../navigation/playChrome";
 import type { RootStackParamList } from "../navigation/types";
 import { goalFace } from "../goalLabel";
-import { roomDecorations, type RoomDecoration } from "../pet/room";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { shopStrings } from "../stringsShop";
 import { completedTaskIds } from "../tasks/model";
 import { moneyStrings } from "../stringsMoney";
+import { finnyScript, nextTourStep, tourStep, type SpotlightBox } from "../finnyScript";
+import { measureSpotlight } from "../measureSpotlight";
 import { colors, minTarget, spacing, type } from "../theme";
 import BankScreen from "./BankScreen";
 import { DailyRewardCalendar, DailyRewardGot } from "./DailyRewardSheet";
+import { FinnyTour } from "./FinnyTour";
 import { HomeScene } from "./HomeScene";
 import { PillRow } from "./moneyParts";
 import { JournalPanel } from "./progressPanels";
@@ -49,7 +52,6 @@ type HubModel = {
   bankOpen: boolean;
   giftReady: boolean;
   giftCells: DailyRewardCell[];
-  decorations: RoomDecoration[];
 };
 
 const MONEY_OPTIONS: { id: MoneySection; label: string }[] = [
@@ -92,7 +94,38 @@ export default function MainScreen({ navigation }: Props) {
   const [cardOpen, setCardOpen] = useState(false);
   const [dayTip, setDayTip] = useState(false);
   const [dropBox, setDropBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [tourId, setTourId] = useState<string | null>(() => {
+    const saved = meta.get(META_KEYS.finnyTour);
+    return tourStep(saved) ? saved : null;
+  });
+  const tourOpensCard = tourStep(tourId)?.spotlight === "goal";
+  const [trackedTourCard, setTrackedTourCard] = useState(tourOpensCard);
+  if (tourOpensCard !== trackedTourCard) {
+    setTrackedTourCard(tourOpensCard);
+    setCardOpen(tourOpensCard);
+  }
+  const [spotlightHole, setSpotlightHole] = useState<{ id: string; box: SpotlightBox } | null>(null);
+  const rememberSpotlight = useCallback((id: string, box: SpotlightBox) => {
+    setSpotlightHole((current) => {
+      if (
+        current?.id === id &&
+        current.box.x === box.x &&
+        current.box.y === box.y &&
+        current.box.width === box.width &&
+        current.box.height === box.height &&
+        current.box.radius === box.radius
+      ) {
+        return current;
+      }
+      return { id, box };
+    });
+  }, []);
   const shellRef = useRef<View>(null);
+  const mapRef = useRef<View>(null);
+  useEffect(() => {
+    if (tourStep(tourId)?.spotlight !== "map") return;
+    measureSpotlight(mapRef.current, shellRef.current, "map", rememberSpotlight, 16);
+  }, [rememberSpotlight, tourId]);
   const dropRef = useRef<View>(null);
   const closeDayTip = useCallback(() => {
     setDropBox(null);
@@ -171,7 +204,6 @@ export default function MainScreen({ navigation }: Props) {
       bankOpen,
       giftReady: gift.ready,
       giftCells: gift.cells,
-      decorations: roomDecorations(game.boughtGoalIds(profileId), content.goals),
     });
     const bankPaid = bank && bank.paid > 0 ? bank : null;
     if (bankPaid) {
@@ -213,6 +245,7 @@ export default function MainScreen({ navigation }: Props) {
           setCardOpen(false);
           return true;
         }
+        if (tourStep(tourId)) return true;
         if (tab === "home") {
           BackHandler.exitApp();
           return true;
@@ -221,7 +254,7 @@ export default function MainScreen({ navigation }: Props) {
         return true;
       });
       return () => subscription.remove();
-    }, [cardOpen, closeDayTip, dayTip, giftGot, giftOpen, setTab, tab]),
+    }, [cardOpen, closeDayTip, dayTip, giftGot, giftOpen, setTab, tab, tourId]),
   );
 
   useFocusEffect(
@@ -239,6 +272,18 @@ export default function MainScreen({ navigation }: Props) {
       (money === "bank" && hub.bankOpen);
     if (!visible) setMoney("journal");
   }, [hub, money, setMoney]);
+
+  const advanceTour = useCallback(() => {
+    if (!tourId) return;
+    const next = nextTourStep(tourId);
+    meta.set(META_KEYS.finnyTour, next ?? "done");
+    setTourId(next);
+  }, [meta, tourId]);
+  useEffect(() => {
+    const step = tourStep(tourId);
+    if (!step) return;
+    setTab(step.tab ?? "home");
+  }, [setTab, tourId]);
 
   const unlockKey = useAccessoryUnlock(hub?.profile.id ?? null);
   const celebrateUnlock = useCallback(() => {
@@ -268,6 +313,9 @@ export default function MainScreen({ navigation }: Props) {
     return true;
   });
   const current = options.find((option) => option.id === money) ?? options[0];
+  const tour = hub.profile.isDemo ? null : tourStep(tourId);
+  const markId = tour?.spotlight ?? (tour?.map ? "pin" : null);
+  const hole = spotlightHole?.id === markId ? spotlightHole.box : null;
   const showUnlock =
     unlockKey != null &&
     focused &&
@@ -275,7 +323,8 @@ export default function MainScreen({ navigation }: Props) {
     !cardOpen &&
     !giftOpen &&
     giftGot == null &&
-    feedback == null;
+    feedback == null &&
+    tour == null;
 
   return (
     <View ref={shellRef} style={styles.shell}>
@@ -285,7 +334,7 @@ export default function MainScreen({ navigation }: Props) {
           importantForAccessibility={cardOpen ? "no-hide-descendants" : "auto"}
           style={styles.aboveTabs}
         >
-          <StatusStrip />
+          <StatusStrip measureRoot={shellRef} spotlight={tour?.spotlight} onSpotlightBox={rememberSpotlight} />
           <View style={styles.bodySlot}>
             {tab === "home" ? (
               <HomeScene
@@ -316,10 +365,16 @@ export default function MainScreen({ navigation }: Props) {
                 onDropLayout={placeDropShield}
                 bottomInset={STAGE_PEEK_HEIGHT}
                 active={focused && !showUnlock}
-                decorations={hub.decorations}
+                quiet={tour != null}
               />
             ) : null}
-            {tab === "map" ? <TaskListScreen /> : null}
+            {tab === "map" ? (
+              <TaskListScreen
+                markFirstOpen={Boolean(tour?.map)}
+                measureRoot={shellRef}
+                onSpotlightBox={rememberSpotlight}
+              />
+            ) : null}
             {tab === "money" ? (
               <View style={styles.money}>
                 <View style={styles.menu} role="tablist" aria-label={moneyStrings.sections}>
@@ -353,6 +408,9 @@ export default function MainScreen({ navigation }: Props) {
           canPickGoal={hub.savingsOpen}
           onPickGoal={openGoal}
           overlay={tab === "home"}
+          spotlight={tour?.spotlight === "goal"}
+          measureRoot={shellRef}
+          onSpotlightBox={rememberSpotlight}
         />
       </View>
       <View style={styles.tabTray}>
@@ -369,6 +427,13 @@ export default function MainScreen({ navigation }: Props) {
             return (
               <Pressable
                 key={id}
+                ref={id === "map" ? mapRef : undefined}
+                collapsable={id === "map" ? false : undefined}
+                onLayout={
+                  id === "map"
+                    ? () => measureSpotlight(mapRef.current, shellRef.current, "map", rememberSpotlight, 16)
+                    : undefined
+                }
                 role="button"
                 aria-label={label}
                 aria-selected={selected}
@@ -433,6 +498,26 @@ export default function MainScreen({ navigation }: Props) {
       ) : null}
       {giftGot != null ? <DailyRewardGot coins={giftGot} onDismiss={() => setGiftGot(null)} /> : null}
       {feedback ? <FeedbackCard model={feedback} onDismiss={() => setFeedback(null)} /> : null}
+      {tour?.pickGoal ? (
+        <GoalPicker
+          visible
+          title={finnyScript.pickTitle}
+          lead={finnyScript.pickLine}
+          required
+          onClose={() => {}}
+          onChanged={() => {
+            touchChrome();
+            advanceTour();
+          }}
+        />
+      ) : tour ? (
+        <FinnyTour
+          step={tour}
+          chosen={tourGoal(game, content.goals, hub.profile.id)}
+          hole={hole}
+          onAdvance={advanceTour}
+        />
+      ) : null}
       {showUnlock && unlockKey ? (
         <AccessoryUnlockCard
           accessory={unlockKey}
@@ -447,6 +532,23 @@ export default function MainScreen({ navigation }: Props) {
       ) : null}
     </View>
   );
+}
+
+function tourGoal(
+  game: { savingsState(profileId: string): { activeGoal: { key: string; cost: number; custom: boolean; name: string | null } | null } },
+  goals: readonly { id: string; name: string }[],
+  profileId: string,
+): { name: string; cost: number } | null {
+  try {
+    const active = game.savingsState(profileId).activeGoal;
+    if (!active) return null;
+    const known = goals.find((goal) => goal.id === active.key);
+    const name = active.custom ? (active.name ?? "") : (known?.name ?? "");
+    if (!name) return null;
+    return { name, cost: active.cost };
+  } catch {
+    return null;
+  }
 }
 
 const styles = StyleSheet.create({

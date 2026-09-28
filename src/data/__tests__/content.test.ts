@@ -7,25 +7,27 @@ describe("loadContent", () => {
     expect(content.contentVersion).toBe(1);
   });
 
-  it("ships six opening cards in Первый запуск order", () => {
-    expect(content.intro.map((card) => card.id)).toEqual([
-      "welcome",
-      "goal",
-      "decisions",
-      "appearance",
-      "name",
-      "budget",
+  it("ships three opening cards in Первый запуск order", () => {
+    expect(content.intro.map((card) => [card.id, card.button, card.title, card.body])).toEqual([
+      [
+        "welcome",
+        "Начать",
+        "Добро пожаловать в “Питомца Финни”!",
+        "Привет! Я Финни. Вместе мы будем учиться обращаться с деньгами, выполнять задания, делать покупки и копить на свои цели.",
+      ],
+      [
+        "task",
+        "Понятно",
+        "Твоя задача — накопить на финансовую цель",
+        "В игре у тебя будет своя финансовая цель — вещь, которую ты хочешь купить. Чтобы её получить, тебе нужно научиться планировать деньги, выполнять задания, делать покупки и откладывать монеты.",
+      ],
+      [
+        "decisions",
+        "Дальше",
+        "В игре тебе часто придётся принимать решения",
+        "У тебя будет три варианта:\n• потратить деньги на обязательное;\n• потратить деньги на то, что хочется;\n• отложить деньги и продолжить копить.\nОт твоих решений будет зависеть, как быстро ты сможешь прийти к своей цели.",
+      ],
     ]);
-    expect(content.intro.map((card) => card.title)).toEqual([
-      "Привет! Это ФинПет",
-      "Копим на мечту",
-      "Три главных решения",
-      "Какой он, твой питомец?",
-      "Давай знакомиться",
-      "Первые 100 монет",
-    ]);
-    // Short enough for a 7-year-old to read on one screen.
-    expect(content.intro.every((card) => card.body.length > 40 && card.body.length < 260)).toBe(true);
   });
 
   it("ships the shelf and nine Цели that are not sold there", () => {

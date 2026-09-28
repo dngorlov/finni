@@ -37,6 +37,7 @@ export function topicTaskGroups(tasks: readonly TaskContent[]): Record<TaskTopic
   };
 }
 
+/** Corrections still waiting to be played. A finished one leaves the map. */
 export function correctionTasks(
   tasks: readonly TaskContent[],
   progress: readonly TaskProgressView[],
@@ -46,7 +47,7 @@ export function correctionTasks(
   const result: TaskContent[] = [];
   for (const row of progress) {
     const task = byId.get(row.taskKey);
-    if (!task?.correction || seen.has(task.id)) continue;
+    if (!task?.correction || row.status === "completed" || seen.has(task.id)) continue;
     seen.add(task.id);
     result.push(task);
   }

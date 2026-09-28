@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -24,8 +24,10 @@ import type { RootStackParamList } from "../navigation/types";
 import { usePlayChrome } from "../navigation/playChrome";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
-import { colors, minTarget, spacing, type } from "../theme";
+import { colors, minTarget, radius, spacing, type } from "../theme";
 import { TOPIC_TINT } from "../topicStyle";
+import type { SpotlightBox } from "../finnyScript";
+import { measureSpotlight } from "../measureSpotlight";
 import { containedMapSize } from "./mapLayout";
 import { completedTaskIds, correctionTasks, type TaskTopic } from "../tasks/model";
 
@@ -52,7 +54,15 @@ type PinState = "locked" | "open" | "done" | "soon";
  * Карта заданий: the map stays clear. A pin opens the lesson in a sheet,
  * with «Начать» in the sheet footer. Мини-игры and Словарик keep their labels.
  */
-export default function TaskListScreen() {
+export default function TaskListScreen({
+  markFirstOpen = false,
+  measureRoot,
+  onSpotlightBox,
+}: {
+  markFirstOpen?: boolean;
+  measureRoot?: RefObject<View | null>;
+  onSpotlightBox?: (id: string, box: SpotlightBox) => void;
+}) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { game, meta, content } = useSession();
   const { focus } = usePlayChrome();
@@ -61,6 +71,16 @@ export default function TaskListScreen() {
   const [gamesOpen, setGamesOpen] = useState(false);
   const [slot, setSlot] = useState({ width: 0, height: 0 });
   const [correctionsHeight, setCorrectionsHeight] = useState(0);
+  const pinRef = useRef<View>(null);
+  const reportPin = () => {
+    if (!markFirstOpen) return;
+    measureSpotlight(pinRef.current, measureRoot?.current ?? null, "pin", onSpotlightBox, PIN / 2);
+  };
+
+  useEffect(() => {
+    if (!markFirstOpen) return;
+    measureSpotlight(pinRef.current, measureRoot?.current ?? null, "pin", onSpotlightBox, PIN / 2);
+  }, [markFirstOpen, measureRoot, onSpotlightBox]);
 
   useFocusEffect(
     useCallback(() => {
@@ -174,12 +194,16 @@ export default function TaskListScreen() {
             const state = stateOf(task);
             const { x, y } = at(task);
             const isSelected = task.id === sheetTaskId;
+            const firstOpen = markFirstOpen && task.id === missions[0]?.id && state === "open";
             return (
               <Pressable
                 key={task.id}
+                ref={firstOpen ? pinRef : undefined}
+                collapsable={firstOpen ? false : undefined}
+                onLayout={firstOpen ? reportPin : undefined}
                 role="button"
                 aria-label={strings.missionPinA11y(task.title, state)}
-                aria-selected={isSelected}
+                aria-selected={isSelected || firstOpen}
                 onPress={() => setSheetTaskId(task.id)}
                 hitSlop={(minTarget - PIN) / 2}
                 style={[
@@ -326,24 +350,30 @@ function MissionAction({
   );
 }
 
+/** One slim row per pending correction. Playing it removes the row. */
 function Corrections({ tasks, onPlay }: { tasks: TaskContent[]; onPlay: (taskId: string) => void }) {
   if (tasks.length === 0) return null;
   return (
     <>
-      <Text style={styles.section}>{strings.missionCorrections}</Text>
       {tasks.map((task) => (
         <Pressable
           key={task.id}
           role="button"
           aria-label={task.title}
+          accessibilityHint={strings.missionCorrections}
           onPress={() => onPlay(task.id)}
-          style={styles.hit}
+          style={({ pressed }) => [styles.fix, pressed ? styles.fixPressed : null]}
         >
-          <Card>
-            <CoinText text={task.title} style={styles.cardTitle} />
-            <CoinText text={task.intro} style={styles.body} />
-            <CoinText text={strings.playTask} style={styles.body} />
-          </Card>
+          <View aria-hidden style={styles.fixBadge}>
+            <PixelIcon name="warning-diamond" size={22} color={colors.onRaised} />
+          </View>
+          <View style={styles.fixCopy}>
+            <Text style={styles.fixCaption}>{strings.missionCorrections}</Text>
+            <CoinText text={task.title} numberOfLines={1} style={styles.fixTitle} />
+          </View>
+          <View aria-hidden style={styles.fixGo}>
+            <PixelIcon name="play" size={18} color={colors.onRaised} />
+          </View>
         </Pressable>
       ))}
     </>
@@ -561,20 +591,61 @@ const styles = StyleSheet.create({
     fontSize: type.body,
   },
   correctionsBar: {
-    gap: spacing.s,
     paddingBottom: spacing.s,
     paddingHorizontal: spacing.m,
+  },
+  fix: {
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderBottomWidth: 4,
+    borderColor: colors.raisedEdge,
+    borderRadius: radius.card,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.s,
+    minHeight: minTarget,
+    paddingHorizontal: spacing.s,
+    paddingVertical: spacing.s,
+  },
+  fixPressed: {
+    borderBottomWidth: 2,
+    marginTop: 2,
+  },
+  fixBadge: {
+    alignItems: "center",
+    backgroundColor: colors.badgeFill,
+    borderRadius: 12,
+    height: 40,
+    justifyContent: "center",
+    width: 40,
+  },
+  fixCopy: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  fixCaption: {
+    color: colors.accentText,
+    fontSize: type.body,
+    fontWeight: "700",
+  },
+  fixTitle: {
+    color: colors.text,
+    fontSize: type.body,
+    fontWeight: "700",
+  },
+  fixGo: {
+    alignItems: "center",
+    backgroundColor: colors.raisedFace,
+    borderRadius: 16,
+    height: 32,
+    justifyContent: "center",
+    width: 32,
   },
   sheetHead: {
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.s,
-  },
-  section: {
-    color: colors.text,
-    fontSize: type.section,
-    fontWeight: "700",
-    marginTop: spacing.s,
   },
   cardTitle: {
     color: colors.text,
@@ -749,8 +820,5 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 18,
     lineHeight: 26,
-  },
-  hit: {
-    minHeight: minTarget,
   },
 });

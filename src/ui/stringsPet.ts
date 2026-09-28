@@ -39,8 +39,6 @@ export const petStrings = {
     }, ${POSE_WORDS[input.pose]}`;
   },
 
-  roomA11y: (names: readonly string[]) => `В комнате: ${names.join(", ")}`,
-
   appearanceTitle: "Внешний вид",
   appearanceOpen: "Внешний вид питомца",
   appearanceSpecies: "Вид",

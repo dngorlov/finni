@@ -117,28 +117,6 @@ describe("Аксессуар opens with Этап", () => {
   });
 });
 
-describe("bought Цели in the room", () => {
-  it("puts bought Цели on the shelf with one summary label", async () => {
-    const ports = createFakePorts();
-    const profileId = seedReturningChild(ports, { unlockMoney: true });
-    buyGoal(ports, goal("skateboard", 90));
-    buyGoal(ports, goal("scooter", 160));
-    ports.game.celebrateAccessoryUnlock(profileId);
-    for (const row of ports.game.listAchievements(profileId)) ports.game.celebrateAchievement(profileId, row.id);
-    await renderApp(ports);
-
-    expect(screen.getByRole("img", { name: "В комнате: Скейтборд, Самокат" })).toBeOnTheScreen();
-    expect(screen.queryByLabelText("Скейтборд")).not.toBeOnTheScreen();
-  });
-
-  it("shows nothing before a Цель is bought", async () => {
-    const ports = createFakePorts();
-    seedReturningChild(ports);
-    await renderApp(ports);
-    expect(screen.queryByRole("img", { name: /В комнате/ })).not.toBeOnTheScreen();
-  });
-});
-
 function homeScene(pet: Partial<HomePet> = {}, extra: { active?: boolean; random?: () => number } = {}) {
   return (
     <HomeScene

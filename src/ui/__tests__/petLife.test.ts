@@ -12,9 +12,6 @@ import {
   pickIdleAction,
   planWalk,
 } from "../pet/petLife";
-import { roomDecorations } from "../pet/room";
-import { customGoalItemId } from "../../core/customGoal";
-
 const scene = { sceneWidth: 400, sceneHeight: 600, homeLeft: 100, homeBottom: 60, size: 200 };
 
 describe("living pet rules", () => {
@@ -88,19 +85,5 @@ describe("living pet rules", () => {
     expect(clipFinished("jump", 8)).toBe(true);
     expect(clipFinished("idle", 100)).toBe(false);
     expect(clipFinished("walk", 100)).toBe(false);
-  });
-});
-
-describe("room decorations", () => {
-  it("shows bought preset Цели with their icons and a Своя цель with a star", () => {
-    const goals = [
-      { id: "skateboard", name: "Скейтборд", icon: "🛹" },
-      { id: "smartwatch", name: "Смарт-часы", icon: "⌚" },
-    ];
-    const custom = customGoalItemId("cg_1", 30, "Рюкзак");
-    expect(roomDecorations(["skateboard", custom, "unknown"], goals)).toEqual([
-      { id: "skateboard", name: "Скейтборд", icon: "🛹" },
-      { id: custom, name: "Рюкзак", icon: "⭐" },
-    ]);
   });
 });

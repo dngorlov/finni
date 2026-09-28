@@ -10,7 +10,7 @@
 - Onboarding: brief intro to the game's purpose + the three decision types (spend on required item / spend on desired item / postpone)
 - Guest mode, no mandatory registration; child profile = game name + selected character
 - The intro hint is returnable at any time
-- **Resolved:** Первый запуск opens with six static cards (welcome, Цель, the three decision types, appearance, name, Стартовый бюджет), then Питомец → Имя. The cards do not write a profile, do not grant coins, cannot be skipped, and are not replayed. Closing the app before the profile exists restarts at the first card. The child then chooses the pet's Вид, Окрас, and Аксессуар, then names only the Питомец on «Имя» (compact in-cloud chip). Valid Имя «Дальше» writes the Профиль ребёнка (leftover `name` equals `petName`) and opens Main. Opening Main shows Дом with the Стартовый бюджет and no income card. There is no «Как играть» walkthrough and no replay from Словарик. Profile = the pet (name + appearance); no account; Первый запуск does not collect a name for the ребёнок. (ROADMAP §2.5, §4.2; ADR-0003)
+- **Resolved:** Первый запуск follows the Finny acquaintance script: three cards, then the pet, the pet’s name, then a one-time tour of Main and the map. The cards do not write a profile and do not grant coins. The child chooses Вид and Окрас, names the pet, and presses «Дальше», which writes the Профиль ребёнка (leftover `name` equals `petName`) and grants the Стартовый бюджет. The tour opens on «Твой первый бюджет», highlighting the live balance, and is not replayed from Словарик. Closing the app before that write restarts at the first card. Profile = the pet (name + appearance); no account; Первый запуск does not collect a name for the ребёнок. (ROADMAP §2.5, §4.2; ADR-0003)
 
 ## 2. Pet Creation
 - Pet appearance customization
@@ -28,7 +28,7 @@
 - Income from completing tasks and/or a clear recurring income (doc's example: daily login)
 - Every accrual shows source + amount; balance never changes without an explanation to the user
 - Starting budget granted at profile setup (game loop step 4)
-- **Resolved:** currency = монеты. Стартовый бюджет **100** granted at profile creation. The sixth opening card introduces it; the grant itself has no feedback card. There is no daily stipend (ADR-0010). Task reward: up to the Задание's max (30 or 35 for a pinned Урок, 10 or 15 for a mini-game or correction) scaled by first-try answers; replays pay only the improvement. A matured Вклад returns its coins with interest. Every movement goes through a feedback card (source + amount). (ROADMAP §2.1, §4.2; ADR-0003)
+- **Resolved:** currency = монеты. Стартовый бюджет **100** granted when the child presses «Дальше» on the pet’s name. «Твой первый бюджет» then highlights that 100 on Main; the grant itself has no feedback card. There is no daily stipend (ADR-0010). Task reward: up to the Задание's max (30 or 35 for a pinned Урок, 10 or 15 for a mini-game or correction) scaled by first-try answers; replays pay only the improvement. A matured Вклад returns its coins with interest. Every movement goes through a feedback card (source + amount). (ROADMAP §2.1, §4.2; ADR-0003)
 
 ## 5. Budget Planning
 - Before each game period: distribute available amount across **≥3 areas** — mandatory expenses, optional expenses, savings
@@ -94,7 +94,7 @@
 ## 14. End-to-End Game Loop (acceptance flow — Appendix A)
 Steps 1–10 form the loop; 11–12 verify persistence and the adult section:
 1. First launch + customize pet → 2. Name the Питомец on «Имя», creating the local profile → 3. Main and the ordinary Пособие card → 4. Current goal, available tasks → 5. Distribute funds (mandatory/optional/savings) → 6. Complete a task, earn currency (with result explanation) → 7. Make ≥1 mandatory + ≥1 optional purchase (must include an attempted insufficient-funds purchase) → 8. Select a goal, replenish savings → 9. Feedback on balance, plan completion, pet status → 10. Transition to next period; progress/stage changes after a series of decisions → 11. Close & relaunch (progress confirmed saved) → 12. Enter adult section, reset/delete test profile
-- **Resolved:** the concrete sequence is specified screen-by-screen in ROADMAP §4 (design flow: screen map, per-screen specs, and the key flows including the day loop, insufficient-funds staging, correction path, demo walkthrough, and relaunch persistence). Appendix A step 1 starts with the six opening cards, then pet customization. Step 2 is the pet-only «Имя» phase that writes the profile. Step 3 is Main with the ordinary Пособие card. There is no «Как играть» tour. Acceptance = milestone ACs (ROADMAP §7) + the scripted manual cases (ROADMAP §8). (ROADMAP §4, §7, §8; ADR-0003)
+- **Resolved:** the concrete sequence is specified screen-by-screen in ROADMAP §4 (design flow: screen map, per-screen specs, and the key flows including the day loop, insufficient-funds staging, correction path, demo walkthrough, and relaunch persistence). Appendix A step 1 starts with the three opening cards, then pet and name. Step 2 writes the profile on «Дальше». Step 3 is Main with Finny’s tour, then the ordinary hub. There is no separate «Как играть» replay. Acceptance = milestone ACs (ROADMAP §7) + the scripted manual cases (ROADMAP §8). (ROADMAP §4, §7, §8; ADR-0003)
 
 ---
 

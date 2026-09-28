@@ -3,6 +3,7 @@ import { BackHandler, Pressable, StyleSheet, Text, TextInput, View, type Role } 
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { IntroCardContent } from "../../data/content";
 import { createLocalId } from "../../data/localId";
+import { META_KEYS } from "../../data/metaKeys";
 import { BeadSlider } from "../components/BeadSlider";
 import { CoinText } from "../components/CoinText";
 import { Pictogram } from "../components/Pictogram";
@@ -14,6 +15,7 @@ import type { RootStackParamList } from "../navigation/types";
 import { COLOR_KEYS, SPECIES_KEYS, type ColorKey, type SpeciesKey } from "../pet/keys";
 import { PetView } from "../pet/PetView";
 import { useSession } from "../session/SessionProvider";
+import { finnyScript } from "../finnyScript";
 import { IntroArt } from "./IntroArt";
 import { strings } from "../strings";
 import { colors, minTarget, radius, spacing, type } from "../theme";
@@ -31,7 +33,7 @@ const TEXTBOX_ROLE = "textbox" as Role;
 const NEW_PET_ACCESSORY = "a1";
 
 export default function FirstRunScreen({ navigation }: Props) {
-  const { content, firstRun } = useSession();
+  const { content, firstRun, meta } = useSession();
   const [phase, setPhase] = useState<Phase>("cards");
   const [cardIndex, setCardIndex] = useState(0);
   const [draft, setDraft] = useState<FirstRunDraft>(() => ({
@@ -51,12 +53,19 @@ export default function FirstRunScreen({ navigation }: Props) {
         setCardIndex((current) => current - 1);
         return true;
       }
-      if (phase === "pet") return false;
-      setPhase("pet");
-      return true;
+      if (phase === "pet") {
+        setCardIndex(content.intro.length - 1);
+        setPhase("cards");
+        return true;
+      }
+      if (phase === "name") {
+        setPhase("pet");
+        return true;
+      }
+      return false;
     });
     return () => subscription.remove();
-  }, [phase, cardIndex]);
+  }, [phase, cardIndex, content.intro.length]);
 
   const completeFirstRun = () => {
     if (saving) return;
@@ -74,6 +83,7 @@ export default function FirstRunScreen({ navigation }: Props) {
         contentVersion: content.contentVersion,
         goals: [],
       });
+      meta.set(META_KEYS.finnyTour, "budget");
       navigation.reset({ index: 0, routes: [{ name: "Main" }] });
     } catch {
       setSaveError(strings.firstRunSaveFailed);
@@ -112,9 +122,9 @@ export default function FirstRunScreen({ navigation }: Props) {
     <NamePhase
       draft={draft}
       petNameTouched={petNameTouched}
+      onChange={(change) => setDraft((current) => ({ ...current, ...change }))}
       error={saveError}
       busy={saving}
-      onChange={(change) => setDraft((current) => ({ ...current, ...change }))}
       onPetNameBlur={() => setPetNameTouched(true)}
       onBack={() => setPhase("pet")}
       onNext={completeFirstRun}
@@ -135,7 +145,6 @@ function OpeningCards({
 }) {
   const card = cards[index];
   if (!card) return null;
-  const last = index >= cards.length - 1;
   const fraction = `${((index + 1) / cards.length) * 100}%` as const;
 
   return (
@@ -151,10 +160,12 @@ function OpeningCards({
           <Text style={styles.step}>{`${index + 1}/${cards.length}`}</Text>
         </View>
       }
-      footer={<PrimaryButton label={last ? strings.done : strings.next} onPress={onNext} />}
+      footer={<PrimaryButton label={card.button} onPress={onNext} />}
     >
       <IntroArt id={card.id} />
-      <ScreenTitle style={styles.title}>{card.title}</ScreenTitle>
+      <ScreenTitle plain style={styles.scriptTitle}>
+        {card.title}
+      </ScreenTitle>
       <CoinText text={card.body} style={styles.body} />
     </Screen>
   );
@@ -171,7 +182,10 @@ function PetPhase({
 }) {
   return (
     <Screen footer={<PrimaryButton label={strings.next} onPress={onNext} />}>
-      <ScreenTitle style={styles.title}>{strings.firstRunPet}</ScreenTitle>
+      <ScreenTitle plain style={styles.scriptTitle}>
+        {finnyScript.petTitle}
+      </ScreenTitle>
+      <Text style={styles.body}>{finnyScript.petLine}</Text>
       <PetView
         species={draft.species}
         color={draft.color}
@@ -229,22 +243,22 @@ function NamePhase({
       footer={
         <>
           <TextButton label={strings.back} onPress={onBack} />
-          <PrimaryButton
-            label={strings.next}
-            disabled={!isValidName(draft.petName) || busy}
-            onPress={onNext}
-          />
+          <PrimaryButton label={strings.next} disabled={!isValidName(draft.petName) || busy} onPress={onNext} />
         </>
       }
     >
+      <ScreenTitle plain style={styles.scriptTitle}>
+        {finnyScript.nameTitle}
+      </ScreenTitle>
+      <Text style={styles.body}>{finnyScript.nameLine}</Text>
       <View style={styles.petCluster}>
         <View style={styles.cloud}>
           <View style={styles.cloudCard}>
-            <Text style={styles.body}>{strings.namePrompt}</Text>
+            <Text style={styles.body}>{finnyScript.nameSays}</Text>
             <View style={styles.chip}>
               <TextInput
                 role={TEXTBOX_ROLE}
-                aria-label={strings.namePrompt}
+                aria-label={finnyScript.nameSays}
                 placeholder={strings.nameBlank}
                 placeholderTextColor={colors.subtle}
                 value={blankIfWhitespace(draft.petName)}
@@ -330,6 +344,11 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: type.title,
+    fontWeight: "700",
+  },
+  scriptTitle: {
+    color: colors.text,
+    fontSize: 22,
     fontWeight: "700",
   },
   petCluster: {

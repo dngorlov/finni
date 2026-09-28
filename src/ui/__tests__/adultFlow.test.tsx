@@ -108,12 +108,12 @@ describe("Взрослый раздел contents and persistence", () => {
     await user.type(screen.getByRole("textbox", { name: "Введи: удалить" }), "удалить");
     await user.press(screen.getByRole("button", { name: "Готово" }));
 
-    expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
+    expect(screen.getByText("Добро пожаловать в “Питомца Финни”!")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Магазин" })).not.toBeOnTheScreen();
 
     await view.unmount();
     await render(<FinPetApp ports={ports} />);
-    expect(screen.getByText("Привет! Это ФинПет")).toBeOnTheScreen();
+    expect(screen.getByText("Добро пожаловать в “Питомца Финни”!")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Магазин" })).not.toBeOnTheScreen();
   });
 

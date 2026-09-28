@@ -49,10 +49,19 @@ export function GoalPicker({
   visible,
   onClose,
   onChanged,
+  title = strings.goalPickerTitle,
+  lead,
+  required = false,
 }: {
   visible: boolean;
   onClose: () => void;
   onChanged?: () => void;
+  /** Sheet heading. Деньги uses «Выбери цель»; the tour keeps its own line. */
+  title?: string;
+  /** Sentence under the heading, on the list only. */
+  lead?: string;
+  /** Stay until a Цель is set. Hides «Закрыть» and «Без цели». */
+  required?: boolean;
 }) {
   const { game, meta, content } = useSession();
   const { height: windowHeight } = useWindowDimensions();
@@ -167,7 +176,7 @@ export function GoalPicker({
   const activeCustom = savings?.activeGoal?.custom ? savings.activeGoal : null;
 
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={close}>
+    <Modal animationType="slide" transparent visible onRequestClose={required ? () => {} : close}>
       <View style={styles.backdrop} pointerEvents="box-none">
         <View style={styles.sheet}>
           {pending ? (
@@ -257,7 +266,8 @@ export function GoalPicker({
             </>
           ) : (
             <>
-              <ScreenTitle style={styles.title}>{strings.goalPickerTitle}</ScreenTitle>
+              <ScreenTitle style={styles.title}>{title}</ScreenTitle>
+              {lead ? <Text style={styles.body}>{lead}</Text> : null}
               <ScrollView style={[styles.list, { maxHeight: listMaxHeight }]} contentContainerStyle={styles.listContent}>
                 {activeCustom?.name ? (
                   <GoalRow
@@ -291,8 +301,8 @@ export function GoalPicker({
                 })}
                 <OwnGoalRow onPress={openCustom} />
               </ScrollView>
-              <TextButton label={strings.goalDrop} onPress={drop} />
-              <TextButton label={strings.close} onPress={close} />
+              {required ? null : <TextButton label={strings.goalDrop} onPress={drop} />}
+              {required ? null : <TextButton label={strings.close} onPress={close} />}
             </>
           )}
         </View>

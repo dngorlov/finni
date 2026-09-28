@@ -311,5 +311,13 @@ describe("Карта заданий", () => {
     expect(screen.queryByRole("heading", { name: /Открылось/ })).not.toBeOnTheScreen();
     expect(screen.getByText("Исправить ошибку")).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Почини рюкзак" })).toBeOnTheScreen();
-  }, 20000);
+
+    await user.press(screen.getByRole("button", { name: "Почини рюкзак" }));
+    await user.press(screen.getByRole("button", { name: "Починить рюкзак" }));
+    await user.press(screen.getByRole("button", { name: "Дальше" }));
+    await user.press(screen.getByRole("button", { name: "На карту" }));
+
+    expect(screen.queryByRole("button", { name: "Почини рюкзак" })).not.toBeOnTheScreen();
+    expect(screen.queryByText("Исправить ошибку")).not.toBeOnTheScreen();
+  }, 30000);
 });

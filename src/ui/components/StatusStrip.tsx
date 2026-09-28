@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -13,6 +13,8 @@ import { MeterBar } from "./MeterBar";
 import { PixelSprite } from "./PixelSprite";
 import { PixelIcon } from "./Pictogram";
 import type { PixelIconName } from "../pixelIconXml";
+import type { SpotlightBox, TourSpotlight } from "../finnyScript";
+import { measureSpotlight } from "../measureSpotlight";
 
 /** One pixel icon per kind of Текущая задача. */
 const TASK_ICON: Record<NonNullable<ReturnType<typeof resolveCurrentTask>>["kind"], PixelIconName> = {
@@ -58,7 +60,15 @@ function openTask(
   chrome.navigation.navigate("Main");
 }
 
-export function StatusStrip() {
+export function StatusStrip({
+  spotlight,
+  measureRoot,
+  onSpotlightBox,
+}: {
+  spotlight?: TourSpotlight | null;
+  measureRoot?: RefObject<View | null>;
+  onSpotlightBox?: (id: string, box: SpotlightBox) => void;
+}) {
   const focused = useIsFocused();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { revision, setTab, setMoney, focus, setFocus } = usePlayChrome();
@@ -67,6 +77,20 @@ export function StatusStrip() {
   void revision;
   const profile = profileId ? game.getProfile(profileId) : null;
   const task = profileId && profile ? resolveCurrentTask(game, content, profileId) : null;
+  const walletRef = useRef<View>(null);
+  const healthRef = useRef<View>(null);
+  const happinessRef = useRef<View>(null);
+  const reportMark = (id: "wallet" | "health" | "happiness", node: View | null) => {
+    if (spotlight !== id) return;
+    measureSpotlight(node, measureRoot?.current ?? null, id, onSpotlightBox, radius.card);
+  };
+
+  useEffect(() => {
+    const root = measureRoot?.current ?? null;
+    if (spotlight === "wallet") measureSpotlight(walletRef.current, root, "wallet", onSpotlightBox, radius.card);
+    if (spotlight === "health") measureSpotlight(healthRef.current, root, "health", onSpotlightBox, radius.card);
+    if (spotlight === "happiness") measureSpotlight(happinessRef.current, root, "happiness", onSpotlightBox, radius.card);
+  }, [measureRoot, onSpotlightBox, spotlight]);
 
   useEffect(() => {
     if (!focus) return;
@@ -85,8 +109,12 @@ export function StatusStrip() {
     <View style={styles.wrap}>
       <View style={styles.status}>
         <Pressable
+          ref={walletRef}
+          collapsable={false}
+          onLayout={() => reportMark("wallet", walletRef.current)}
           role="button"
           aria-label={strings.balanceBadge(profile.balance)}
+          aria-selected={spotlight === "wallet" ? true : undefined}
           onPress={() => {
             setTab("money");
             navigation.navigate("Main");
@@ -110,8 +138,26 @@ export function StatusStrip() {
         </Pressable>
       </View>
       <View style={styles.meters}>
-        <MeterBar compact sprite="food" icon={strings.careIcon} label={strings.care} value={profile.care} />
-        <MeterBar compact sprite="mood" icon={strings.moodIcon} label={strings.mood} value={profile.mood} />
+        <MeterBar
+          compact
+          marked={spotlight === "health"}
+          measureRef={healthRef}
+          onMeasure={() => reportMark("health", healthRef.current)}
+          sprite="food"
+          icon={strings.careIcon}
+          label={strings.care}
+          value={profile.care}
+        />
+        <MeterBar
+          compact
+          marked={spotlight === "happiness"}
+          measureRef={happinessRef}
+          onMeasure={() => reportMark("happiness", happinessRef.current)}
+          sprite="mood"
+          icon={strings.moodIcon}
+          label={strings.mood}
+          value={profile.mood}
+        />
       </View>
       {task ? (
         <Pressable

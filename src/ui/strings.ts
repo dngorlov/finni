@@ -296,8 +296,6 @@ export const strings = {
   bucketValue: (label: string, n: number) => `${label} ${n}`,
   planVsActual: (plan: number, actual: number) => `план ${plan} · потрачено ${actual}`,
 
-  firstRunPet: "Питомец",
-  namePrompt: "Меня зовут",
   nameBlank: "____",
   namePen: "✏️",
   nameValidation: "Введи от 1 до 20 символов",

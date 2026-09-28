@@ -7,10 +7,19 @@ export function ScreenTitle({
   children,
   style,
   numberOfLines,
+  plain,
 }: {
   children: string;
   style?: StyleProp<TextStyle>;
   numberOfLines?: number;
+  /** Phone font. Tutorial titles are too long for the pixel face. */
+  plain?: boolean;
 }) {
-  return <CoinText text={children} numberOfLines={numberOfLines} style={[style, screenTitleStyle(children)]} />;
+  return (
+    <CoinText
+      text={children}
+      numberOfLines={numberOfLines}
+      style={plain ? style : [style, screenTitleStyle(children)]}
+    />
+  );
 }

@@ -6,8 +6,6 @@ import { PixelSprite } from "../components/PixelSprite";
 import { useLatest } from "../components/useLatest";
 import { LivingPet } from "../pet/LivingPet";
 import { poseFromMeters } from "../pet/keys";
-import type { RoomDecoration } from "../pet/room";
-import { petStrings } from "../stringsPet";
 import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
 import { shopStrings } from "../stringsShop";
@@ -23,10 +21,6 @@ const SPEECH_MS = 3500;
 const QUIET_MS = 8000;
 /** Info mark is 32 dp; slop keeps the tap at the 48 dp minimum. */
 const DAY_INFO_SLOP = (minTarget - 32) / 2;
-/** Bought Цели sit on the shelf first, then on the floor by the wall. */
-const SHELF_SLOTS = 3;
-const FLOOR_SLOTS = 3;
-const DECOR_SIZE = 48;
 
 export type HomePet = {
   species: string;
@@ -78,7 +72,7 @@ export function HomeScene({
   onDropLayout,
   bottomInset = 0,
   active = true,
-  decorations = [],
+  quiet = false,
   random,
 }: {
   pet: HomePet;
@@ -107,8 +101,8 @@ export function HomeScene({
   bottomInset?: number;
   /** Дом is on screen. False pauses the pet's animation timers. */
   active?: boolean;
-  /** Цели already bought, shown in the room. */
-  decorations?: readonly RoomDecoration[];
+  /** Acquaintance tour is speaking, so the pet stays quiet. */
+  quiet?: boolean;
   /** Test seam for the pet's idle choices. */
   random?: () => number;
 }) {
@@ -121,7 +115,10 @@ export function HomeScene({
 
   // Speech pauses with the pet while Дом is not on screen.
   useEffect(() => {
-    if (!active) return;
+    if (!active || quiet) {
+      setLine(null);
+      return;
+    }
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     turn.current = 0;
@@ -147,7 +144,7 @@ export function HomeScene({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [active, mood, petRef]);
+  }, [active, quiet, mood, petRef]);
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -168,9 +165,6 @@ export function HomeScene({
     : undefined;
 
   const say = () => showRef.current();
-  const shelf = decorations.slice(-(SHELF_SLOTS + FLOOR_SLOTS)).slice(0, SHELF_SLOTS);
-  const floorItems = decorations.slice(-(SHELF_SLOTS + FLOOR_SLOTS)).slice(SHELF_SLOTS);
-  const shownDecor = [...shelf, ...floorItems];
 
   const progress = cost > 0 ? Math.max(0, Math.min(1, accumulated / cost)) : 0;
   const goalLabel = `${homeStrings.goalA11y(goalName, accumulated, cost)}${threshold ? `. ${threshold}` : ""}`;
@@ -220,33 +214,7 @@ export function HomeScene({
           <View style={styles.plank} />
           <View style={styles.plank} />
         </View>
-        {floorItems.map((item, index) => (
-          <View
-            key={item.id}
-            style={[styles.decor, styles.decorFloor, { bottom: floorHeight - DECOR_SIZE + 6, left: spacing.m + index * (DECOR_SIZE + 8) }]}
-          >
-            <Text style={styles.decorIcon}>{item.icon}</Text>
-          </View>
-        ))}
       </View>
-      {shelf.length > 0 ? (
-        <View
-          accessible
-          role="img"
-          aria-label={petStrings.roomA11y(shownDecor.map((item) => item.name))}
-          pointerEvents="none"
-          style={[styles.shelf, { bottom: floorHeight + spacing.l + 96 }]}
-        >
-          <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.shelfRow}>
-            {shelf.map((item) => (
-              <View key={item.id} style={styles.decor}>
-                <Text style={styles.decorIcon}>{item.icon}</Text>
-              </View>
-            ))}
-          </View>
-          <View aria-hidden style={styles.shelfBoard} />
-        </View>
-      ) : null}
 
       <LivingPet
         pet={pet}
@@ -413,36 +381,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     height: 4,
     opacity: 0.5,
-  },
-  decor: {
-    alignItems: "center",
-    height: DECOR_SIZE,
-    justifyContent: "flex-end",
-    position: "relative",
-    width: DECOR_SIZE,
-  },
-  decorFloor: {
-    position: "absolute",
-  },
-  decorIcon: {
-    fontSize: 32,
-    includeFontPadding: false,
-    lineHeight: 40,
-    textAlign: "center",
-  },
-  shelf: {
-    position: "absolute",
-    right: spacing.l,
-  },
-  shelfRow: {
-    flexDirection: "row",
-    gap: 4,
-    paddingHorizontal: 4,
-  },
-  shelfBoard: {
-    backgroundColor: colors.raisedEdge,
-    borderRadius: 2,
-    height: 8,
   },
   bubble: {
     backgroundColor: colors.card,

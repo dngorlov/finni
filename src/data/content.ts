@@ -93,15 +93,16 @@ const termsFileSchema = z.object({
   terms: z.array(termSchema).length(10),
 });
 
-const INTRO_IDS = ["welcome", "goal", "decisions", "appearance", "name", "budget"] as const;
+const INTRO_IDS = ["welcome", "task", "decisions"] as const;
 
 const introCardSchema = z.object({
   id: z.enum(INTRO_IDS),
   title: z.string().min(1),
   body: z.string().min(1),
+  button: z.string().min(1),
 });
 
-/** Six static cards that open Первый запуск, before Питомец. Order is fixed. */
+/** Three static cards that open Первый запуск, before the pet is created. Order is fixed. */
 const introFileSchema = z
   .object({
     contentVersion: z.literal(CONTENT_VERSION),
@@ -350,7 +351,7 @@ export interface GameContent {
   bills: DayBillsContent[];
   goals: GoalContent[];
   terms: TermContent[];
-  /** Opening cards of Первый запуск, before Питомец. */
+  /** Opening cards of Первый запуск, before the pet is created. */
   intro: IntroCardContent[];
   tasks: TaskFileContent[];
 }

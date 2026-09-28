@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import {
   AccessibilityInfo,
   Animated,
@@ -14,7 +14,9 @@ import { STAGE_CODES, STAGE_NAMES, type Stage } from "../../core/stages";
 import { PixelIcon } from "./Pictogram";
 import { homeStrings } from "../stringsHome";
 import { strings } from "../strings";
-import { font, minTarget, spacing } from "../theme";
+import type { SpotlightBox } from "../finnyScript";
+import { measureSpotlight } from "../measureSpotlight";
+import { colors, font, minTarget, spacing } from "../theme";
 
 /** Lip under the tucked card, same press language as a raised button. */
 const PEEK_EDGE = 4;
@@ -64,10 +66,10 @@ const FACES: Record<Stage, Face> = {
     kind: "sticker",
   },
   pro: {
-    background: "#10243F",
-    band: "#10243F",
-    ink: "#E7FF57",
-    accent: "#C6F135",
+    background: colors.heroFill,
+    band: colors.heroFill,
+    ink: "#FFFFFF",
+    accent: colors.accent,
     radius: 2,
     fontFamily: font.pro,
     kind: "club",
@@ -97,6 +99,9 @@ export function StageCard({
   canPickGoal,
   onPickGoal,
   overlay = false,
+  spotlight = false,
+  measureRoot,
+  onSpotlightBox,
 }: {
   stage: Stage;
   petName: string;
@@ -113,6 +118,10 @@ export function StageCard({
   onPickGoal: () => void;
   /** Sit on top of the screen behind, instead of taking a row of its own. */
   overlay?: boolean;
+  /** Acquaintance tour is pointing at this card. */
+  spotlight?: boolean;
+  measureRoot?: RefObject<View | null>;
+  onSpotlightBox?: (id: string, box: SpotlightBox) => void;
 }) {
   const { width } = useWindowDimensions();
   const face = FACES[stage];
@@ -122,6 +131,16 @@ export function StageCard({
   const label = strings.stageA11y(name, number, STAGE_TOTAL, spoken);
   const { cardHeight } = cardSize(width);
   const [shift] = useState(() => new Animated.Value(tuckedOffset(Dimensions.get("window").width)));
+  const goalRef = useRef<View>(null);
+  const reportGoal = () => {
+    if (!spotlight || !open) return;
+    measureSpotlight(goalRef.current, measureRoot?.current ?? null, "goal", onSpotlightBox, face.radius);
+  };
+
+  useEffect(() => {
+    if (!spotlight || !open) return;
+    measureSpotlight(goalRef.current, measureRoot?.current ?? null, "goal", onSpotlightBox, face.radius);
+  }, [face.radius, measureRoot, onSpotlightBox, open, spotlight]);
 
   useEffect(() => {
     if (!open) return;
@@ -187,6 +206,13 @@ export function StageCard({
             { height: cardHeight, transform: [{ translateY: shift }] },
           ]}
         >
+          <View
+            ref={goalRef}
+            collapsable={false}
+            onLayout={reportGoal}
+            pointerEvents="none"
+            style={StyleSheet.absoluteFill}
+          />
           <CardFace {...faceProps} />
           <Pressable
             role="button"

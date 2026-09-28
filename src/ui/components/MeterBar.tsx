@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { strings } from "../strings";
 import { Pictogram } from "./Pictogram";
@@ -10,6 +11,9 @@ export function MeterBar({
   value,
   compact,
   sprite,
+  marked,
+  measureRef,
+  onMeasure,
 }: {
   icon: string;
   /** Andrei's pixel sprite shown instead of the emoji glyph. */
@@ -17,13 +21,25 @@ export function MeterBar({
   label: string;
   value: number;
   compact?: boolean;
+  /** Acquaintance tour is pointing at this meter. The ring is drawn by the coach, not on the bar. */
+  marked?: boolean;
+  measureRef?: Ref<View>;
+  onMeasure?: () => void;
 }) {
   const width = `${Math.max(0, Math.min(100, value))}%` as const;
   const name = strings.meterLine(label, value);
   const mark = sprite ? <PixelSprite name={sprite} size={24} /> : <Pictogram glyph={icon} />;
   if (compact) {
     return (
-      <View accessible aria-label={name} style={styles.compact}>
+      <View
+        ref={measureRef}
+        accessible
+        aria-label={name}
+        aria-selected={marked ? true : undefined}
+        collapsable={false}
+        onLayout={onMeasure}
+        style={styles.compact}
+      >
         {mark}
         <View style={styles.compactTrack} accessibilityElementsHidden>
           <View style={[styles.compactFill, { width }]} />
