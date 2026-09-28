@@ -137,16 +137,20 @@ describe("План yesterday", () => {
     const { user } = await playDayOneThenOpenDayTwo();
     await openMoney(user, "План");
 
+    // One pile per step: Обязательные, then Копилка, then Желаемые.
     expect(screen.getByText("Вчера: 12")).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Далее" }));
     expect(screen.getByText("Вчера: 15")).toBeOnTheScreen();
-    expect(screen.getByText("Вчера: 5")).toBeOnTheScreen();
-    expect(screen.getByText("Сегодня на 15 меньше, чем вчера")).toBeOnTheScreen();
-    expect(screen.getByText("Сегодня на 5 меньше, чем вчера")).toBeOnTheScreen();
-
+    expect(screen.getByText(" · сегодня на 15 меньше")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Копилка, больше" }));
-    expect(screen.getByText("Сегодня на 14 меньше, чем вчера")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Копилка: 1 монета")).toBeOnTheScreen();
-    expect(screen.getByRole("img", { name: /^План на сегодня: .*Копилка 1 монет/ })).toBeOnTheScreen();
+    expect(screen.getByText(" · сегодня на 14 меньше")).toBeOnTheScreen();
+    expect(screen.getByRole("slider", { name: "Копилка" })).toHaveAccessibilityValue({
+      now: 1,
+      text: "Копилка: 1 монета",
+    });
+    await user.press(screen.getByRole("button", { name: "Далее" }));
+    expect(screen.getByText("Вчера: 5")).toBeOnTheScreen();
+    expect(screen.getByText(" · сегодня на 5 меньше")).toBeOnTheScreen();
   });
 });
 

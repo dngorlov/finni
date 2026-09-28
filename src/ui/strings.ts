@@ -265,21 +265,13 @@ export const strings = {
   journalAmount: (n: number) => `${n > 0 ? "+" : ""}${n}`,
 
   planAvailable: (n: number) => `Можно распределить: ${n}`,
-  planIncomeToday: (n: number) => `Сегодня пришло: +${n}`,
-  planBillsTitle: "Счета на сегодня",
-  planBillsLine: (parts: readonly { name: string; price: number }[], total: number) =>
-    `${parts.map((part) => `${part.name} ${part.price}`).join(" · ")} = ${total}`,
-  planBillsFloor: (n: number) => `Обязательных не меньше ${n} — это счета.`,
   planBillsShort: (missing: number) => `На все счета не хватает ${missing}. Сделай Задание — за него дают монеты.`,
   planGoalForecast: (goal: string, days: number) =>
-    `${goal}: накопишь через ${days} ${daysWord(days)}, если откладывать столько каждый день.`,
-  planGoalNoSavings: (goal: string) => `Если ничего не отложить, ${goal} не станет ближе.`,
+    `Так ${goal} будет через ${days} ${daysWord(days)}.`,
+  planGoalNoSavings: (goal: string) => `Без Копилки ${goal} не станет ближе.`,
   planWantsHint: (names: readonly string[]) =>
     names.length > 0 ? `Хватит на: ${names.join(", ")}` : "Пока ни на что из желаемого не хватит.",
   planRemainder: (n: number) => `Останется свободных: ${n}`,
-  planOverBudget: "В плане больше монет, чем есть. Убавь суммы.",
-  planPromise: "Это обещание на сегодня. Монеты пока в Балансе.",
-  planSavingsExtra: "Положишь их отдельно — в Копилке.",
   confirmPlan: "Подтвердить план",
   confirmPlanTitle: "Подтвердить план дня?",
   confirmPlanBody:
