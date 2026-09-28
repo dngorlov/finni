@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
@@ -57,7 +57,9 @@ describe("Банк", () => {
       for (let n = 0; n < 3; n += 1) {
         await user.press(screen.getByRole("button", { name: "Дом" }));
         await user.press(screen.getByRole("button", { name: "Магазин" }));
-        ports.game.closeDay(profileId, content.catalog, content.bills);
+        await act(async () => {
+          ports.game.closeDay(profileId, content.catalog, content.bills);
+        });
         await user.press(screen.getByRole("button", { name: "Назад" }));
       }
       expect(screen.getByText("Вклад вернулся: +22 (из них 2 — проценты).")).toBeOnTheScreen();

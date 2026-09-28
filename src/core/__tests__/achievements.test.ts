@@ -5,11 +5,19 @@ describe("достижения", () => {
     expect(earnedAchievementIds(emptyAchievementFacts())).toEqual([]);
   });
 
-  it("earns a shop, a lunch, and a treat from those buys", () => {
-    expect(earnedAchievementIds(emptyAchievementFacts({ shopBuys: 1 }))).toEqual(["first_buy"]);
+  it("earns a first buy and a treat, and Обед adds nothing of its own", () => {
+    expect(earnedAchievementIds(emptyAchievementFacts({ shopBuys: 1, lunchBuys: 1 }))).toEqual(["first_buy"]);
     expect(
-      earnedAchievementIds(emptyAchievementFacts({ shopBuys: 1, lunchBuys: 1, optionalBuys: 1 })),
-    ).toEqual(["first_buy", "lunch", "treat"]);
+      earnedAchievementIds(emptyAchievementFacts({ shopBuys: 2, lunchBuys: 1, optionalBuys: 1 })),
+    ).toEqual(["first_buy", "treat"]);
+  });
+
+  it("gives the first finished Урок one reward, though it also closes day 1", () => {
+    expect(earnedAchievementIds(emptyAchievementFacts({ lessonsCompleted: 1, daysClosed: 1 }))).toEqual(["lesson"]);
+  });
+
+  it("has no reward for a Своя цель, only for the Цель", () => {
+    expect(earnedAchievementIds(emptyAchievementFacts({ goalsBought: 1, customGoalsBought: 1 }))).toEqual(["goal"]);
   });
 
   it("counts 50 coins put into Копилка, and keeps the first deposit before that", () => {
@@ -21,8 +29,8 @@ describe("достижения", () => {
   });
 
   it("earns the week only after seven closed days, and Про stays earned at Миллионер", () => {
-    expect(earnedAchievementIds(emptyAchievementFacts({ daysClosed: 1 }))).toEqual(["day_done"]);
-    expect(earnedAchievementIds(emptyAchievementFacts({ daysClosed: 7 }))).toEqual(["day_done", "week"]);
+    expect(earnedAchievementIds(emptyAchievementFacts({ daysClosed: 6 }))).toEqual([]);
+    expect(earnedAchievementIds(emptyAchievementFacts({ daysClosed: 7 }))).toEqual(["week"]);
     expect(earnedAchievementIds(emptyAchievementFacts({ stage: "pro" }))).toEqual(["pro"]);
     expect(earnedAchievementIds(emptyAchievementFacts({ stage: "millionaire" }))).toEqual(["pro", "millionaire"]);
   });

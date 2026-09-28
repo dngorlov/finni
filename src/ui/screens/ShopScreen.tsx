@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { META_KEYS } from "../../data/metaKeys";
@@ -70,6 +70,7 @@ export default function ShopScreen({ navigation }: Props) {
   const [receipt, setReceipt] = useState<PurchaseResultModel | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [offerPickGoal, setOfferPickGoal] = useState(false);
+  const [postponeInfoOpen, setPostponeInfoOpen] = useState(false);
 
   // A new «оплатить Счета» hint turns the list back to Необходимое.
   const [seenFocus, setSeenFocus] = useState(focus);
@@ -82,7 +83,8 @@ export default function ShopScreen({ navigation }: Props) {
     const profileId = meta.get(META_KEYS.activeProfileId);
     if (!profileId) return;
     const next = game.dayState(profileId);
-    const purchasedToday = game.purchasedItemIds(profileId, next.dayId);
+    // The day can close while Магазин is open (a Урок, Демо-режим); a closed day has no purchases to read.
+    const purchasedToday = next.open ? game.purchasedItemIds(profileId, next.dayId) : [];
     setDay(next);
     setBalance(next.available);
     setBought(purchasedToday);
@@ -228,7 +230,7 @@ export default function ShopScreen({ navigation }: Props) {
       return (
         <>
           {head}
-          <CoinText coin text={strings.shopConfirmBuy(item.name, item.price)} style={styles.section} />
+          <CoinText text={strings.shopConfirmBuy(item.price)} label={strings.shopConfirmBuyA11y(item.price)} style={styles.section} />
           <CoinText coin text={strings.shopBuyActiveGoalWarn(pot)} style={styles.body} />
           {planLines(item)}
         </>
@@ -250,7 +252,7 @@ export default function ShopScreen({ navigation }: Props) {
         {!canPay && flags.goal ? <CoinText text={strings.shopBlockedAlreadyGoal} style={styles.body} /> : null}
         {canPay && !flags.goal ? (
           <View style={styles.confirm}>
-            <CoinText coin text={strings.shopConfirmBuy(item.name, item.price)} style={styles.section} />
+            <CoinText text={strings.shopConfirmBuy(item.price)} label={strings.shopConfirmBuyA11y(item.price)} style={styles.section} />
             {planLines(item)}
           </View>
         ) : null}
@@ -324,8 +326,9 @@ export default function ShopScreen({ navigation }: Props) {
     ) : null;
 
   const sheetOpen = drawer.name !== "closed";
+  const anySheet = sheetOpen || postponeInfoOpen;
   // Behind an open drawer or the receipt the page is out of reach, for touch and for the screen reader.
-  const behindSheet = sheetOpen || receipt ? hiddenFromReader : {};
+  const behindSheet = anySheet || receipt ? hiddenFromReader : {};
 
   return (
     <Screen
@@ -363,6 +366,7 @@ export default function ShopScreen({ navigation }: Props) {
                 onBuy={() => openDrawer("buy", item)}
                 onPostpone={() => openDrawer("postpone", item)}
                 onRestore={() => markPostponed(item, false)}
+                onPostponeInfo={() => setPostponeInfoOpen(true)}
               />
             );
           })}
@@ -370,6 +374,14 @@ export default function ShopScreen({ navigation }: Props) {
       </View>
       <BottomSheet visible={sheetOpen} onClose={closeDrawer} footer={drawerFooter()}>
         {drawerBody()}
+      </BottomSheet>
+      <BottomSheet
+        visible={postponeInfoOpen}
+        onClose={() => setPostponeInfoOpen(false)}
+        footer={<PrimaryButton label={strings.gotIt} onPress={() => setPostponeInfoOpen(false)} />}
+      >
+        <Text style={styles.section}>{shopStrings.postponeInfoTitle}</Text>
+        <Text style={styles.body}>{shopStrings.postponeInfo}</Text>
       </BottomSheet>
       {receipt ? <PurchaseResult model={receipt} onDismiss={() => setReceipt(null)} /> : null}
       <GoalPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onChanged={load} />

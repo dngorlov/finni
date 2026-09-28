@@ -237,7 +237,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
 
     expect(screen.getByText(finnyScript.pickTitle)).toBeOnTheScreen();
     expect(screen.getByText(finnyScript.pickLine)).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Закрыть" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Без цели" })).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Сделать целью Конструктор" }));
@@ -303,12 +303,13 @@ describe("first-run flow (Appendix A 1–4)", () => {
     expect(screen.getByText("Новичок")).toBeOnTheScreen();
     expectMainChrome();
     expect(screen.queryByText("Выбери цель")).not.toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Текущая задача: купить нужное в Магазине" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Текущая задача: купить обед и проезд" })).toBeOnTheScreen();
     expect(screen.queryByText("Что такое бюджет?")).not.toBeOnTheScreen();
     expect(screen.getByLabelText(/Питомец Пух.*Вид 2.*спокойный/)).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Деньги" }));
-    expect(screen.getByRole("button", { name: "Журнал" })).toBeSelected();
+    // Журнал is the only section, so there is no switcher to press.
+    expect(screen.queryByRole("button", { name: "Журнал" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Копилка" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "План" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Банк" })).not.toBeOnTheScreen();

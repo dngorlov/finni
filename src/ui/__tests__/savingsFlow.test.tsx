@@ -93,7 +93,7 @@ describe("Копилка", () => {
     expect(screen.getByRole("button", { name: "Купить из копилки" })).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Купить из копилки" }));
-    expect(screen.getByText("Счастье +12")).toBeOnTheScreen();
+    expect(screen.getByText("Счастье +93")).toBeOnTheScreen();
     expect(screen.getByText("Копилка -90")).toBeOnTheScreen();
     expect(screen.getByText("Теперь ты Про!")).toBeOnTheScreen();
     expect(screen.queryByText(/Баланс/)).not.toBeOnTheScreen();
@@ -104,10 +104,15 @@ describe("Копилка", () => {
     expect(ports.game.boughtAsActiveGoalCount(profileId)).toBe(1);
     await user.press(screen.getByRole("button", { name: "Выбрать новую цель" }));
     expect(
-      screen.getByRole("button", { name: "Самокат. 160 монет. Счастье +14. Доехать до парка самому" }),
+      screen.getByRole("button", {
+        name: "Самокат. 160 монет. Счастье +95. Доехать до парка самому. Купишь — питомец перейдёт на этап «Миллионер»",
+      }),
     ).toBeOnTheScreen();
     expect(screen.getByText("Доехать до парка самому", { includeHiddenElements: true })).toBeOnTheScreen();
-    expect(screen.getByText("+14 счастье", { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByText("+95 счастье", { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(
+      screen.getAllByText("Купишь — питомец перейдёт на этап «Миллионер»", { includeHiddenElements: true }).length,
+    ).toBe(3);
     await user.press(screen.getByRole("button", { name: "Сделать целью Самокат" }));
     expect(screen.getAllByText("Самокат")).toHaveLength(2);
     expect(screen.getByLabelText("160 монет")).toBeOnTheScreen();

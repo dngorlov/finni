@@ -1,4 +1,5 @@
-import { act, render, screen, userEvent } from "@testing-library/react-native";
+import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { writeAnimationsOn } from "../motion";
 import { BackHandler } from "react-native";
 import type { CatalogItem } from "../../core/economy";
 import { META_KEYS } from "../../data/metaKeys";
@@ -56,6 +57,32 @@ describe("Этап на панели", () => {
     expect(screen.queryByRole("button", { name: "Закрыть" })).not.toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Этап 1 из 3, Новичок. Цель: Скейтборд, 0 из 90" })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Дом" })).toBeSelected();
+  });
+
+  it("slides the open card back down instead of dropping it, and drops it at once with Анимация off", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports);
+    const { user } = await renderApp(ports);
+    const stage = "Этап 1 из 3, Новичок. Цель: Скейтборд, 0 из 90";
+
+    await user.press(screen.getByRole("button", { name: stage }));
+    await user.press(screen.getByRole("button", { name: "Закрыть" }));
+    // Still drawn while it slides, but out of reach for touch and the screen reader.
+    expect(screen.getByTestId("stage-card-tucking", { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Закрыть" })).not.toBeOnTheScreen();
+    expect(
+      await screen.findByRole("button", { name: stage }),
+    ).toBeOnTheScreen();
+    await waitFor(() =>
+      expect(screen.queryByTestId("stage-card-tucking", { includeHiddenElements: true })).not.toBeOnTheScreen(),
+    );
+
+    await act(async () => {
+      writeAnimationsOn(ports.meta, false);
+    });
+    await user.press(screen.getByRole("button", { name: stage }));
+    await user.press(screen.getByRole("button", { name: "Закрыть" }));
+    expect(screen.queryByTestId("stage-card-tucking", { includeHiddenElements: true })).not.toBeOnTheScreen();
   });
 
   it("tucks from the dim layer and leaves Настройки unopened", async () => {
@@ -173,6 +200,8 @@ describe("Этап на панели", () => {
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
+    await user.press(screen.getByRole("button", { name: "Об авторах и источниках" }));
+    expect(screen.getByText("Шрифты")).toBeOnTheScreen();
     expect(screen.getByText("Nunito")).toBeOnTheScreen();
     expect(screen.getByText("Unbounded")).toBeOnTheScreen();
     expect(screen.getByText("Cormorant Garamond")).toBeOnTheScreen();

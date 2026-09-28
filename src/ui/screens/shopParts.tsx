@@ -18,7 +18,7 @@ import { colors, font, minTarget, radius, spacing, type } from "../theme";
 const tint = {
   mandatoryTile: colors.highlight,
   optionalTile: "#E9F0C4",
-  goalTag: "#FFE08A",
+  goalTag: colors.badgeFill,
   neutralTag: colors.track,
   gain: "#EEF3D2",
 } as const;
@@ -72,6 +72,7 @@ export function goalAnnouncement(
     price: number;
     description: string;
     effect: { meter: "care" | "mood"; delta: number };
+    note?: string;
   },
   selected: boolean,
 ) {
@@ -81,6 +82,7 @@ export function goalAnnouncement(
     strings.shopMeterA11y(meterWord(goal.effect.meter), goal.effect.delta),
   ];
   if (goal.description) parts.push(goal.description);
+  if (goal.note) parts.push(goal.note);
   if (selected) parts.push(strings.shopGoalChip);
   return parts.join(". ");
 }
@@ -206,7 +208,24 @@ export function RowButton({
   );
 }
 
-/** Two-segment switch; each half is a button with aria-selected. */
+/** Small square «i», a full 48 dp target, for a one-line explanation. */
+export function InfoButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      role="button"
+      aria-label={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.infoButton, pressed ? styles.rowButtonPressed : null]}
+    >
+      <PixelIcon name="info-box" size={20} color={colors.accentText} />
+    </Pressable>
+  );
+}
+
+/**
+ * Two-segment switch; each half is a button with aria-selected. A press sinks
+ * the face onto its edge like the raised buttons, so the tap is felt.
+ */
 export function SegmentedTabs<T extends string>({
   options,
   value,
@@ -227,11 +246,23 @@ export function SegmentedTabs<T extends string>({
             aria-label={option.label}
             aria-selected={selected}
             onPress={() => onChange(option.value)}
-            style={[styles.segment, selected ? styles.segmentOn : null]}
+            style={({ pressed }) => [
+              styles.segment,
+              selected ? styles.segmentOn : null,
+              pressed ? styles.segmentPressed : null,
+            ]}
           >
-            <View style={[styles.segmentFace, selected ? styles.segmentFaceOn : null]}>
-              <Text style={[styles.segmentLabel, selected ? styles.segmentLabelOn : null]}>{option.label}</Text>
-            </View>
+            {({ pressed }) => (
+              <View
+                style={[
+                  styles.segmentFace,
+                  selected ? styles.segmentFaceOn : null,
+                  pressed ? styles.segmentFacePressed : null,
+                ]}
+              >
+                <Text style={[styles.segmentLabel, selected ? styles.segmentLabelOn : null]}>{option.label}</Text>
+              </View>
+            )}
           </Pressable>
         );
       })}
@@ -249,6 +280,7 @@ export function ShopRow({
   onBuy,
   onPostpone,
   onRestore,
+  onPostponeInfo,
 }: {
   item: CatalogItemContent;
   flags: RowFlags;
@@ -258,6 +290,8 @@ export function ShopRow({
   onBuy: () => void;
   onPostpone: () => void;
   onRestore: () => void;
+  /** Opens the one-line «what Отложить does» note. */
+  onPostponeInfo?: () => void;
 }) {
   const shortfall = balance < item.price ? item.price - balance : null;
   return (
@@ -287,6 +321,7 @@ export function ShopRow({
         </View>
       </Pressable>
       <View style={styles.rowActions}>
+        {!flags.bought && onPostponeInfo ? <InfoButton label={shopStrings.postponeInfoA11y} onPress={onPostponeInfo} /> : null}
         {flags.bought ? null : flags.postponed ? (
           <RowButton
             label={shopStrings.restore}
@@ -320,6 +355,8 @@ export type GoalFace = {
   price: number;
   description: string;
   effect: { meter: "care" | "mood"; delta: number };
+  /** «Купишь — питомец перейдёт на этап «Про»». */
+  note?: string;
 };
 
 /** One Цель, laid out like a Магазин row: picture, name, what it is, the gain, and the price. */
@@ -346,6 +383,7 @@ export function GoalRow({
           <Text style={styles.name}>{goal.name}</Text>
           <View {...hiddenFromReader} style={styles.rowDetails}>
             {goal.description ? <Text style={styles.goalDescription}>{goal.description}</Text> : null}
+            {goal.note ? <Text style={styles.goalNote}>{goal.note}</Text> : null}
             <ItemTags item={{ once: false }} flags={{ due: false, goal: selected, bought: false, postponed: false }} />
             <ItemEffects item={goal} announce={false} />
           </View>
@@ -369,28 +407,11 @@ export function GoalRow({
   );
 }
 
-/** The «write your own» entry under the preset Цели. */
-export function OwnGoalRow({ onPress }: { onPress: () => void }) {
-  return (
-    <View style={styles.row}>
-      <Pressable role="button" aria-label={strings.customGoal} onPress={onPress} style={styles.rowInfo}>
-        <ItemTile item={{ icon: "✨", kind: "optional" }} />
-        <View style={styles.rowMiddle}>
-          <Text style={styles.name}>{strings.customGoal}</Text>
-          <Text {...hiddenFromReader} style={styles.goalDescription}>
-            {strings.customGoalLead}
-          </Text>
-        </View>
-      </Pressable>
-    </View>
-  );
-}
-
 /** Drawer header: big tile, name, price. */
 export function DrawerHead({ item, children }: { item: CatalogItemContent; children?: ReactNode }) {
   return (
     <View style={styles.drawerHead}>
-      <ItemTile item={item} size={96} />
+      <ItemTile item={item} size={72} />
       <View style={styles.drawerHeadText}>
         <Text style={styles.drawerName}>{item.name}</Text>
         <CoinPrice amount={item.price} large />
@@ -494,6 +515,16 @@ const styles = StyleSheet.create({
   rowButtonFacePrimary: {
     backgroundColor: colors.raisedFace,
   },
+  infoButton: {
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderColor: colors.disabledFace,
+    borderRadius: 12,
+    borderWidth: 2,
+    height: minTarget,
+    justifyContent: "center",
+    width: minTarget,
+  },
   rowButtonPressed: {
     opacity: 0.75,
   },
@@ -531,6 +562,15 @@ const styles = StyleSheet.create({
   },
   segmentFaceOn: {
     backgroundColor: colors.card,
+  },
+  // The 3 dp edge moves above the face: the face drops by the edge height.
+  segmentPressed: {
+    backgroundColor: colors.disabledFace,
+    paddingBottom: 0,
+    paddingTop: 3,
+  },
+  segmentFacePressed: {
+    backgroundColor: colors.highlight,
   },
   segmentLabel: {
     color: colors.subtle,
@@ -571,6 +611,11 @@ const styles = StyleSheet.create({
   name: {
     color: colors.text,
     fontSize: 18,
+    fontWeight: "700",
+  },
+  goalNote: {
+    color: colors.accentText,
+    fontSize: type.body,
     fontWeight: "700",
   },
   goalDescription: {

@@ -1,4 +1,6 @@
 import { loadContent } from "../content";
+import { METERS } from "../../core/config";
+import { itemMeterEffects } from "../../core/economy";
 
 describe("loadContent", () => {
   const content = loadContent();
@@ -72,6 +74,39 @@ describe("loadContent", () => {
     ]);
     const shopIds = new Set(content.catalog.map((item) => item.id));
     for (const goal of content.goals) expect(shopIds.has(goal.id)).toBe(false);
+  });
+
+  it("makes every Цель lift Счастье more the more it costs", () => {
+    const byPrice = [...content.goals].sort((a, b) => a.price - b.price);
+    for (const goal of content.goals) expect(goal.effect.meter).toBe("mood");
+    for (let index = 1; index < byPrice.length; index += 1) {
+      expect(byPrice[index].effect.delta).toBeGreaterThan(byPrice[index - 1].effect.delta);
+    }
+    for (const stage of ["novice", "pro", "millionaire"] as const) {
+      const deltas = content.goals.filter((goal) => goal.stage === stage).map((goal) => goal.effect.delta);
+      expect(deltas).toEqual([...deltas].sort((a, b) => a - b));
+      expect(new Set(deltas).size).toBe(deltas.length);
+    }
+    const smartwatch = content.goals.find((goal) => goal.id === "smartwatch")!;
+    expect(smartwatch.effect.delta).toBeGreaterThan(content.goals.find((goal) => goal.id === "lego")!.effect.delta);
+    expect(smartwatch.effect.delta).toBeLessThan(content.goals.find((goal) => goal.id === "skateboard")!.effect.delta);
+  });
+
+  it("makes a Цель worth more Счастье than the same coins spent on Желаемое", () => {
+    const wants = content.catalog.filter((item) => item.kind === "optional");
+    const bestPerCoin = Math.max(
+      ...wants.map((item) => itemMeterEffects(item).find((effect) => effect.meter === "mood")!.delta / item.price),
+    );
+    for (const goal of content.goals) {
+      expect(goal.effect.delta).toBeLessThanOrEqual(METERS.max);
+      // Счастье stops at METERS.max, so no pile of sweets adds more than that. Where the price
+      // outruns the meter, the Цель still fills at least nine tenths of it in one purchase.
+      const sweets = Math.min(goal.price * bestPerCoin, METERS.max * 0.9);
+      expect(goal.effect.delta).toBeGreaterThan(sweets);
+    }
+    for (const goal of content.goals.filter((row) => row.price * bestPerCoin < METERS.max)) {
+      expect(goal.effect.delta / goal.price).toBeGreaterThan(bestPerCoin);
+    }
   });
 
   it("ships a Счета cycle of mandatory items with a medicine day", () => {

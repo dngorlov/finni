@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   tile: {
     alignItems: "center",
-    backgroundColor: "#FFE08A",
+    backgroundColor: colors.highlight,
     borderRadius: 20,
     height: 72,
     justifyContent: "center",
