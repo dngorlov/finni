@@ -14,9 +14,17 @@ export type PetPose = "idle" | "happy" | "sad";
 /** A new Питомец starts green, like the app icon. */
 export const DEFAULT_COLOR: ColorKey = "c3";
 
-/** Pose from meters (M2 spec; not settled in ROADMAP). */
+/** Meter bounds for the Дом pose (M2 spec; not settled in ROADMAP). */
+export const POSE_THRESHOLDS = {
+  /** Any meter below this: sad. */
+  sadBelow: 30,
+  /** Both meters at or above this: happy. */
+  happyFrom: 70,
+} as const;
+
+/** Pose from meters. */
 export function poseFromMeters(care: number, mood: number): PetPose {
-  if (care < 30 || mood < 30) return "sad";
-  if (care >= 70 && mood >= 70) return "happy";
+  if (care < POSE_THRESHOLDS.sadBelow || mood < POSE_THRESHOLDS.sadBelow) return "sad";
+  if (care >= POSE_THRESHOLDS.happyFrom && mood >= POSE_THRESHOLDS.happyFrom) return "happy";
   return "idle";
 }
