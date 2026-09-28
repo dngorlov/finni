@@ -28,7 +28,7 @@ describe("Копилка", () => {
     await user.press(screen.getByRole("button", { name: "Сумма, больше" }));
     await user.press(screen.getByRole("button", { name: "Положить" }));
 
-    expect(screen.getByText("Баланс -1")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс -1")).toBeOnTheScreen();
     expect(screen.getByText("Копилка +1")).toBeOnTheScreen();
     expect(screen.queryByText(/Счастье/)).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
@@ -60,7 +60,7 @@ describe("Копилка", () => {
     expect(screen.getByLabelText(/В копилке станет 14 монет\. Мечта отодвинется/)).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Забрать 1?" }));
 
-    expect(screen.getByText("Баланс +1")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс +1")).toBeOnTheScreen();
     expect(screen.getByText("Копилка -1")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
     expect(screen.getByLabelText("В копилке 14")).toBeOnTheScreen();

@@ -55,7 +55,7 @@ describe("Ежедневный подарок", () => {
 
     await user.press(screen.getByRole("button", { name: "Забрать подарок, 5 монет" }));
     expect(screen.getByText("Вот твой подарок")).toBeOnTheScreen();
-    expect(screen.getByText("Тебе 5 монет")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Тебе 5 монет")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Подарок" })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Понятно" }));
