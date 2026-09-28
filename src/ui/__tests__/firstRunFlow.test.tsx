@@ -14,7 +14,7 @@ async function renderApp(ports = createFakePorts()) {
   return { user, ports, view };
 }
 
-const welcomeTitle = "Добро пожаловать в “Питомца Финни”!";
+const welcomeTitle = "Добро пожаловать в “Финни”!";
 
 async function leaveOpeningCards(user: ReturnType<typeof userEvent.setup>) {
   await user.press(screen.getByRole("button", { name: "Начать" }));
