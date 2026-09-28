@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { act, render, screen, userEvent } from "@testing-library/react-native";
 import type { CatalogItem } from "../../core/economy";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
@@ -42,15 +42,15 @@ describe("Достижения", () => {
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
-    expect(screen.getByRole("button", { name: "Достижения. Получено 0 из 16" })).toBeOnTheScreen();
-    expect(screen.getByText("0/16", { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Достижения. Получено 0 из 13" })).toBeOnTheScreen();
+    expect(screen.getByText("0/13", { includeHiddenElements: true })).toBeOnTheScreen();
     expect(screen.queryByRole("heading", { name: "Достижения" })).not.toBeOnTheScreen();
     expect(screen.queryByLabelText("Первая покупка. Купи что-нибудь в Магазине.")).not.toBeOnTheScreen();
 
-    await user.press(screen.getByRole("button", { name: "Достижения. Получено 0 из 16" }));
+    await user.press(screen.getByRole("button", { name: "Достижения. Получено 0 из 13" }));
     expect(screen.getByRole("heading", { name: "Достижения" })).toBeOnTheScreen();
-    expect(screen.getByText("0/16")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Получено 0 из 16")).toBeOnTheScreen();
+    expect(screen.getByText("0/13")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Получено 0 из 13")).toBeOnTheScreen();
     expect(screen.getByLabelText("Первая покупка. Купи что-нибудь в Магазине.")).toBeOnTheScreen();
     expect(screen.getByLabelText("Неделя с Финни. Закрой 7 Игровых дней.")).toBeOnTheScreen();
     expect(screen.getByLabelText("Миллионер. Перейди на этап Миллионер.")).toBeOnTheScreen();
@@ -68,10 +68,7 @@ describe("Достижения", () => {
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
     expect(screen.getByText("Первая покупка")).toBeOnTheScreen();
     expect(screen.getByText("Ты купил в Магазине.")).toBeOnTheScreen();
-    expect(screen.getByText("Есть ещё.")).toBeOnTheScreen();
-    await user.press(screen.getByRole("button", { name: "Ура!" }));
-    expect(screen.getByText("Обед готов")).toBeOnTheScreen();
-    expect(screen.getByText("Питомец поел.")).toBeOnTheScreen();
+    expect(screen.queryByText("Есть ещё.")).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Ура!" }));
     expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
@@ -79,14 +76,27 @@ describe("Достижения", () => {
     await user.press(screen.getByRole("button", { name: "Назад" }));
     await openMoney(user, "Журнал");
     expect(screen.getByLabelText("Первая покупка. Получено. Ты купил в Магазине. День 1")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Обед готов. Получено. Питомец поел. День 1")).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
-    await user.press(screen.getByRole("button", { name: "Достижения. Получено 2 из 16" }));
-    expect(screen.getByText("2/16")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Получено 2 из 16")).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Достижения. Получено 1 из 13" }));
+    expect(screen.getByText("1/13")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Получено 1 из 13")).toBeOnTheScreen();
     expect(screen.getByLabelText("Первая покупка. Получено. Ты купил в Магазине.")).toBeOnTheScreen();
     expect(screen.getByLabelText("Полтинник. Положи в Копилку 50 монет.")).toBeOnTheScreen();
+  });
+
+  it("pops the reward on the very first launch, for a profile made after the app opened", async () => {
+    const ports = createFakePorts();
+    await renderApp(ports);
+    expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
+
+    await act(async () => {
+      const profileId = seedReturningChild(ports);
+      ports.game.purchase(profileId, ports.game.dayState(profileId).dayId, lunch);
+    });
+
+    expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
+    expect(screen.getByText("Первая покупка")).toBeOnTheScreen();
   });
 
   it("shows the day's earned achievements on Итоги дня and the full set on Итоги", async () => {
@@ -98,7 +108,6 @@ describe("Достижения", () => {
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
     await dismissRewards(user);
     expect(screen.getByText("Итоги дня")).toBeOnTheScreen();
-    expect(screen.getByLabelText("День позади. Получено. Игровой день закрыт. День 1")).toBeOnTheScreen();
     expect(screen.getByLabelText("Держу слово. Получено. Потратил не больше Плана. День 1")).toBeOnTheScreen();
     expect(screen.getByLabelText("Счета оплачены. Получено. Счета дня оплачены. День 1")).toBeOnTheScreen();
     expect(screen.queryByText("Неделя с Финни")).not.toBeOnTheScreen();

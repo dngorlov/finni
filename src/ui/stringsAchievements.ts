@@ -16,12 +16,6 @@ export const ACHIEVEMENT_COPY: Record<AchievementId, AchievementCopy> = {
     hint: "Купи что-нибудь в Магазине.",
     detail: "Ты купил в Магазине.",
   },
-  lunch: {
-    emoji: "🍱",
-    title: "Обед готов",
-    hint: "Купи Обед.",
-    detail: "Питомец поел.",
-  },
   treat: {
     emoji: "🍬",
     title: "Маленькая радость",
@@ -46,12 +40,6 @@ export const ACHIEVEMENT_COPY: Record<AchievementId, AchievementCopy> = {
     hint: "Подтверди План.",
     detail: "План подтверждён.",
   },
-  day_done: {
-    emoji: "🌙",
-    title: "День позади",
-    hint: "Закрой Игровой день.",
-    detail: "Игровой день закрыт.",
-  },
   week: {
     emoji: "📅",
     title: "Неделя с Финни",
@@ -69,12 +57,6 @@ export const ACHIEVEMENT_COPY: Record<AchievementId, AchievementCopy> = {
     title: "Цель куплена",
     hint: "Купи Цель.",
     detail: "Цель куплена из Копилки.",
-  },
-  own_goal: {
-    emoji: "✏️",
-    title: "Своя цель",
-    hint: "Купи Свою цель.",
-    detail: "Своя цель куплена.",
   },
   bank: {
     emoji: "🏦",

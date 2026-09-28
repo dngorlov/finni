@@ -1,6 +1,7 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
+import { billsPhrase } from "../tasks/resolveCurrentTask";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 
 const content = loadContent();
@@ -35,7 +36,7 @@ describe("Магазин", () => {
     expect(
       screen.getByRole("button", { name: "Школьные принадлежности. 10 монет. Счастье +5" }),
     ).toBeOnTheScreen();
-    expect(screen.getByText("Каждый день сытость -15 и счастье -15. Покупка в Магазине это компенсирует.")).toBeOnTheScreen();
+    expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     expect(screen.queryByText(/не купишь|если отложить/)).not.toBeOnTheScreen();
     expect(screen.queryByText("Счёт на сегодня", { includeHiddenElements: true })).not.toBeOnTheScreen();
     expect(screen.getAllByText("Необходимое", { includeHiddenElements: true })).toHaveLength(1);
@@ -53,7 +54,8 @@ describe("Магазин", () => {
     expect(screen.getByLabelText("Сытость +10")).toBeOnTheScreen();
     expect(screen.queryByText(/не купишь/)).not.toBeOnTheScreen();
     expect(screen.getByLabelText("после покупки: 88 монет")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Купить Обед за 12?")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Купить за 12 монет?")).toBeOnTheScreen();
+    expect(screen.queryByText(/Купить Обед за/)).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Купить Обед" })).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Купить" }));
 
@@ -140,7 +142,7 @@ describe("Магазин", () => {
     await user.press(screen.getByRole("button", { name: "Магазин" }));
     await user.press(screen.getByRole("button", { name: /^Обед/ }));
     expect(screen.getByText(lunch.description)).toBeOnTheScreen();
-    expect(screen.getByLabelText("Купить Обед за 12?")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Купить за 12 монет?")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: /^Проезд/ })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Назад" }));
@@ -211,10 +213,44 @@ describe("Магазин", () => {
     seedReturningChild(ports);
     const { user } = await renderApp(ports);
 
-    await user.press(screen.getByRole("button", { name: "Текущая задача: купить нужное в Магазине" }));
+    await user.press(screen.getByRole("button", { name: "Текущая задача: купить обед и проезд" }));
     expect(screen.getByRole("button", { name: "Необходимое" })).toBeSelected();
     expect(screen.getByRole("button", { name: /^Обед/ })).toBeSelected();
     expect(screen.getByRole("button", { name: /^Проезд/ })).toBeSelected();
     expect(screen.getByRole("button", { name: /^Школьные принадлежности/ })).not.toBeSelected();
+  });
+
+  it("explains «Отложить» from the «i» beside it", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports);
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Магазин" }));
+    const infos = screen.getAllByRole("button", { name: "Что значит «Отложить»" });
+    expect(infos.length).toBeGreaterThan(0);
+    await user.press(infos[0]!);
+    expect(screen.getByText(/значит пока не покупать: монеты останутся у тебя/)).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Отложить Обед" })).not.toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Понятно" }));
+    expect(screen.queryByText(/значит пока не покупать/)).not.toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Отложить Обед" })).toBeOnTheScreen();
+  });
+
+  it("names what is left to buy in Текущая задача as Счета get paid", async () => {
+    const ports = createFakePorts();
+    const profileId = seedReturningChild(ports);
+    ports.game.purchase(profileId, ports.game.dayState(profileId).dayId, lunch);
+    await renderApp(ports);
+
+    expect(screen.getByRole("button", { name: "Текущая задача: купить проезд" })).toBeOnTheScreen();
+  });
+});
+
+describe("billsPhrase", () => {
+  it("lowercases catalog names and joins the last one with «и»", () => {
+    expect(billsPhrase(["lunch"], content)).toBe("обед");
+    expect(billsPhrase(["lunch", "transport"], content)).toBe("обед и проезд");
+    expect(billsPhrase(["lunch", "transport", "medicine"], content)).toBe("обед, проезд и лекарство");
+    expect(billsPhrase([], content)).toBe("");
   });
 });

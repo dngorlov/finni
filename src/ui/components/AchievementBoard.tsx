@@ -29,25 +29,34 @@ function sameEarned(left: readonly EarnedAchievement[], right: readonly EarnedAc
   );
 }
 
+/**
+ * The active profile is read on every snapshot, not once at mount: the host
+ * mounts before Первый запуск writes the profile, and nothing re-renders it
+ * after. Reading it once left the first profile's rewards silent until the
+ * next launch.
+ */
 function useEarned() {
   const { game, meta } = useSession();
-  const profileId = meta.get(META_KEYS.activeProfileId);
   const cache = useRef<{ key: string; rows: EarnedAchievement[] }>({ key: "", rows: NO_ACHIEVEMENTS });
 
-  const subscribe = useCallback(
-    (listener: () => void) => (profileId ? game.subscribe(listener) : () => {}),
-    [game, profileId],
-  );
+  const subscribe = useCallback((listener: () => void) => game.subscribe(listener), [game]);
   const getSnapshot = useCallback(() => {
+    const profileId = meta.get(META_KEYS.activeProfileId);
     if (!profileId) return NO_ACHIEVEMENTS;
-    const next = game.listAchievements(profileId);
+    let next: EarnedAchievement[];
+    try {
+      next = game.listAchievements(profileId);
+    } catch {
+      // Удалить профиль leaves the id behind for a moment.
+      return NO_ACHIEVEMENTS;
+    }
     if (cache.current.key === profileId && sameEarned(cache.current.rows, next)) return cache.current.rows;
     cache.current = { key: profileId, rows: next };
     return next;
-  }, [game, profileId]);
+  }, [game, meta]);
   const rows = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  return { profileId, rows, game };
+  return { profileId: meta.get(META_KEYS.activeProfileId), rows, game };
 }
 
 function AchievementRow({
@@ -78,7 +87,7 @@ function AchievementRow({
         aria-hidden
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={[styles.tile, { backgroundColor: earned ? "#FFE08A" : colors.track }]}
+        style={[styles.tile, { backgroundColor: earned ? colors.highlight : colors.track }]}
       >
         <Text style={styles.emoji}>{copy.emoji}</Text>
       </View>
@@ -166,7 +175,7 @@ export function EarnedAchievements({ dayN, collapseAfter }: { dayN?: number; col
 /** Pops the reward modal for each Достижение not yet dismissed. */
 export function AchievementHost() {
   const { profileId, rows, game } = useEarned();
-  const pending = rows.filter((row) => !row.celebrated);
+  const pending = rows.filter((row) => !row.celebrated && copyFor(row.id) != null);
   const current = pending[0];
   const copy = current ? copyFor(current.id) : null;
   if (!profileId || !current || !copy) return null;
@@ -228,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: type.body,
   },
   tag: {
-    backgroundColor: "#FFE08A",
+    backgroundColor: colors.badgeFill,
     borderRadius: 12,
     paddingHorizontal: spacing.s,
     paddingVertical: 4,

@@ -1,24 +1,21 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View, type Role } from "react-native";
-import { CUSTOM_GOAL_MOOD, CUSTOM_GOAL_PRICE_MAX } from "../../core/customGoal";
-import { showStageThreshold, stageGoalFloor } from "../../core/stages";
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { CUSTOM_GOAL_MOOD } from "../../core/customGoal";
+import { nextStage, STAGE_NAMES } from "../../core/stages";
 import type { CatalogItemContent, GoalContent } from "../../data/content";
 import type { JournalEntry } from "../../data/repositories/gameRepository";
 import { META_KEYS } from "../../data/metaKeys";
-import { DEFAULT_GOAL_EMOJI, GOAL_EMOJI_GROUPS } from "../goalEmojis";
+import { DEFAULT_GOAL_EMOJI } from "../goalEmojis";
 import { goalThresholdLabel } from "../goalLabel";
-import { GoalRow, OwnGoalRow } from "../screens/shopParts";
+import { GoalRow } from "../screens/shopParts";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
-import { colors, minTarget, radius, spacing, type } from "../theme";
-import { AmountStepper } from "./AmountStepper";
+import { colors, radius, spacing, type } from "../theme";
 import { AppModal } from "./AppModal";
 import { CoinText } from "./CoinText";
 import { ScreenTitle } from "./ScreenTitle";
 import { PrimaryButton } from "./PrimaryButton";
 import { TextButton } from "./TextButton";
-
-const TEXTBOX_ROLE = "textbox" as Role;
 
 /** Lifetime `once` ownership: any journal purchase of a once catalog id (plus today's purchased ids). */
 export function ownedOnceItemIds(
@@ -44,8 +41,6 @@ export function settableOptionalItems(
   return catalog.filter((item) => item.kind === "optional" && !(item.once && ownedOnce.has(item.id)));
 }
 
-type CustomDraft = { icon: string; title: string; price: number };
-
 export function GoalPicker({
   visible,
   onClose,
@@ -61,25 +56,21 @@ export function GoalPicker({
   title?: string;
   /** Sentence under the heading, on the list only. */
   lead?: string;
-  /** Stay until a Цель is set. Hides «Закрыть» and «Без цели». */
+  /** Stay until a Цель is set. Hides «Закрыть». */
   required?: boolean;
 }) {
   const { game, meta, content } = useSession();
   const { height: windowHeight } = useWindowDimensions();
   const listMaxHeight = Math.round(windowHeight * 0.62);
   const [pending, setPending] = useState<GoalContent | null>(null);
-  const [draft, setDraft] = useState<CustomDraft | null>(null);
-  const [confirmDraft, setConfirmDraft] = useState<CustomDraft | null>(null);
-  const [pickingIcon, setPickingIcon] = useState(false);
 
   const profileId = meta.get(META_KEYS.activeProfileId);
   const savings = profileId ? game.savingsState(profileId) : null;
   const pot = savings?.pot ?? 0;
   const activeKey = savings?.activeGoal?.key ?? null;
   const stage = profileId ? game.getProfile(profileId).stage : "novice";
-  const presetPrices = content.goals.filter((goal) => goal.stage === stage).map((goal) => goal.price);
-  const floor = presetPrices.length > 0 ? stageGoalFloor(presetPrices) : 0;
-  const credit = savings?.stageCredit ?? 0;
+  const next = nextStage(stage);
+  const stepNote = next === stage ? null : strings.goalStepNote(STAGE_NAMES[next]);
 
   const items = useMemo(() => {
     if (!profileId) return [];
@@ -96,9 +87,6 @@ export function GoalPicker({
 
   const close = () => {
     setPending(null);
-    setDraft(null);
-    setConfirmDraft(null);
-    setPickingIcon(false);
     onClose();
   };
 
@@ -117,21 +105,6 @@ export function GoalPicker({
     onClose();
   };
 
-  const applyCustom = (next: CustomDraft) => {
-    if (!profileId || floor <= 0) return;
-    game.setCustomGoal(profileId, {
-      name: next.title,
-      icon: next.icon,
-      price: next.price,
-      presetPrices,
-    });
-    setDraft(null);
-    setConfirmDraft(null);
-    setPickingIcon(false);
-    onChanged?.();
-    onClose();
-  };
-
   const choose = (item: GoalContent) => {
     if (!profileId) return;
     if (activeKey && activeKey !== item.id) {
@@ -141,39 +114,9 @@ export function GoalPicker({
     apply(item);
   };
 
-  const saveCustom = () => {
-    if (!draft || draft.title.trim().length === 0) return;
-    if (activeKey) {
-      setConfirmDraft(draft);
-      setDraft(null);
-      setPickingIcon(false);
-      return;
-    }
-    applyCustom(draft);
-  };
-
-  const openCustom = () => {
-    setPending(null);
-    setPickingIcon(false);
-    setDraft({ icon: DEFAULT_GOAL_EMOJI, title: "", price: floor });
-  };
-
-  const drop = () => {
-    if (!profileId) return;
-    game.clearActiveGoal(profileId);
-    setPending(null);
-    onChanged?.();
-    onClose();
-  };
-
   if (!visible) return null;
 
-  const thresholdFor = (price: number) =>
-    showStageThreshold({ stage, custom: true, price, threshold: floor })
-      ? strings.stageThreshold(credit, floor)
-      : null;
-  const drafting = draft ?? confirmDraft;
-  const thresholdLabel = drafting ? thresholdFor(drafting.price) : null;
+  // A Своя цель saved before ADR-0015 stays readable and buyable; no new one can be written.
   const activeCustom = savings?.activeGoal?.custom ? savings.activeGoal : null;
 
   return (
@@ -187,84 +130,6 @@ export function GoalPicker({
               <TextButton label={strings.close} onPress={() => setPending(null)} />
               <PrimaryButton label={strings.shopMakeGoal} onPress={() => apply(pending)} />
             </>
-          ) : confirmDraft ? (
-            <>
-              <ScreenTitle style={styles.title}>{strings.customGoal}</ScreenTitle>
-              <CoinText coin text={strings.shopConfirmReplaceGoal(confirmDraft.title.trim(), pot)} style={styles.body} />
-              {thresholdLabel ? <Text style={styles.body}>{thresholdLabel}</Text> : null}
-              <TextButton label={strings.back} onPress={() => { setDraft(confirmDraft); setConfirmDraft(null); }} />
-              <PrimaryButton label={strings.shopMakeGoal} onPress={() => applyCustom(confirmDraft)} />
-            </>
-          ) : draft && pickingIcon ? (
-            <>
-              <ScreenTitle style={styles.title}>{strings.goalIcon(draft.icon)}</ScreenTitle>
-              <ScrollView style={[styles.list, { maxHeight: listMaxHeight }]} contentContainerStyle={styles.emojiList}>
-                {GOAL_EMOJI_GROUPS.map((group) => (
-                  <View key={group.title} style={styles.emojiGroup}>
-                    <Text style={styles.groupTitle}>{group.title}</Text>
-                    <View style={styles.emojiGrid}>
-                      {group.emojis.map((emoji) => (
-                        <Pressable
-                          key={emoji}
-                          role="button"
-                          aria-label={strings.goalIconPick(emoji)}
-                          onPress={() => {
-                            setDraft({ ...draft, icon: emoji });
-                            setPickingIcon(false);
-                          }}
-                          style={styles.emoji}
-                        >
-                          <Text aria-hidden style={styles.emojiGlyph}>
-                            {emoji}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-              <TextButton label={strings.back} onPress={() => setPickingIcon(false)} />
-            </>
-          ) : draft ? (
-            <>
-              <ScreenTitle style={styles.title}>{strings.customGoal}</ScreenTitle>
-              <Pressable
-                role="button"
-                aria-label={strings.goalIcon(draft.icon)}
-                onPress={() => setPickingIcon(true)}
-                style={styles.iconButton}
-              >
-                <Text aria-hidden style={styles.iconGlyph}>
-                  {draft.icon}
-                </Text>
-              </Pressable>
-              <TextInput
-                role={TEXTBOX_ROLE}
-                aria-label={strings.customGoalName}
-                placeholder={strings.customGoalNameHint}
-                placeholderTextColor={colors.subtle}
-                value={draft.title}
-                maxLength={24}
-                onChangeText={(title) => setDraft({ ...draft, title })}
-                style={styles.input}
-              />
-              <AmountStepper
-                label={strings.customGoalPrice}
-                pictogram={strings.balanceIcon}
-                value={draft.price}
-                min={1}
-                max={CUSTOM_GOAL_PRICE_MAX}
-                showTrack
-                onChange={(price) => setDraft({ ...draft, price })}
-              />
-              {thresholdLabel ? <Text style={styles.body}>{thresholdLabel}</Text> : null}
-              <TextButton label={strings.back} onPress={() => { setDraft(null); setPickingIcon(false); }} />
-              <PrimaryButton
-                label={strings.shopMakeGoal}
-                disabled={draft.title.trim().length === 0}
-                onPress={saveCustom}
-              />
-            </>
           ) : (
             <>
               <ScreenTitle style={styles.title}>{title}</ScreenTitle>
@@ -276,7 +141,7 @@ export function GoalPicker({
                       name: activeCustom.name,
                       icon: activeCustom.icon || DEFAULT_GOAL_EMOJI,
                       price: activeCustom.cost,
-                      description: (savings ? goalThresholdLabel(savings, stage) : null) ?? strings.customGoalLead,
+                      description: (savings ? goalThresholdLabel(savings, stage) : null) ?? "",
                       effect: { meter: "mood", delta: CUSTOM_GOAL_MOOD },
                     }}
                     selected
@@ -294,15 +159,14 @@ export function GoalPicker({
                         price: item.price,
                         description: item.description,
                         effect: item.effect,
+                        note: stepNote ?? undefined,
                       }}
                       selected={selected}
                       onChoose={selected ? close : () => choose(item)}
                     />
                   );
                 })}
-                <OwnGoalRow onPress={openCustom} />
               </ScrollView>
-              {required ? null : <TextButton label={strings.goalDrop} onPress={drop} />}
               {required ? null : <TextButton label={strings.close} onPress={close} />}
             </>
           )}
@@ -342,52 +206,5 @@ const styles = StyleSheet.create({
   listContent: {
     gap: 12,
     paddingVertical: spacing.s,
-  },
-  input: {
-    borderColor: colors.track,
-    borderRadius: 12,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: type.body,
-    minHeight: minTarget,
-    paddingHorizontal: spacing.m,
-  },
-  iconButton: {
-    alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: colors.highlight,
-    borderRadius: 12,
-    height: minTarget,
-    justifyContent: "center",
-    width: minTarget,
-  },
-  iconGlyph: {
-    fontSize: 28,
-  },
-  emojiList: {
-    gap: spacing.m,
-    paddingVertical: spacing.s,
-  },
-  emojiGroup: {
-    gap: spacing.s,
-  },
-  groupTitle: {
-    color: colors.subtle,
-    fontSize: type.body,
-    fontWeight: "700",
-  },
-  emojiGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.s,
-  },
-  emoji: {
-    alignItems: "center",
-    height: minTarget,
-    justifyContent: "center",
-    width: minTarget,
-  },
-  emojiGlyph: {
-    fontSize: 28,
   },
 });

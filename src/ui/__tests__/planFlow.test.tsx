@@ -22,7 +22,7 @@ describe("plan from Main", () => {
     expect(screen.queryByText("Составь план дня")).not.toBeOnTheScreen();
 
     await user.press(planTile);
-    expect(screen.queryByText("Каждый день сытость -15 и счастье -15. Покупка в Магазине это компенсирует.")).not.toBeOnTheScreen();
+    expect(screen.queryByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).not.toBeOnTheScreen();
     expect(screen.getByText("Сегодня пришло: +100")).toBeOnTheScreen();
     expect(screen.getByText("Это обещание на сегодня. Монеты пока в Балансе.")).toBeOnTheScreen();
     expect(screen.getByText("Сначала счета и всё нужное.")).toBeOnTheScreen();

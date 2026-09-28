@@ -383,9 +383,12 @@ export default function MainScreen({ navigation }: Props) {
             {tab === "money" || leaving === "money" ? (
               <TabPane open={tab === "money"} leaving={leaving === "money"} fadeIn={fade?.value ?? null}>
                 <View style={styles.money}>
-                  <View style={styles.menu} role="tablist" aria-label={moneyStrings.sections}>
-                    <PillRow grow options={options} value={current.id} onChange={setMoney} />
-                  </View>
+                  {/* A lone Журнал pill switches nothing; the row appears once a second section opens. */}
+                  {options.length > 1 ? (
+                    <View style={styles.menu} role="tablist" aria-label={moneyStrings.sections}>
+                      <PillRow grow options={options} value={current.id} onChange={setMoney} />
+                    </View>
+                  ) : null}
                   <View style={styles.bodySlot}>
                     {money === "savings" ? <SavingsScreen /> : null}
                     {money === "plan" ? <PlanScreen /> : null}

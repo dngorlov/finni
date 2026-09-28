@@ -33,12 +33,16 @@ export async function openTab(user: ReturnType<typeof userEvent.setup>, name: "�
   await user.press(screen.getByRole("button", { name }));
 }
 
-/** Open a Деньги section from the pill tabs at the top (Копилка is first). */
+/**
+ * Open a Деньги section from the pill tabs at the top (Копилка is first).
+ * While Журнал is the only section there are no pills, and Деньги shows it.
+ */
 export async function openMoney(
   user: ReturnType<typeof userEvent.setup>,
   section: "Копилка" | "План" | "Журнал" | "Банк",
 ) {
   await openTab(user, "Деньги");
+  if (section === "Журнал" && !screen.queryByRole("button", { name: section })) return;
   await user.press(screen.getByRole("button", { name: section }));
 }
 

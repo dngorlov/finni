@@ -5,7 +5,8 @@ export type CurrentTask =
   | { kind: "set-goal" }
   | { kind: "buy-goal"; goalId: string }
   | { kind: "confirm-plan" }
-  | { kind: "buy-bills" }
+  /** `itemIds`: today's unpaid Счета, in bill order, when the caller knows them. */
+  | { kind: "buy-bills"; itemIds?: readonly string[] }
   | { kind: "lesson"; taskId: string };
 
 export interface CurrentTaskInput {

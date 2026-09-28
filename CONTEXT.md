@@ -92,11 +92,11 @@ Separate from Копилка and opened after the lesson «Где живут н�
 _Avoid_: депозит, счёт, копилка (for the bank)
 
 **Цель (Goal)**:
-The one thing Копилка is accumulating toward. The child picks one of the three options of the current Этап — Новичок: Конструктор, Смарт-часы, Скейтборд; Про: Набор для рисования, Самокат, Телефон; Миллионер: Гитара, Велосипед, Компьютер — or writes a Своя цель. It is not sold in Магазин; there is at most one at a time. Buying a preset Цель, or a Своя цель that is not cheaper than the Порог этапа, advances Этап.
+The one thing Копилка is accumulating toward. The child picks one of the three options of the current Этап — Новичок: Конструктор, Смарт-часы, Скейтборд; Про: Набор для рисования, Самокат, Телефон; Миллионер: Гитара, Велосипед, Компьютер. It is not sold in Магазин; there is at most one at a time, and the child changes it only by picking another. Buying it advances Этап and lifts Счастье more than the same coins spent on Желаемые; a dearer Цель lifts it more.
 _Avoid_: ачивка, мечта, Желаемое
 
 **Своя цель (Custom goal)**:
-A Цель the child writes on the current Этап: a name, an emoji значок, and a price. One at a time, beside the three presets, bought from Копилка the same way.
+A Цель a child wrote before ADR-0015, with a name, an emoji значок, and a price. No new one can be written. A saved one stays the active Цель and is bought from Копилка the same way.
 _Avoid_: произвольная цель, мечта
 
 **Порог этапа (Stage threshold)**:
@@ -156,7 +156,7 @@ A financial-literacy mission — an Урок, a mini-game that belongs to an У�
 _Avoid_: квест, тест
 
 **Текущая задача (Current task)**:
-The single next action suggested under the meters. It points at a Задание, at today's Счета, at confirming the План, at choosing a Цель, or at buying the Цель once Копилка covers its price. That last one also opens a buy modal.
+The single next action suggested under the meters. It points at a Задание, at today's unpaid Счета (named, «купить обед и проезд»), at confirming the План, at choosing a Цель, or at buying the Цель once Копилка covers its price. That last one also opens a buy modal.
 _Avoid_: Задание, квест, подсказка, туториал
 
 **Карта заданий (Mission map)**:

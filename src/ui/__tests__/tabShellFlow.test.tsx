@@ -18,17 +18,21 @@ async function renderShell(animations: boolean) {
 function expectHome() {
   expect(screen.getByRole("button", { name: PET })).toBeOnTheScreen();
   expect(screen.queryByRole("button", { name: "Мини-игры" })).not.toBeOnTheScreen();
-  expect(screen.queryByRole("button", { name: "Журнал" })).not.toBeOnTheScreen();
+  expect(screen.queryByText(JOURNAL)).not.toBeOnTheScreen();
 }
+
+/** Журнал body: the operations heading, or the empty line on a fresh profile. */
+const JOURNAL = /^(Операции|За эти дни операций нет\.)$/;
 
 function expectMap() {
   expect(screen.getByRole("button", { name: "Мини-игры" })).toBeOnTheScreen();
   expect(screen.queryByRole("button", { name: PET })).not.toBeOnTheScreen();
-  expect(screen.queryByRole("button", { name: "Журнал" })).not.toBeOnTheScreen();
+  expect(screen.queryByText(JOURNAL)).not.toBeOnTheScreen();
 }
 
 function expectMoney() {
-  expect(screen.getByRole("button", { name: "Журнал" })).toBeOnTheScreen();
+  // A lone Журнал has no section pill; its list is what shows.
+  expect(screen.getByText(JOURNAL)).toBeOnTheScreen();
   expect(screen.queryByRole("button", { name: PET })).not.toBeOnTheScreen();
   expect(screen.queryByRole("button", { name: "Мини-игры" })).not.toBeOnTheScreen();
 }

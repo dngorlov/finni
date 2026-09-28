@@ -62,11 +62,11 @@ describe("Главная scene", () => {
     expect(screen.getByText("День 1")).toBeOnTheScreen();
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
-    expect(screen.getByText("Каждый день сытость -15 и счастье -15. Покупка в Магазине это компенсирует.")).toBeOnTheScreen();
+    expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Закрыть подсказку", includeHiddenElements: true }));
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
-    expect(screen.getByText("Каждый день сытость -15 и счастье -15. Покупка в Магазине это компенсирует.")).toBeOnTheScreen();
+    expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Магазин" })).toBeEnabled();
@@ -186,14 +186,16 @@ describe("Дом shortcuts", () => {
     await user.press(screen.getByRole("button", { name: "Дом" }));
     await user.press(screen.getByRole("button", { name: "Выбери цель" }));
     expect(screen.getByRole("button", { name: "Копилка" })).toBeSelected();
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет/ })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Закрыть" }));
     await user.press(screen.getByRole("button", { name: "Дом" }));
     await user.press(screen.getByRole("button", { name: "Этап 1 из 3, Новичок. Выбери цель" }));
     const prompts = screen.getAllByRole("button", { name: "Выбери цель" });
     await user.press(prompts[prompts.length - 1]);
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет/ })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
   });
 
   it("opens Цель from the current goal", async () => {
@@ -203,7 +205,8 @@ describe("Дом shortcuts", () => {
 
     await user.press(screen.getByRole("button", { name: "Цель: Скейтборд, 0 из 90" }));
     expect(screen.getByRole("button", { name: "Копилка" })).toBeSelected();
-    expect(screen.getByRole("button", { name: "Своя цель" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет/ })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
   });
 });
 
