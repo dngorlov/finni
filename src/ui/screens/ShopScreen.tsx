@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { META_KEYS } from "../../data/metaKeys";
@@ -30,7 +30,6 @@ import {
   ItemTags,
   SegmentedTabs,
   ShopRow,
-  dailyDropPhrase,
   type RowFlags,
 } from "./shopParts";
 
@@ -38,14 +37,12 @@ type Props = NativeStackScreenProps<RootStackParamList, "Shop">;
 type Tab = "mandatory" | "optional";
 /**
  * Bottom drawer for one item. `buy` shows details and the confirm;
- * `goalWarn` is the extra step before spending Баланс on the active Цель;
- * `postpone` explains what waiting costs.
+ * `goalWarn` is the extra step before spending Баланс on the active Цель.
  */
 type Drawer =
   | { name: "closed" }
   | { name: "buy"; item: CatalogItemContent }
-  | { name: "goalWarn"; item: CatalogItemContent }
-  | { name: "postpone"; item: CatalogItemContent };
+  | { name: "goalWarn"; item: CatalogItemContent };
 
 const TABS: readonly { value: Tab; label: string }[] = [
   { value: "mandatory", label: strings.shopMandatoryTab },
@@ -65,12 +62,10 @@ export default function ShopScreen({ navigation }: Props) {
   const [bought, setBought] = useState<string[]>([]);
   const [ownedOnce, setOwnedOnce] = useState<Set<string>>(new Set());
   const [savings, setSavings] = useState<SavingsView | null>(null);
-  const [postponed, setPostponed] = useState<Set<string>>(new Set());
   const [drawer, setDrawer] = useState<Drawer>({ name: "closed" });
   const [receipt, setReceipt] = useState<PurchaseResultModel | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [offerPickGoal, setOfferPickGoal] = useState(false);
-  const [postponeInfoOpen, setPostponeInfoOpen] = useState(false);
 
   // A new «оплатить Счета» hint turns the list back to Необходимое.
   const [seenFocus, setSeenFocus] = useState(focus);
@@ -92,13 +87,7 @@ export default function ShopScreen({ navigation }: Props) {
     setOwnedOnce(ownedOnceItemIds(game.listJournal(profileId), content.catalog, purchasedToday));
   }, [content.catalog, game, meta]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-      // Отложено lasts for one visit to Магазин.
-      setPostponed(new Set());
-    }, [load]),
-  );
+  useFocusEffect(load);
 
   useEffect(() => game.subscribe(load), [game, load]);
 
@@ -112,17 +101,8 @@ export default function ShopScreen({ navigation }: Props) {
     navigation.navigate("Main");
   };
 
-  const openDrawer = (name: "buy" | "postpone", item: CatalogItemContent) => {
-    setDrawer(name === "buy" ? { name: "buy", item } : { name: "postpone", item });
-  };
-
-  const markPostponed = (item: CatalogItemContent, on: boolean) => {
-    setPostponed((current) => {
-      const next = new Set(current);
-      if (on) next.add(item.id);
-      else next.delete(item.id);
-      return next;
-    });
+  const openBuy = (item: CatalogItemContent) => {
+    setDrawer({ name: "buy", item });
   };
 
   const activeKey = savings?.activeGoal?.key ?? null;
@@ -132,7 +112,6 @@ export default function ShopScreen({ navigation }: Props) {
     due: dueIds.has(item.id),
     goal: activeKey === item.id,
     bought: bought.includes(item.id),
-    postponed: postponed.has(item.id),
   });
 
   const items = content.catalog.filter((item) => {
@@ -145,7 +124,6 @@ export default function ShopScreen({ navigation }: Props) {
 
   const afterPurchase = (item: CatalogItemContent, fromSavings: boolean, offerGoal: boolean) => {
     load();
-    markPostponed(item, false);
     closeDrawer();
     setOfferPickGoal(offerGoal);
     setReceipt({ item, paidFrom: fromSavings ? "savings" : "balance" });
@@ -158,7 +136,7 @@ export default function ShopScreen({ navigation }: Props) {
     const wasActiveGoal = game.savingsState(profileId).activeGoal?.key === item.id;
     const result = game.purchase(profileId, today.dayId, engineItem(item));
     if (result.status === "blocked") {
-      openDrawer("buy", item);
+      openBuy(item);
       return;
     }
     afterPurchase(item, false, wasActiveGoal);
@@ -205,27 +183,6 @@ export default function ShopScreen({ navigation }: Props) {
       </DrawerHead>
     );
 
-    if (drawer.name === "postpone") {
-      const drop = dailyDropPhrase(item);
-      const planned = confirmedLeftover(day, item.kind) != null;
-      return (
-        <>
-          {head}
-          <CoinText text={shopStrings.postponeTitle(item.name)} style={styles.section} />
-          <ItemEffects item={item} announce={false} />
-          {drop ? (
-            <>
-              <CoinText text={shopStrings.postponeDaily(drop)} style={styles.warn} />
-              <CoinText text={shopStrings.postponeDueLater} style={styles.body} />
-            </>
-          ) : (
-            <CoinText text={shopStrings.postponeNoEffect} style={styles.body} />
-          )}
-          <CoinText text={planned ? shopStrings.postponeKeepPlan : shopStrings.postponeKeep} style={styles.body} />
-        </>
-      );
-    }
-
     if (drawer.name === "goalWarn") {
       return (
         <>
@@ -263,20 +220,6 @@ export default function ShopScreen({ navigation }: Props) {
   const drawerFooter = (): ReactNode => {
     if (drawer.name === "closed") return null;
     const item = drawer.item;
-    if (drawer.name === "postpone") {
-      return (
-        <>
-          <PrimaryButton
-            label={shopStrings.postpone}
-            onPress={() => {
-              markPostponed(item, true);
-              closeDrawer();
-            }}
-          />
-          <TextButton label={strings.back} onPress={closeDrawer} />
-        </>
-      );
-    }
     if (drawer.name === "goalWarn") {
       return (
         <>
@@ -326,9 +269,8 @@ export default function ShopScreen({ navigation }: Props) {
     ) : null;
 
   const sheetOpen = drawer.name !== "closed";
-  const anySheet = sheetOpen || postponeInfoOpen;
   // Behind an open drawer or the receipt the page is out of reach, for touch and for the screen reader.
-  const behindSheet = anySheet || receipt ? hiddenFromReader : {};
+  const behindSheet = sheetOpen || receipt ? hiddenFromReader : {};
 
   return (
     <Screen
@@ -362,11 +304,8 @@ export default function ShopScreen({ navigation }: Props) {
                 flags={flags}
                 balance={balance}
                 marked={focus?.kind === "shop-bills" && flags.due && !flags.bought}
-                onOpen={() => openDrawer("buy", item)}
-                onBuy={() => openDrawer("buy", item)}
-                onPostpone={() => openDrawer("postpone", item)}
-                onRestore={() => markPostponed(item, false)}
-                onPostponeInfo={() => setPostponeInfoOpen(true)}
+                onOpen={() => openBuy(item)}
+                onBuy={() => openBuy(item)}
               />
             );
           })}
@@ -374,14 +313,6 @@ export default function ShopScreen({ navigation }: Props) {
       </View>
       <BottomSheet visible={sheetOpen} onClose={closeDrawer} footer={drawerFooter()}>
         {drawerBody()}
-      </BottomSheet>
-      <BottomSheet
-        visible={postponeInfoOpen}
-        onClose={() => setPostponeInfoOpen(false)}
-        footer={<PrimaryButton label={strings.gotIt} onPress={() => setPostponeInfoOpen(false)} />}
-      >
-        <Text style={styles.section}>{shopStrings.postponeInfoTitle}</Text>
-        <Text style={styles.body}>{shopStrings.postponeInfo}</Text>
       </BottomSheet>
       {receipt ? <PurchaseResult model={receipt} onDismiss={() => setReceipt(null)} /> : null}
       <GoalPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onChanged={load} />

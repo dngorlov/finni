@@ -29,7 +29,7 @@ export const hiddenFromReader = {
   importantForAccessibility: "no-hide-descendants" as const,
 };
 
-export type RowFlags = { due: boolean; goal: boolean; bought: boolean; postponed: boolean };
+export type RowFlags = { due: boolean; goal: boolean; bought: boolean };
 
 function meterWordLower(meter: "care" | "mood") {
   return meter === "care" ? shopStrings.careWord : shopStrings.moodWord;
@@ -61,7 +61,6 @@ export function rowAnnouncement(item: CatalogItemContent, balance: number, flags
   if (flags.bought) parts.push(strings.shopBought);
   if (item.once) parts.push(strings.shopOnceChip);
   if (balance < item.price) parts.push(strings.shopShortfall(item.price - balance));
-  if (flags.postponed) parts.push(shopStrings.tagPostponed);
   return parts.join(". ");
 }
 
@@ -131,18 +130,17 @@ function Tag({ label, fill, icon }: { label: string; fill: string; icon?: PixelI
 }
 
 /**
- * State tags: Цель, Куплено, Один раз, Отложено. No category or «Счёт на
+ * State tags: Цель, Куплено, Один раз. No category or «Счёт на
  * сегодня» (Дима, 2026-09-26): the tab already says the category, and the
  * day's drop is stated once above the list.
  */
 export function ItemTags({ item, flags }: { item: { once?: boolean }; flags: RowFlags }) {
-  if (!flags.goal && !flags.bought && !item.once && !flags.postponed) return null;
+  if (!flags.goal && !flags.bought && !item.once) return null;
   return (
     <View style={styles.tags}>
       {flags.goal ? <Tag label={strings.shopGoalChip} fill={tint.goalTag} icon="star" /> : null}
       {flags.bought ? <Tag label={strings.shopBought} fill={tint.gain} icon="check" /> : null}
       {item.once ? <Tag label={strings.shopOnceChip} fill={tint.neutralTag} /> : null}
-      {flags.postponed ? <Tag label={shopStrings.tagPostponed} fill={tint.neutralTag} icon="clock" /> : null}
     </View>
   );
 }
@@ -208,20 +206,6 @@ export function RowButton({
   );
 }
 
-/** Small square «i», a full 48 dp target, for a one-line explanation. */
-export function InfoButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      role="button"
-      aria-label={label}
-      onPress={onPress}
-      style={({ pressed }) => [styles.infoButton, pressed ? styles.rowButtonPressed : null]}
-    >
-      <PixelIcon name="info-box" size={20} color={colors.accentText} />
-    </Pressable>
-  );
-}
-
 /**
  * Two-segment switch; each half is a button with aria-selected. A press sinks
  * the face onto its edge like the raised buttons, so the tap is felt.
@@ -270,7 +254,7 @@ export function SegmentedTabs<T extends string>({
   );
 }
 
-/** One shop row: tappable info block plus Купить / Отложить. */
+/** One shop row: tappable info block plus Купить. */
 export function ShopRow({
   item,
   flags,
@@ -278,9 +262,6 @@ export function ShopRow({
   marked,
   onOpen,
   onBuy,
-  onPostpone,
-  onRestore,
-  onPostponeInfo,
 }: {
   item: CatalogItemContent;
   flags: RowFlags;
@@ -288,10 +269,6 @@ export function ShopRow({
   marked: boolean;
   onOpen: () => void;
   onBuy: () => void;
-  onPostpone: () => void;
-  onRestore: () => void;
-  /** Opens the one-line «what Отложить does» note. */
-  onPostponeInfo?: () => void;
 }) {
   const shortfall = balance < item.price ? item.price - balance : null;
   return (
@@ -301,7 +278,7 @@ export function ShopRow({
         aria-label={rowAnnouncement(item, balance, flags)}
         aria-selected={marked}
         onPress={onOpen}
-        style={[styles.rowInfo, flags.postponed ? styles.dim : null]}
+        style={styles.rowInfo}
       >
         <ItemTile item={item} />
         <View style={styles.rowMiddle}>
@@ -321,22 +298,6 @@ export function ShopRow({
         </View>
       </Pressable>
       <View style={styles.rowActions}>
-        {!flags.bought && onPostponeInfo ? <InfoButton label={shopStrings.postponeInfoA11y} onPress={onPostponeInfo} /> : null}
-        {flags.bought ? null : flags.postponed ? (
-          <RowButton
-            label={shopStrings.restore}
-            spoken={shopStrings.restoreA11y(item.name)}
-            icon="arrow-up"
-            onPress={onRestore}
-          />
-        ) : (
-          <RowButton
-            label={shopStrings.postpone}
-            spoken={shopStrings.postponeA11y(item.name)}
-            icon="clock"
-            onPress={onPostpone}
-          />
-        )}
         <RowButton
           label={shopStrings.buy}
           spoken={shopStrings.buyA11y(item.name)}
@@ -384,7 +345,7 @@ export function GoalRow({
           <View {...hiddenFromReader} style={styles.rowDetails}>
             {goal.description ? <Text style={styles.goalDescription}>{goal.description}</Text> : null}
             {goal.note ? <Text style={styles.goalNote}>{goal.note}</Text> : null}
-            <ItemTags item={{ once: false }} flags={{ due: false, goal: selected, bought: false, postponed: false }} />
+            <ItemTags item={{ once: false }} flags={{ due: false, goal: selected, bought: false }} />
             <ItemEffects item={goal} announce={false} />
           </View>
         </View>
@@ -515,16 +476,6 @@ const styles = StyleSheet.create({
   rowButtonFacePrimary: {
     backgroundColor: colors.raisedFace,
   },
-  infoButton: {
-    alignItems: "center",
-    backgroundColor: colors.card,
-    borderColor: colors.disabledFace,
-    borderRadius: 12,
-    borderWidth: 2,
-    height: minTarget,
-    justifyContent: "center",
-    width: minTarget,
-  },
   rowButtonPressed: {
     opacity: 0.75,
   },
@@ -597,9 +548,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     minHeight: minTarget,
-  },
-  dim: {
-    opacity: 0.5,
   },
   rowMiddle: {
     flex: 1,

@@ -185,7 +185,6 @@ export const strings = {
   shopShortfall: (n: number) => `Не хватает ${n}`,
   shopBought: "Куплено",
   shopBuy: "Купить",
-  shopPostpone: "Отложить",
   shopMakeGoal: "Сделать целью",
   shopMakeGoalA11y: (name: string) => `Сделать целью ${name}`,
   shopBuyFromSavings: "Купить из копилки",

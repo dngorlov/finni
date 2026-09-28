@@ -11,8 +11,6 @@ export function dailyRuleText(care: number, mood: number): string {
 
 /** Магазин copy added with the shop-row redesign. Older shop strings stay in strings.ts. */
 export const shopStrings = {
-  tagPostponed: "Отложено",
-
   careWord: "сытость",
   moodWord: "счастье",
   /** «+10 сытость» */
@@ -27,23 +25,7 @@ export const shopStrings = {
   dailyMood: (n: number) => `счастье -${n}`,
 
   buy: "Купить",
-  postpone: "Отложить",
-  restore: "Вернуть",
   buyA11y: (name: string) => `Купить ${name}`,
-  postponeA11y: (name: string) => `Отложить ${name}`,
-  restoreA11y: (name: string) => `Вернуть ${name}`,
-
-  postponeTitle: (name: string) => `Отложить ${name}?`,
-  /** «Каждый день сытость -15 и счастье -15. Покупка это компенсирует.» */
-  postponeDaily: (phrase: string) => `Каждый день ${phrase}. Покупка это компенсирует.`,
-  postponeDueLater: "Можно вернуться и купить позже, пока день не закончился.",
-  postponeKeepPlan: "Деньги останутся в плане. Потратишь их позже или на другое.",
-  postponeKeep: "Деньги останутся у тебя.",
-  postponeNoEffect: "Питомец ничего не потеряет.",
-  /** The «i» beside «Отложить» on a row. */
-  postponeInfoA11y: "Что значит «Отложить»",
-  postponeInfoTitle: "Отложить",
-  postponeInfo: "«Отложить» — значит пока не покупать: монеты останутся у тебя, а вещь можно вернуть кнопкой «Вернуть».",
 
   /** Receipt after a Магазин purchase. */
   resultBought: "Куплено",
