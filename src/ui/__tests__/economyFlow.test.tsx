@@ -2,7 +2,7 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
-import { confirmTinyPlan, openMoney, openTab } from "../testSupport/flowHelpers";
+import { confirmTinyPlan, openMoney, openTab, walkTinyPlan } from "../testSupport/flowHelpers";
 
 const content = loadContent();
 const candy = content.catalog.find((item) => item.id === "candy")!;
@@ -23,11 +23,7 @@ describe("economy loop (Appendix A 5, 7–9)", () => {
     const { user } = await renderApp(ports);
 
     await openMoney(user, "План");
-    await user.press(screen.getByRole("button", { name: "Обязательные, больше" }));
-    await user.press(screen.getByRole("button", { name: "Желаемые, больше" }));
-    await user.press(screen.getByRole("button", { name: "Копилка, больше" }));
-    await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
-    await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
+    await walkTinyPlan(user);
     await openTab(user, "Дом");
 
     await user.press(screen.getByRole("button", { name: "Магазин" }));

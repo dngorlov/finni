@@ -78,10 +78,6 @@ export const dayStrings = {
   showLess: "Свернуть",
 
   // План
-  planHave: "У тебя есть",
-  planPlace: "Разложи монеты по кучкам",
-  planLeft: (n: number) => `Осталось разложить ${n}`,
   planAllPlaced: "Все монеты разложены!",
   planTooMuch: (n: number) => `Разложено на ${n} больше, чем есть. Убавь суммы.`,
-  planBillsMin: (n: number) => `Счета на сегодня — минимум ${n}`,
 };
