@@ -177,22 +177,33 @@ describe("first-run flow (Appendix A 1–4)", () => {
     // Аксессуары open with Этап, so the first run does not offer them.
     expect(screen.queryByText(strings.accessoryLegend)).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: /Аксессуар|Очки|Шапочка/ })).not.toBeOnTheScreen();
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
+    // A new pet starts green, like the app icon; the Окрас beads read зелёный, оранжевый, серый.
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 1.*Зелёный.*без аксессуара/ })).toBeOnTheScreen();
+    const beads = screen.getAllByRole("button", { name: /^(Зелёный|Оранжевый|Серый)$/ });
+    expect(beads).toHaveLength(3);
+    ["Зелёный", "Оранжевый", "Серый"].forEach((name, index) => expect(beads[index]).toHaveAccessibleName(name));
+    expectSelectedAppearanceOption("Зелёный");
+    // No emoji or pictogram before the «Вид» and «Окрас» labels.
+    expect(screen.queryByText("🐣", { includeHiddenElements: true })).not.toBeOnTheScreen();
+    for (const legend of [strings.speciesLegend, strings.colorLegend]) {
+      const label = screen.getByText(legend);
+      expect(label.parent?.children[0]).toBe(label);
+    }
     expectSelectedAppearanceOption("Вид 1");
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 2" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Вид 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 1.*без аксессуара/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Зелёный.*без аксессуара/ })).toBeOnTheScreen();
     expectSelectedAppearanceOption("Вид 2");
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeSelected();
     expect(screen.getByRole("button", { name: "Вид 1" })).not.toBeDisabled();
 
-    await user.press(screen.getByRole("button", { name: "Окрас 2" }));
-    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Окрас 2.*без аксессуара/ })).toBeOnTheScreen();
-    expectSelectedAppearanceOption("Окрас 2");
-    expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeSelected();
-    expect(screen.getByRole("button", { name: "Окрас 1" })).not.toBeDisabled();
+    await user.press(screen.getByRole("button", { name: "Оранжевый" }));
+    expect(screen.getByRole("img", { name: /Питомец.*Вид 2.*Оранжевый.*без аксессуара/ })).toBeOnTheScreen();
+    expectSelectedAppearanceOption("Оранжевый");
+    expect(screen.getByRole("button", { name: "Зелёный" })).not.toBeSelected();
+    expect(screen.getByRole("button", { name: "Зелёный" })).not.toBeDisabled();
 
     await user.press(screen.getByRole("button", { name: "Дальше" }));
     expectNameChip("");

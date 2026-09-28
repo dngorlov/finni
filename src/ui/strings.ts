@@ -8,10 +8,11 @@ const SPECIES_NAMES: Record<string, string> = {
   sp3: "Вид 3",
 };
 
+/** Stored keys stay c1/c2/c3; the child sees the colour itself. */
 const COLOR_NAMES: Record<string, string> = {
-  c1: "Окрас 1",
-  c2: "Окрас 2",
-  c3: "Окрас 3",
+  c1: "Серый",
+  c2: "Оранжевый",
+  c3: "Зелёный",
 };
 
 const ACCESSORY_NAMES: Record<string, string> = {
@@ -304,9 +305,7 @@ export const strings = {
   nameValidation: "Введи от 1 до 20 символов",
   firstRunSaveFailed: "Не получилось начать игру. Попробуй ещё раз.",
   speciesLegend: "Вид",
-  speciesPictogram: "🐣",
   colorLegend: "Окрас",
-  colorPictogram: "🎨",
   accessoryLegend: "Аксессуар",
   accessoryPictogram: "🎀",
   speciesName: (key: string) => SPECIES_NAMES[key] ?? key,

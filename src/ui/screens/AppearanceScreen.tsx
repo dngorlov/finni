@@ -66,7 +66,6 @@ export default function AppearanceScreen(_props: Props) {
       <View style={styles.sliders}>
         <BeadSlider
           legend={petStrings.appearanceSpecies}
-          pictogram={strings.speciesPictogram}
           keys={SPECIES_KEYS}
           labelOf={strings.speciesName}
           value={species}
@@ -74,7 +73,6 @@ export default function AppearanceScreen(_props: Props) {
         />
         <BeadSlider
           legend={petStrings.appearanceColor}
-          pictogram={strings.colorPictogram}
           keys={COLOR_KEYS}
           labelOf={strings.colorName}
           value={color}

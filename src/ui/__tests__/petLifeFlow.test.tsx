@@ -104,18 +104,21 @@ describe("Аксессуар opens with Этап", () => {
     expect(screen.getByRole("button", { name: "Очки" })).toBeSelected();
     expect(screen.getByText("Откроется на этапе «Миллионер»")).toBeOnTheScreen();
 
+    const beads = screen.getAllByRole("button", { name: /^(Зелёный|Оранжевый|Серый)$/ });
+    ["Зелёный", "Оранжевый", "Серый"].forEach((name, index) => expect(beads[index]).toHaveAccessibleName(name));
+    expect(screen.queryByText("🐣", { includeHiddenElements: true })).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Вид 3" }));
-    await user.press(screen.getByRole("button", { name: "Окрас 2" }));
+    await user.press(screen.getByRole("button", { name: "Оранжевый" }));
     await user.press(screen.getByRole("button", { name: "Без аксессуара" }));
     await user.press(hat);
 
     expect(ports.game.getProfile(profileId)).toMatchObject({ species: "sp3", color: "c2", accessory: "a1" });
     expect(screen.getByRole("button", { name: "Без аксессуара" })).toBeSelected();
-    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Окрас 2, без аксессуара/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Оранжевый, без аксессуара/ })).toBeOnTheScreen();
 
     await user.press(screen.getAllByRole("button", { name: "Назад" })[0]!);
     await user.press(screen.getByRole("button", { name: "Назад" }));
-    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Окрас 2, без аксессуара/ })).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец Пух, Вид 3, Оранжевый, без аксессуара/ })).toBeOnTheScreen();
   });
 });
 
