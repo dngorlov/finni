@@ -30,6 +30,7 @@ import { DailyRewardCalendar, DailyRewardGot } from "./DailyRewardSheet";
 import { FinnyTour } from "./FinnyTour";
 import { HomeScene } from "./HomeScene";
 import { PillRow } from "./moneyParts";
+import { TabPane, useTabFade } from "./TabPane";
 import { JournalPanel } from "./progressPanels";
 import PlanScreen from "./PlanScreen";
 import SavingsScreen from "./SavingsScreen";
@@ -87,6 +88,8 @@ export default function MainScreen({ navigation }: Props) {
   const { game, meta, content } = useSession();
   const focused = useIsFocused();
   const { tab, setTab, money, setMoney, revision, setGoalPrompt, touchChrome } = usePlayChrome();
+  // Дом stays mounted behind the other tabs, so the pet is not rebuilt on every switch.
+  const { fade, leaving } = useTabFade(tab);
   const [hub, setHub] = useState<HubModel | null>(null);
   const [feedback, setFeedback] = useState<FeedbackModel | null>(null);
   const [giftOpen, setGiftOpen] = useState(false);
@@ -336,7 +339,7 @@ export default function MainScreen({ navigation }: Props) {
         >
           <StatusStrip measureRoot={shellRef} spotlight={tour?.spotlight} onSpotlightBox={rememberSpotlight} />
           <View style={styles.bodySlot}>
-            {tab === "home" ? (
+            <TabPane open={tab === "home"} leaving={leaving === "home"} fadeIn={fade?.value ?? null}>
               <HomeScene
                 pet={{
                   species: hub.profile.species,
@@ -364,33 +367,37 @@ export default function MainScreen({ navigation }: Props) {
                 dropRef={dropRef}
                 onDropLayout={placeDropShield}
                 bottomInset={STAGE_PEEK_HEIGHT}
-                active={focused && !showUnlock}
+                active={focused && !showUnlock && tab === "home"}
                 quiet={tour != null}
               />
+            </TabPane>
+            {tab === "map" || leaving === "map" ? (
+              <TabPane open={tab === "map"} leaving={leaving === "map"} fadeIn={fade?.value ?? null}>
+                <TaskListScreen
+                  markFirstOpen={Boolean(tour?.map)}
+                  measureRoot={shellRef}
+                  onSpotlightBox={rememberSpotlight}
+                />
+              </TabPane>
             ) : null}
-            {tab === "map" ? (
-              <TaskListScreen
-                markFirstOpen={Boolean(tour?.map)}
-                measureRoot={shellRef}
-                onSpotlightBox={rememberSpotlight}
-              />
-            ) : null}
-            {tab === "money" ? (
-              <View style={styles.money}>
-                <View style={styles.menu} role="tablist" aria-label={moneyStrings.sections}>
-                  <PillRow grow options={options} value={current.id} onChange={setMoney} />
+            {tab === "money" || leaving === "money" ? (
+              <TabPane open={tab === "money"} leaving={leaving === "money"} fadeIn={fade?.value ?? null}>
+                <View style={styles.money}>
+                  <View style={styles.menu} role="tablist" aria-label={moneyStrings.sections}>
+                    <PillRow grow options={options} value={current.id} onChange={setMoney} />
+                  </View>
+                  <View style={styles.bodySlot}>
+                    {money === "savings" ? <SavingsScreen /> : null}
+                    {money === "plan" ? <PlanScreen /> : null}
+                    {money === "journal" ? (
+                      <Screen>
+                        <JournalPanel />
+                      </Screen>
+                    ) : null}
+                    {money === "bank" ? <BankScreen /> : null}
+                  </View>
                 </View>
-                <View style={styles.bodySlot}>
-                  {money === "savings" ? <SavingsScreen /> : null}
-                  {money === "plan" ? <PlanScreen /> : null}
-                  {money === "journal" ? (
-                    <Screen>
-                      <JournalPanel />
-                    </Screen>
-                  ) : null}
-                  {money === "bank" ? <BankScreen /> : null}
-                </View>
-              </View>
+              </TabPane>
             ) : null}
           </View>
         </View>
