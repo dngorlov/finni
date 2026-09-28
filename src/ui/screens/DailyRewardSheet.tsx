@@ -1,5 +1,6 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { DailyRewardCell } from "../../core/dailyReward";
+import { AppModal } from "../components/AppModal";
 import { BottomSheet } from "../components/BottomSheet";
 import { PixelSprite } from "../components/PixelSprite";
 import { PixelIcon } from "../components/Pictogram";
@@ -84,7 +85,7 @@ function RewardCell({ cell, onClaim }: { cell: DailyRewardCell; onClaim: () => v
 /** What this claim added to Баланс. */
 export function DailyRewardGot({ coins, onDismiss }: { coins: number; onDismiss: () => void }) {
   return (
-    <Modal animationType="fade" transparent visible onRequestClose={onDismiss}>
+    <AppModal animation="fade" transparent visible onRequestClose={onDismiss}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <Text style={styles.title}>{homeStrings.giftGotTitle}</Text>
@@ -95,7 +96,7 @@ export function DailyRewardGot({ coins, onDismiss }: { coins: number; onDismiss:
           <PrimaryButton label={strings.gotIt} onPress={onDismiss} />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

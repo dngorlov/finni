@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Animated, AppState, Easing, PanResponder, Pressable, StyleSheet, View } from "react-native";
 import { useLatest } from "../components/useLatest";
+import { useAnimationsOn } from "../motion";
 import { petStrings } from "../stringsPet";
 import { petAtlasSource } from "./assets";
 import { poseFromMeters } from "./keys";
@@ -57,8 +58,9 @@ function motionValue(motion: Motion, now: number): number {
  * to the floor, shows FALLS, and goes back to IDLE.
  *
  * Frames change through state at PET_FPS; every movement is an Animated tween
- * on the native driver. Timers stop while `active` is false or the app is in
- * the background, and everything is cleared on unmount.
+ * on the native driver. Timers stop while `active` is false, animations are
+ * off in Настройки, or the app is in the background, and everything is cleared
+ * on unmount.
  */
 export function LivingPet({
   pet,
@@ -93,8 +95,9 @@ export function LivingPet({
   const [hop] = useState(() => new Animated.Value(0));
   // Built once: a new node every frame would re-attach the native animation graph.
   const [lift] = useState(() => Animated.add(offset.y, hop));
+  const animationsOn = useAnimationsOn();
   const [appActive, setAppActive] = useState(() => AppState.currentState !== "background");
-  const live = active && appActive;
+  const live = active && appActive && animationsOn;
 
   const shownRef = useRef(shown);
   const at = useRef<Offset>({ x: 0, y: 0 });
@@ -167,7 +170,7 @@ export function LivingPet({
 
   const jump = useCallback(() => {
     const clip = shownRef.current.clip;
-    if (dragging.current || clip === "held" || clip === "fall") return;
+    if (!animationsOn || dragging.current || clip === "held" || clip === "fall") return;
     halt();
     show("jump");
     const air = (JUMP_AIR_TICKS * PET_FRAME_MS) / 2;
@@ -181,7 +184,7 @@ export function LivingPet({
       }),
       Animated.timing(hop, { toValue: 0, duration: air, easing: Easing.in(Easing.quad), useNativeDriver: true }),
     ]).start();
-  }, [halt, hop, latest, show]);
+  }, [animationsOn, halt, hop, latest, show]);
 
   const stroll = useCallback(() => {
     const { bounds: room, size: side, random: roll, calm } = latest.current;
@@ -282,6 +285,12 @@ export function LivingPet({
     if (!dragging.current) return;
     dragging.current = false;
     const plan = landingPlan(at.current, latest.current.bounds);
+    if (!animationsOn) {
+      at.current = { x: plan.x, y: 0 };
+      offset.setValue(at.current);
+      show("idle");
+      return;
+    }
     at.current = { x: plan.x, y: plan.fromY };
     offset.setValue(at.current);
     if (plan.durationMs === 0) {
@@ -289,7 +298,7 @@ export function LivingPet({
       return;
     }
     tween("y", 0, plan.durationMs, true, land);
-  }, [land, latest, offset, tween]);
+  }, [animationsOn, land, latest, offset, show, tween]);
 
   // Handlers read refs when a finger moves, not while rendering.
   /* eslint-disable react-hooks/refs */

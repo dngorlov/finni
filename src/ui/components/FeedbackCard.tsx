@@ -1,9 +1,10 @@
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Pictogram } from "./Pictogram";
 import { CoinText } from "./CoinText";
 import { PrimaryButton } from "./PrimaryButton";
 import { strings } from "../strings";
 import { colors, radius, spacing, type } from "../theme";
+import { AppModal } from "./AppModal";
 
 export type FeedbackDeltas = {
   balance?: number;
@@ -32,7 +33,7 @@ export function FeedbackCard({ model, onDismiss }: { model: FeedbackModel; onDis
   const { deltas } = model;
 
   return (
-    <Modal animationType="fade" transparent visible onRequestClose={onDismiss}>
+    <AppModal animation="fade" transparent visible onRequestClose={onDismiss}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           {model.chip ? (
@@ -62,7 +63,7 @@ export function FeedbackCard({ model, onDismiss }: { model: FeedbackModel; onDis
           />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

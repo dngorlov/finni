@@ -1,8 +1,9 @@
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "./PrimaryButton";
 import { achievementStrings, type AchievementCopy } from "../stringsAchievements";
 import { colors, radius, spacing, type } from "../theme";
 import { MoneyCard, moneyColors } from "../screens/moneyParts";
+import { AppModal } from "./AppModal";
 
 /**
  * Reward for a new Достижение. Gold hero like a Деньги account card, emoji
@@ -19,7 +20,7 @@ export function AchievementModal({
 }) {
   const spoken = achievementStrings.rowA11y(copy.title, copy.detail);
   return (
-    <Modal animationType="fade" transparent visible onRequestClose={onDismiss}>
+    <AppModal animation="fade" transparent visible onRequestClose={onDismiss}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <View accessible aria-label={`${achievementStrings.modalCaption}. ${spoken}`} style={styles.hero}>
@@ -41,7 +42,7 @@ export function AchievementModal({
           <PrimaryButton label={achievementStrings.celebrate} onPress={onDismiss} />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

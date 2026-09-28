@@ -1,6 +1,7 @@
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { itemMeterEffects, type MeterKind } from "../../core/economy";
 import type { CatalogItemContent } from "../../data/content";
+import { AppModal } from "../components/AppModal";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { PixelSprite, type SpriteName } from "../components/PixelSprite";
 import { strings } from "../strings";
@@ -38,7 +39,7 @@ export function PurchaseResult({ model, onDismiss }: { model: PurchaseResultMode
   const shieldPhrase = dailyDropPhrase(item);
 
   return (
-    <Modal animationType="fade" transparent visible onRequestClose={onDismiss}>
+    <AppModal animation="fade" transparent visible onRequestClose={onDismiss}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <View style={styles.hero}>
@@ -83,7 +84,7 @@ export function PurchaseResult({ model, onDismiss }: { model: PurchaseResultMode
           <PrimaryButton label={strings.gotIt} onPress={onDismiss} />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

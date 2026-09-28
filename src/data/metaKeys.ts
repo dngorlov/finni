@@ -8,4 +8,6 @@ export const META_KEYS = {
   demoProfileId: "demoProfileId",
   /** Device-wide громкость, 0–100. Missing means the default in `readSoundVolume`. */
   soundVolume: "soundVolume",
+  /** Device-wide. Missing means on. `"0"` keeps the pet still and opens windows at once. */
+  animationsOn: "animationsOn",
 } as const;

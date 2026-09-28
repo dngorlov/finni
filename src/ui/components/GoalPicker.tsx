@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View, type Role } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View, type Role } from "react-native";
 import { CUSTOM_GOAL_MOOD, CUSTOM_GOAL_PRICE_MAX } from "../../core/customGoal";
 import { showStageThreshold, stageGoalFloor } from "../../core/stages";
 import type { CatalogItemContent, GoalContent } from "../../data/content";
@@ -12,6 +12,7 @@ import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { colors, minTarget, radius, spacing, type } from "../theme";
 import { AmountStepper } from "./AmountStepper";
+import { AppModal } from "./AppModal";
 import { CoinText } from "./CoinText";
 import { ScreenTitle } from "./ScreenTitle";
 import { PrimaryButton } from "./PrimaryButton";
@@ -176,7 +177,7 @@ export function GoalPicker({
   const activeCustom = savings?.activeGoal?.custom ? savings.activeGoal : null;
 
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={required ? () => {} : close}>
+    <AppModal animation="slide" transparent visible onRequestClose={required ? () => {} : close}>
       <View style={styles.backdrop} pointerEvents="box-none">
         <View style={styles.sheet}>
           {pending ? (
@@ -307,7 +308,7 @@ export function GoalPicker({
           )}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

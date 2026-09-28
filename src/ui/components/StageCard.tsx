@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { STAGE_CODES, STAGE_NAMES, type Stage } from "../../core/stages";
+import { useAnimationsOn } from "../motion";
 import { PixelIcon } from "./Pictogram";
 import { homeStrings } from "../stringsHome";
 import { strings } from "../strings";
@@ -130,6 +131,7 @@ export function StageCard({
   const spoken = spokenGoal(goalName, accumulated, cost, threshold, canPickGoal);
   const label = strings.stageA11y(name, number, STAGE_TOTAL, spoken);
   const { cardHeight } = cardSize(width);
+  const motion = useAnimationsOn();
   const [shift] = useState(() => new Animated.Value(tuckedOffset(Dimensions.get("window").width)));
   const goalRef = useRef<View>(null);
   const reportGoal = () => {
@@ -144,13 +146,17 @@ export function StageCard({
 
   useEffect(() => {
     if (!open) return;
+    if (!motion) {
+      shift.setValue(0);
+      return;
+    }
     shift.setValue(Math.max(cardHeight - minTarget, 0));
     Animated.timing(shift, {
       toValue: 0,
       duration: 240,
       useNativeDriver: true,
     }).start();
-  }, [cardHeight, open, shift]);
+  }, [cardHeight, motion, open, shift]);
 
   const faceProps = {
     face,
@@ -203,7 +209,7 @@ export function StageCard({
           style={[
             styles.openCard,
             faceShell(face),
-            { height: cardHeight, transform: [{ translateY: shift }] },
+            { height: cardHeight, transform: [{ translateY: motion ? shift : 0 }] },
           ]}
         >
           <View
@@ -231,6 +237,7 @@ export function StageCard({
 /** Up arrow in the slot Закрыть uses once the card is open. It bobs so the strip reads as a pull. */
 function PeekCue({ color }: { color: string }) {
   const [nudge] = useState(() => new Animated.Value(0));
+  const motion = useAnimationsOn();
 
   useEffect(() => {
     let stopped = false;
@@ -250,6 +257,10 @@ function PeekCue({ color }: { color: string }) {
       loop = null;
       nudge.setValue(0);
     };
+    if (!motion) {
+      stop();
+      return;
+    }
     AccessibilityInfo.isReduceMotionEnabled()
       .then((reduce) => {
         if (!stopped && !reduce) play();
@@ -264,7 +275,7 @@ function PeekCue({ color }: { color: string }) {
       stop();
       subscription.remove();
     };
-  }, [nudge]);
+  }, [motion, nudge]);
 
   return (
     <Animated.View
@@ -272,7 +283,7 @@ function PeekCue({ color }: { color: string }) {
       aria-hidden
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[styles.peekCue, { transform: [{ translateY: nudge }] }]}
+      style={[styles.peekCue, { transform: [{ translateY: motion ? nudge : 0 }] }]}
     >
       <PixelIcon name="arrow-up" size={22} color={color} />
     </Animated.View>

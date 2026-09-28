@@ -7,8 +7,12 @@ export function SessionProvider({ ports, children }: { ports: SessionPorts; chil
   return <SessionContext.Provider value={ports}>{children}</SessionContext.Provider>;
 }
 
+export function useOptionalSession(): SessionPorts | null {
+  return useContext(SessionContext);
+}
+
 export function useSession(): SessionPorts {
-  const value = useContext(SessionContext);
+  const value = useOptionalSession();
   if (!value) {
     throw new Error("useSession must be used inside SessionProvider");
   }

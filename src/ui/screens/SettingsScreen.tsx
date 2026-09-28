@@ -11,6 +11,7 @@ import { Screen } from "../components/Screen";
 import { useEarnedAchievementCount } from "../components/AchievementBoard";
 import { VolumeControl } from "../components/VolumeControl";
 import { META_KEYS } from "../../data/metaKeys";
+import { useAnimationsOn, writeAnimationsOn } from "../motion";
 import { clampVolume, readSoundVolume } from "../sound/cues";
 import { playCue } from "../sound/playCue";
 import { useSession } from "../session/SessionProvider";
@@ -106,7 +107,35 @@ function SoundSettings() {
           if (value > 0) void playCue("correct", value);
         }}
       />
+      <AnimationSwitch />
     </Card>
+  );
+}
+
+function AnimationSwitch() {
+  const { meta } = useSession();
+  const on = useAnimationsOn();
+
+  return (
+    <Pressable
+      role="switch"
+      aria-checked={on}
+      aria-label={strings.animations}
+      onPress={() => writeAnimationsOn(meta, !on)}
+      style={styles.switchRow}
+    >
+      <Text style={styles.switchLabel}>{strings.animations}</Text>
+      <Text style={styles.switchValue}>{on ? strings.animationsOn : strings.animationsOff}</Text>
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        aria-hidden
+        style={[styles.switchTrack, on ? styles.switchTrackOn : null]}
+      >
+        {on ? <View style={styles.switchSpacer} /> : null}
+        <View style={styles.switchThumb} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -160,5 +189,43 @@ const styles = StyleSheet.create({
     color: colors.subtle,
     fontSize: type.body,
     fontWeight: "700",
+  },
+  switchRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.s,
+    minHeight: minTarget,
+  },
+  switchLabel: {
+    color: colors.text,
+    flex: 1,
+    fontSize: type.body,
+    fontWeight: "700",
+  },
+  switchValue: {
+    color: colors.text,
+    fontSize: type.body,
+    fontWeight: "700",
+  },
+  switchTrack: {
+    alignItems: "center",
+    backgroundColor: colors.track,
+    borderRadius: 16,
+    flexDirection: "row",
+    height: 32,
+    padding: 2,
+    width: 56,
+  },
+  switchTrackOn: {
+    backgroundColor: colors.fill,
+  },
+  switchSpacer: {
+    flex: 1,
+  },
+  switchThumb: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    height: 28,
+    width: 28,
   },
 });

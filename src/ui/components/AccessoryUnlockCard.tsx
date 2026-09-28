@@ -1,9 +1,10 @@
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { Stage } from "../../core/stages";
 import { PetView } from "../pet/PetView";
 import { MoneyCard, moneyColors } from "../screens/moneyParts";
 import { petStrings } from "../stringsPet";
 import { colors, radius, spacing, type } from "../theme";
+import { AppModal } from "./AppModal";
 import { PrimaryButton } from "./PrimaryButton";
 import { TextButton } from "./TextButton";
 
@@ -23,7 +24,7 @@ export function AccessoryUnlockCard({
 }) {
   const title = petStrings.unlockTitle(accessory);
   return (
-    <Modal animationType="fade" transparent visible onRequestClose={onDone}>
+    <AppModal animation="fade" transparent visible onRequestClose={onDone}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <View style={styles.hero}>
@@ -47,7 +48,7 @@ export function AccessoryUnlockCard({
           <TextButton label={petStrings.appearanceTitle} onPress={onAppearance} />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

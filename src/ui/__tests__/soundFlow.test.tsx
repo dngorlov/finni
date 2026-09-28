@@ -58,6 +58,29 @@ describe("громкость в Настройках", () => {
     expect(ports.meta.get(META_KEYS.soundVolume)).toBe("0");
     expect(preview).not.toHaveBeenCalled();
   });
+
+  it("turns animations off beside the volume slider and keeps that choice", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports);
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Настройки" }));
+    expect(screen.getByRole("switch", { name: "Анимация" })).toBeChecked();
+    expect(screen.getByText("Включена")).toBeOnTheScreen();
+
+    await user.press(screen.getByRole("switch", { name: "Анимация" }));
+    expect(screen.getByRole("switch", { name: "Анимация" })).not.toBeChecked();
+    expect(screen.getByText("Выключена")).toBeOnTheScreen();
+    expect(ports.meta.get(META_KEYS.animationsOn)).toBe("0");
+
+    await user.press(screen.getByRole("button", { name: "Назад" }));
+    await user.press(screen.getByRole("button", { name: "Настройки" }));
+    expect(screen.getByRole("switch", { name: "Анимация" })).not.toBeChecked();
+
+    await user.press(screen.getByRole("switch", { name: "Анимация" }));
+    expect(screen.getByText("Включена")).toBeOnTheScreen();
+    expect(ports.meta.get(META_KEYS.animationsOn)).toBe("1");
+  });
 });
 
 describe("звуки задания", () => {

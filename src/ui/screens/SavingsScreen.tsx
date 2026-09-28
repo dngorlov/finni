@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { CUSTOM_GOAL_MOOD } from "../../core/customGoal";
 import type { CatalogItemContent, GoalContent } from "../../data/content";
@@ -8,6 +8,7 @@ import { activeGoalLabel, goalThresholdLabel } from "../goalLabel";
 import { META_KEYS } from "../../data/metaKeys";
 import type { DayState, JournalEntry, SavingsView } from "../../data/repositories/gameRepository";
 import { AmountStepper } from "../components/AmountStepper";
+import { AppModal } from "../components/AppModal";
 import { CoinText } from "../components/CoinText";
 import { GlyphLabel } from "../components/Pictogram";
 import { ScreenTitle } from "../components/ScreenTitle";
@@ -52,7 +53,7 @@ type Phase =
 /** Centered dialog over a dimmed Копилка. The dimmed area and «Закрыть» both dismiss it. */
 function AmountDialog({ onClose, children }: { onClose: () => void; children: ReactNode }) {
   return (
-    <Modal animationType="fade" transparent visible onRequestClose={onClose}>
+    <AppModal animation="fade" transparent visible onRequestClose={onClose}>
       <View style={styles.modalRoot}>
         <Pressable
           role="button"
@@ -66,7 +67,7 @@ function AmountDialog({ onClose, children }: { onClose: () => void; children: Re
           </View>
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

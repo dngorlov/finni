@@ -4,6 +4,7 @@ import { META_KEYS } from "../../data/metaKeys";
 import { FinPetApp } from "../FinPetApp";
 import { PET_FRAME_MS } from "../pet/petLife";
 import { HomeScene, type HomePet } from "../screens/HomeScene";
+import { SessionProvider } from "../session/SessionProvider";
 import { achievementStrings } from "../stringsAchievements";
 import { petStrings } from "../stringsPet";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
@@ -239,6 +240,20 @@ describe("living pet on Дом", () => {
       if (seen[seen.length - 1] !== petClip()) seen.push(petClip());
     }
     expect(seen).toEqual(["idle", "walk", "idle"]);
+  });
+
+  it("stays on IDLE when animations are off, and still talks", async () => {
+    const ports = createFakePorts();
+    ports.meta.set(META_KEYS.animationsOn, "0");
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await render(<SessionProvider ports={ports}>{homeScene({}, { random: () => 0 })}</SessionProvider>);
+    await measure();
+
+    await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
+    expect(petClip()).toBe("idle");
+    expect(screen.getByText("Пойдём на карту?")).toBeOnTheScreen();
+    await advance(30000);
+    expect(petClip()).toBe("idle");
   });
 
   it("is dragged with the JUMP frame, falls to the floor, shows FALLS, then IDLE", async () => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Modal, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { CUSTOM_GOAL_MOOD, readCustomGoalItem } from "../../core/customGoal";
 import { meterDeltaMap } from "../../core/economy";
 import { META_KEYS } from "../../data/metaKeys";
@@ -8,6 +8,7 @@ import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { resolveCurrentTask } from "../tasks/resolveCurrentTask";
 import { colors, radius, spacing, type } from "../theme";
+import { AppModal } from "./AppModal";
 import { CoinText } from "./CoinText";
 import { FeedbackCard, type FeedbackModel } from "./FeedbackCard";
 import { PrimaryButton } from "./PrimaryButton";
@@ -92,7 +93,7 @@ export function BuyGoalPrompt() {
   if (!goal || hiddenKey === goal.id || pot < goal.price) return null;
 
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={dismiss}>
+    <AppModal animation="slide" transparent visible onRequestClose={dismiss}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <ScreenTitle style={styles.title}>{strings.savingsAchieved}</ScreenTitle>
@@ -102,7 +103,7 @@ export function BuyGoalPrompt() {
           <PrimaryButton label={strings.savingsBuyFromSavings} onPress={buy} />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

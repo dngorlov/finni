@@ -51,6 +51,9 @@ export const strings = {
     const word = n <= 40 ? "Тихо" : n <= 70 ? "Средне" : "Громко";
     return `${word} ${n}%`;
   },
+  animations: "Анимация",
+  animationsOn: "Включена",
+  animationsOff: "Выключена",
   deleteProfile: "Удалить профиль",
   devSection: "Dev",
   finishDay: "Закончить день",

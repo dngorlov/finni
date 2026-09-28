@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { strings } from "../strings";
 import { colors, radius, spacing } from "../theme";
+import { AppModal } from "./AppModal";
 
 /**
  * Bottom drawer: slides up over a dimmed screen. Tap on the dim area or the
@@ -20,7 +21,7 @@ export function BottomSheet({
 }) {
   if (!visible) return null;
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={onClose}>
+    <AppModal animation="slide" transparent visible onRequestClose={onClose}>
       <View style={styles.root}>
         <Pressable
           role="button"
@@ -36,7 +37,7 @@ export function BottomSheet({
           {footer ? <View style={styles.footer}>{footer}</View> : null}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

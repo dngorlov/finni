@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
-import { Modal, StyleSheet, Text, TextInput, View, type Role } from "react-native";
+import { StyleSheet, Text, TextInput, View, type Role } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { META_KEYS } from "../../data/metaKeys";
+import { AppModal } from "../components/AppModal";
 import { BackButton } from "../components/BackButton";
 import { ScreenTitle } from "../components/ScreenTitle";
 import { Card } from "../components/Card";
@@ -182,7 +183,7 @@ function ConfirmSheet({
   onConfirm: () => void;
 }) {
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={onClose}>
+    <AppModal animation="slide" transparent visible onRequestClose={onClose}>
       <View style={styles.backdrop} pointerEvents="box-none">
         <View style={styles.sheet}>
           <Text style={styles.section}>{title}</Text>
@@ -191,7 +192,7 @@ function ConfirmSheet({
           <PrimaryButton label={confirmLabel} onPress={onConfirm} />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 
@@ -213,7 +214,7 @@ function TypedSheet({
   onConfirm: () => void;
 }) {
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={onClose}>
+    <AppModal animation="slide" transparent visible onRequestClose={onClose}>
       <View style={styles.backdrop} pointerEvents="box-none">
         <View style={styles.sheet}>
           <Text style={styles.section}>{title}</Text>
@@ -231,7 +232,7 @@ function TypedSheet({
           <PrimaryButton label={strings.done} disabled={value.trim() !== expected} onPress={onConfirm} />
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 
