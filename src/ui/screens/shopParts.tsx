@@ -9,7 +9,7 @@ import { PixelSprite } from "../components/PixelSprite";
 import type { PixelIconName } from "../pixelIconXml";
 import { strings } from "../strings";
 import { shopStrings } from "../stringsShop";
-import { colors, font, minTarget, radius, spacing, type } from "../theme";
+import { colors, font, minTarget, radius, spacing, type, wholeWords } from "../theme";
 
 /**
  * Soft tints for Магазин tiles and tags. Text on every tint stays colors.text
@@ -282,19 +282,22 @@ export function ShopRow({
       >
         <ItemTile item={item} />
         <View style={styles.rowMiddle}>
-          <Text style={styles.name}>{item.name}</Text>
+          <Text {...wholeWords} style={styles.name}>
+            {item.name}
+          </Text>
+          {/* Price sits under the name, so the name gets the whole column and never splits a word. */}
+          <View style={styles.rowPrice}>
+            <CoinPrice amount={item.price} />
+            {shortfall != null ? (
+              <View {...hiddenFromReader}>
+                <CoinText coin labelled={false} text={strings.shopShortfall(shortfall)} style={styles.shortfall} />
+              </View>
+            ) : null}
+          </View>
           <View {...hiddenFromReader} style={styles.rowDetails}>
             <ItemTags item={item} flags={flags} />
             <ItemEffects item={item} announce={false} />
           </View>
-        </View>
-        <View style={styles.rowPrice}>
-          <CoinPrice amount={item.price} />
-          {shortfall != null ? (
-            <View {...hiddenFromReader}>
-              <CoinText coin labelled={false} text={strings.shopShortfall(shortfall)} style={styles.shortfall} />
-            </View>
-          ) : null}
         </View>
       </Pressable>
       <View style={styles.rowActions}>
@@ -341,16 +344,18 @@ export function GoalRow({
       >
         <ItemTile item={{ icon: goal.icon, kind: "optional" }} />
         <View style={styles.rowMiddle}>
-          <Text style={styles.name}>{goal.name}</Text>
+          <Text {...wholeWords} style={styles.name}>
+            {goal.name}
+          </Text>
+          <View style={styles.rowPrice}>
+            <CoinPrice amount={goal.price} />
+          </View>
           <View {...hiddenFromReader} style={styles.rowDetails}>
             {goal.description ? <Text style={styles.goalDescription}>{goal.description}</Text> : null}
             {goal.note ? <Text style={styles.goalNote}>{goal.note}</Text> : null}
             <ItemTags item={{ once: false }} flags={{ due: false, goal: selected, bought: false }} />
             <ItemEffects item={goal} announce={false} />
           </View>
-        </View>
-        <View style={styles.rowPrice}>
-          <CoinPrice amount={goal.price} />
         </View>
       </Pressable>
       {selected ? null : (
@@ -374,7 +379,9 @@ export function DrawerHead({ item, children }: { item: CatalogItemContent; child
     <View style={styles.drawerHead}>
       <ItemTile item={item} size={72} />
       <View style={styles.drawerHeadText}>
-        <Text style={styles.drawerName}>{item.name}</Text>
+        <Text {...wholeWords} style={styles.drawerName}>
+          {item.name}
+        </Text>
         <CoinPrice amount={item.price} large />
         {children}
       </View>
@@ -551,7 +558,9 @@ const styles = StyleSheet.create({
   },
   rowMiddle: {
     flex: 1,
+    flexShrink: 1,
     gap: 6,
+    minWidth: 0,
   },
   rowDetails: {
     gap: 6,
@@ -571,14 +580,15 @@ const styles = StyleSheet.create({
     fontSize: type.body,
   },
   rowPrice: {
-    alignItems: "flex-end",
-    gap: 4,
-    maxWidth: 96,
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    columnGap: spacing.s,
+    rowGap: 2,
   },
   shortfall: {
     color: colors.subtle,
     fontSize: 13,
-    textAlign: "right",
   },
   rowActions: {
     flexDirection: "row",
@@ -591,7 +601,9 @@ const styles = StyleSheet.create({
   },
   drawerHeadText: {
     flex: 1,
+    flexShrink: 1,
     gap: spacing.s,
+    minWidth: 0,
   },
   drawerName: {
     color: colors.text,

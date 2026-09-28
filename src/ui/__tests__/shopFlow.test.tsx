@@ -47,6 +47,10 @@ describe("Магазин", () => {
     expect(screen.queryByText("Обязательные")).not.toBeOnTheScreen();
     expect(screen.queryByText(/после покупки/)).not.toBeOnTheScreen();
     expect(screen.getByText("12")).toHaveStyle({ fontFamily: "PressStart2P_400Regular" });
+    // A long name wraps only between words on Android («при / надлежности» was split).
+    const longName = screen.getByText("Школьные принадлежности");
+    expect(longName).toHaveProp("textBreakStrategy", "simple");
+    expect(longName).toHaveProp("android_hyphenationFrequency", "none");
     expect(screen.queryByRole("button", { name: "Отложить Обед" })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Купить Обед" }));
