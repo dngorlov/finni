@@ -6,6 +6,7 @@ import { PET_FRAME_MS } from "../pet/petLife";
 import { HomeScene, type HomePet } from "../screens/HomeScene";
 import { SessionProvider } from "../session/SessionProvider";
 import { achievementStrings } from "../stringsAchievements";
+import { homeStrings } from "../stringsHome";
 import { petStrings } from "../stringsPet";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 
@@ -209,10 +210,23 @@ describe("living pet on Дом", () => {
     await advance(PET_FRAME_MS * 3);
     expect(petClip()).toBe("idle");
 
+    expect(screen.getByText("Привет!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
     expect(petClip()).toBe("jump");
-    expect(screen.getByText("Пойдём на карту?")).toBeOnTheScreen();
+    expect(screen.queryByText("Привет!")).not.toBeOnTheScreen();
+    expect(screen.getByText(homeStrings.petLinesAny.at(-1)!)).toBeOnTheScreen();
     await advance(PET_FRAME_MS * 9);
+    expect(petClip()).toBe("idle");
+  });
+
+  it("sometimes answers a tap with a one-two punch, then goes back to IDLE", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await render(homeScene({}, { random: () => 0.1 }));
+    await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
+    expect(petClip()).toBe("attack");
+    await advance(PET_FRAME_MS * 7);
+    expect(petClip()).toBe("attack");
+    await advance(PET_FRAME_MS * 2);
     expect(petClip()).toBe("idle");
   });
 

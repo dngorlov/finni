@@ -70,7 +70,7 @@ assets/content/   учебный контент в JSON: уроки, катал�
 
 ## Графика
 
-- Питомцы нарезаются из спрайт-листов Андрея: `node scripts/slice-pet-sheets.mjs` (`design/pets` → `assets/pets`).
+- Питомцы нарезаются из спрайт-листов Андрея: `node scripts/slice-pet-sheets.mjs` (`design/pets` → `src/ui/pet/petSprites.generated.ts`). Кадры рисуются SVG-квадратами (`PixelFrame`), а не растром: Android сглаживает любую растянутую картинку, и пиксели мылятся.
 - Иконки лежат в `assets/icons`, исходники 12×12 — в `design/icons`.
 - Карта Москвы: `assets/map/moscow.png`. Точки уроков задаются долями ширины и высоты в `tasks.json`.
 

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Animated, AppState, Easing, PanResponder, Pressable, StyleSheet, View } from "react-native";
+import { Animated, AppState, Easing, PanResponder, PixelRatio, Pressable, StyleSheet, View } from "react-native";
 import { useLatest } from "../components/useLatest";
 import { useAnimationsOn } from "../motion";
 import { petStrings } from "../stringsPet";
-import { petAtlasSource } from "./assets";
+import { petPixels } from "./assets";
 import { poseFromMeters } from "./keys";
 import {
-  atlasCell,
   clampOffset,
+  clipFrame,
   clipAnimates,
   clipFinished,
   dragBounds,
@@ -20,16 +20,22 @@ import {
   landingPlan,
   PET_FRAME_MS,
   pickIdleAction,
+  pickTapMove,
   planWalk,
   walkSpeed,
   type Offset,
   type PetClip,
 } from "./petLife";
-import { PET_ATLAS_COLUMNS, PET_ATLAS_ROWS, PET_PITCH_PX } from "./petSprites.generated";
-import { SheetFrame } from "./SheetFrame";
+import { PixelFrame } from "./PixelFrame";
 
-const ATLAS_WIDTH = PET_ATLAS_COLUMNS * PET_PITCH_PX;
-const ATLAS_HEIGHT = PET_ATLAS_ROWS * PET_PITCH_PX;
+/**
+ * Rounds an animated offset down to whole physical pixels on the native side.
+ * A tween passes through fractional offsets; Android then resamples the whole
+ * picture between two pixel columns and every hard art edge goes soft.
+ */
+function snapToPixels(value: Animated.Value | Animated.AnimatedAddition<number>) {
+  return Animated.subtract(value, Animated.modulo(value, 1 / PixelRatio.get()));
+}
 
 export type LivingPetLook = {
   species: string;
@@ -53,12 +59,13 @@ function motionValue(motion: Motion, now: number): number {
 
 /**
  * The Питомец on Дом. IDLE loops; after a quiet spell it strolls, pushes, or
- * hops (calm moves only when Сытость or Счастье is low). A tap plays JUMP and
- * says a line. The child can drag it anywhere in the room; on release it falls
- * to the floor, shows FALLS, and goes back to IDLE.
+ * hops (calm moves only when Сытость or Счастье is low). A tap plays JUMP, or
+ * now and then a playful ATTACK punch, and says a line. The child can drag it
+ * anywhere in the room; on release it falls straight down to the floor where
+ * it was let go, shows FALLS, and goes back to IDLE from that spot.
  *
  * Frames change through state at PET_FPS; every movement is an Animated tween
- * on the native driver. Timers stop while `active` is false, animations are
+ * on the native driver, rounded to whole physical pixels so the art stays sharp. Timers stop while `active` is false, animations are
  * off in Настройки, or the app is in the background, and everything is cleared
  * on unmount.
  */
@@ -94,7 +101,8 @@ export function LivingPet({
   const [offset] = useState(() => new Animated.ValueXY({ x: 0, y: 0 }));
   const [hop] = useState(() => new Animated.Value(0));
   // Built once: a new node every frame would re-attach the native animation graph.
-  const [lift] = useState(() => Animated.add(offset.y, hop));
+  const [shiftX] = useState(() => snapToPixels(offset.x));
+  const [lift] = useState(() => snapToPixels(Animated.add(offset.y, hop)));
   const animationsOn = useAnimationsOn();
   const [appActive, setAppActive] = useState(() => AppState.currentState !== "background");
   const live = active && appActive && animationsOn;
@@ -185,6 +193,13 @@ export function LivingPet({
       Animated.timing(hop, { toValue: 0, duration: air, easing: Easing.in(Easing.quad), useNativeDriver: true }),
     ]).start();
   }, [animationsOn, halt, hop, latest, show]);
+
+  const punch = useCallback(() => {
+    const clip = shownRef.current.clip;
+    if (!animationsOn || dragging.current || clip === "held" || clip === "fall") return;
+    halt();
+    show("attack");
+  }, [animationsOn, halt, show]);
 
   const stroll = useCallback(() => {
     const { bounds: room, size: side, random: roll, calm } = latest.current;
@@ -332,7 +347,7 @@ export function LivingPet({
   );
   /* eslint-enable react-hooks/refs */
 
-  const cell = atlasCell(shown.clip, shown.tick);
+  const frame = clipFrame(shown.clip, shown.tick);
   const pose = poseFromMeters(pet.care, pet.mood);
 
   return (
@@ -342,11 +357,11 @@ export function LivingPet({
         styles.body,
         { bottom: homeBottom, width: size, height: size },
         homeLeft === undefined ? styles.centered : { left: homeLeft },
-        { transform: [{ translateX: offset.x }, { translateY: lift }] },
+        { transform: [{ translateX: shiftX }, { translateY: lift }] },
       ]}
     >
       {bubble ? (
-        <View pointerEvents="none" style={[styles.bubbleSlot, { bottom: size }]}>
+        <View pointerEvents="box-none" style={[styles.bubbleSlot, { bottom: size }]}>
           {bubble}
         </View>
       ) : null}
@@ -355,7 +370,8 @@ export function LivingPet({
         aria-label={talkLabel}
         onPress={() => {
           if (dragging.current) return;
-          jump();
+          if (pickTapMove(latest.current.random) === "attack") punch();
+          else jump();
           latest.current.onTap();
         }}
       >
@@ -371,15 +387,7 @@ export function LivingPet({
           })}
           testID={`living-pet-${shown.clip}`}
         >
-          <SheetFrame
-            source={petAtlasSource(pet)}
-            size={size}
-            column={cell.column}
-            row={cell.row}
-            fileWidthPx={ATLAS_WIDTH}
-            fileHeightPx={ATLAS_HEIGHT}
-            flipped={shown.faceLeft}
-          />
+          <PixelFrame pixels={petPixels(pet)} frame={frame} size={size} flipped={shown.faceLeft} />
         </View>
       </Pressable>
     </Animated.View>

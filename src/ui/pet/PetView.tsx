@@ -1,12 +1,11 @@
 import { View } from "react-native";
 import { petStrings } from "../stringsPet";
-import { petPosesSource } from "./assets";
+import { petPixels } from "./assets";
 import { poseFromMeters, type PetPose } from "./keys";
-import { PET_FRAME_PX, PET_PITCH_PX, PET_POSE_COLUMN, PET_POSE_COLUMNS } from "./petSprites.generated";
-import { SheetFrame } from "./SheetFrame";
+import { PET_POSE_FRAME } from "./petSprites.generated";
+import { PixelFrame } from "./PixelFrame";
 
 const DEFAULT_SIZE = 120;
-const POSES_WIDTH = PET_POSE_COLUMNS * PET_PITCH_PX;
 
 /** A still Питомец: one pose of Andrei's art for this Вид, Окрас, and Аксессуар. */
 export function PetView({
@@ -44,13 +43,7 @@ export function PetView({
       }
       style={{ height: size, width: size }}
     >
-      <SheetFrame
-        source={petPosesSource({ species, color, accessory })}
-        size={size}
-        column={PET_POSE_COLUMN[resolved]}
-        fileWidthPx={POSES_WIDTH}
-        fileHeightPx={PET_FRAME_PX}
-      />
+      <PixelFrame pixels={petPixels({ species, color, accessory })} frame={PET_POSE_FRAME[resolved]} size={size} />
     </View>
   );
 }

@@ -3,13 +3,43 @@
  * and the Об авторах block in Настройки. Kept apart from strings.ts so parallel
  * screen work does not collide.
  */
+import { coins } from "./games/gameStrings";
+
 export const homeStrings = {
   /** Spoken name of the pet button on Главная (the pet picture keeps its own label). */
   petTalk: (petName: string) => (petName ? `Поговорить с питомцем ${petName}` : "Поговорить с питомцем"),
-  petLinesHungry: ["Я бы что-нибудь съел…", "Животик урчит!"],
-  petLinesSad: ["Мне немного грустно.", "Давай поиграем?"],
-  petLinesHappy: ["Ура, я так рад!", "Ты лучший друг!", "Копим на мечту?", "Сегодня отличный день!"],
-  petLinesIdle: ["Привет!", "Пойдём на карту?", "Копим на мечту?", "Что купим сегодня?"],
+  /** Pet lines on Дом: the pool for the pet's mood comes first, then goal, time of day, and any-mood lines. */
+  petLinesHungry: ["Я бы что-нибудь съел…", "Животик урчит!", "Может, купим обед?", "Обед — важная покупка!"],
+  petLinesSad: ["Мне немного грустно.", "Давай поиграем?", "Побудь со мной немножко.", "Вместе всегда веселее!"],
+  petLinesHappy: [
+    "Ура, я так рад!",
+    "Ты лучший друг!",
+    "Сегодня отличный день!",
+    "Мне так весело с тобой!",
+    "Прыг-скок!",
+  ],
+  petLinesIdle: ["Привет!", "Пойдём на карту?", "Что купим сегодня?", "Пощекочи меня!", "Сначала нужное, потом приятное."],
+  petLinesAny: [
+    "Копим на мечту?",
+    "Монетка к монетке!",
+    "Иногда лучше подождать.",
+    "План помогает не потратить лишнее.",
+    "Копилка любит терпеливых.",
+    "Хочу научиться считать деньги!",
+    "На карте нас ждут уроки!",
+    "Спасибо, что заботишься обо мне!",
+  ],
+  petLineMorning: "Доброе утро!",
+  petLineDay: "Хорошего тебе дня!",
+  petLineEvening: "Добрый вечер!",
+  petLineNight: "Уже поздно, я зеваю…",
+  petLinePickGoal: "Давай выберем цель!",
+  petLineGoalStart: (goal: string) => `Начнём копить на «${goal}»?`,
+  petLineGoalLeft: (left: number) => `До цели ещё ${coins(left)}!`,
+  petLineGoalHalf: "Уже половина пути к цели!",
+  petLineGoalReady: "Монет хватает на цель!",
+  /** Hint on the speech bubble: a tap there asks for another line. */
+  petBubbleHint: "Нажми, чтобы услышать другую фразу",
   goalA11y: (name: string, have: number, cost: number) => `Цель: ${name}, ${have} из ${cost}`,
   mapMore: "Подробнее",
   mapMoreA11y: (title: string) => `Подробнее: ${title}`,
