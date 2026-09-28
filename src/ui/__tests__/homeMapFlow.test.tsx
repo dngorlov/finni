@@ -1,5 +1,9 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
+import { BANK, ECONOMY, METERS, SAVINGS } from "../../core/config";
+import { DAILY_REWARD_COINS } from "../../core/dailyReward";
+import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
+import { strings } from "../strings";
 import { DEV_TOOLS, RUNTIME_LIBRARIES } from "../credits";
 import { HomeScene, type HomePet } from "../screens/HomeScene";
 import { speechPool } from "../screens/petSpeech";
@@ -422,5 +426,47 @@ describe("Об авторах и источниках", () => {
       screen.getByRole("link", { name: /craftpix\.net\/freebies\/free-pixel-art-tiny-hero-sprites/ }),
     ).toBeOnTheScreen();
     expect(screen.getByRole("link", { name: /craftpix\.net\/file-licenses/ })).toBeOnTheScreen();
+  });
+});
+
+describe("Как всё считается", () => {
+  it("opens from Настройки and shows numbers taken from config and content", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports);
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Настройки" }));
+    await user.press(screen.getByRole("button", { name: "Как всё считается" }));
+    expect(screen.getByRole("heading", { name: "Как всё считается" })).toBeOnTheScreen();
+    for (const title of [
+      "1. Откуда монеты",
+      "2. План дня",
+      "3. Покупки и шкалы",
+      "4. Копилка и цели",
+      "5. Банк",
+      "6. Этапы питомца",
+    ]) {
+      expect(screen.getByRole("heading", { name: title })).toBeOnTheScreen();
+    }
+
+    const text = flatText(screen.toJSON()).join("\n");
+    expect(text).toContain(`Старт: ${ECONOMY.startingBudget} монет`);
+    expect(text).toContain(`Сытость −${METERS.dailyCareDrop}, Счастье −${METERS.dailyMoodDrop}`);
+    expect(text).toContain(`ещё Счастье −${METERS.overspendMoodPenalty}`);
+    expect(text).toContain(`ещё Счастье −${METERS.noPlanMoodPenalty}`);
+    expect(text).toContain(DAILY_REWARD_COINS.join(", "));
+    expect(text).toContain(`Вклад — от ${BANK.minDeposit} монет`);
+    for (const offer of BANK.offers) expect(text).toContain(`+${offer.ratePercent}%`);
+    expect(text).toContain(`по последним ${SAVINGS.estimateWindow} взносам`);
+
+    const content = loadContent();
+    const lunch = content.catalog.find((item) => item.id === "lunch")!;
+    expect(text).toContain(`${lunch.name} (обязательное) — ${lunch.price} монет`);
+    const guitar = content.goals.find((goal) => goal.id === "guitar")!;
+    expect(text).toContain(`${guitar.name} ${guitar.price} (Счастье +${guitar.effect.delta})`);
+    expect(text).toContain(`Счета идут по кругу из ${content.bills.length} дней`);
+
+    await user.press(screen.getByRole("button", { name: strings.back }));
+    expect(screen.getByRole("button", { name: "Как всё считается" })).toBeOnTheScreen();
   });
 });
