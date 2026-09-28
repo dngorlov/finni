@@ -9,6 +9,7 @@ import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { currentTaskLabel, resolveCurrentTask } from "../tasks/resolveCurrentTask";
 import { colors, font, minTarget, radius, spacing, type } from "../theme";
+import { CoinAmount } from "./CoinText";
 import { MeterBar } from "./MeterBar";
 import { PixelSprite } from "./PixelSprite";
 import { PixelIcon } from "./Pictogram";
@@ -121,10 +122,7 @@ export function StatusStrip({
           }}
           style={({ pressed }) => [styles.balance, pressed ? styles.balancePressed : null]}
         >
-          <PixelSprite name="coin" size={24} />
-          <Text aria-hidden style={styles.balanceValue}>
-            {profile.balance}
-          </Text>
+          <CoinAmount hidden value={profile.balance} style={styles.balanceValue} size={24} />
         </Pressable>
         <Pressable
           role="button"

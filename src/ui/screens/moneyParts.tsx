@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { CoinAmount } from "../components/CoinText";
 import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
 import type { PixelIconName } from "../pixelIconXml";
@@ -45,8 +46,7 @@ export function Amount({
   const text = signed ? moneyStrings.signed(value) : String(value);
   return (
     <View style={styles.amount}>
-      <Text style={[styles.pixel, { color, fontSize: size, lineHeight: Math.round(size * 1.5) }]}>{text}</Text>
-      <PixelSprite name="coin" size={Math.max(16, Math.round(size * 1.1))} />
+      <CoinAmount value={text} style={[styles.pixel, { color, fontSize: size, lineHeight: Math.round(size * 1.5) }]} />
     </View>
   );
 }
@@ -406,7 +406,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     flexShrink: 0,
-    gap: 6,
   },
   hero: {
     backgroundColor: moneyColors.heroFace,
