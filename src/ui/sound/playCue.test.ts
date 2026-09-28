@@ -34,12 +34,12 @@ describe("playCue", () => {
     );
     expect(createPlayer).toHaveBeenCalledTimes(1);
     const player = createPlayer.mock.results[0]?.value as { play: jest.Mock; volume: number };
-    expect(player.volume).toBe(0.4);
+    expect(player.volume).toBeCloseTo(Math.pow(10, -0.9), 5);
     expect(player.play).toHaveBeenCalledTimes(1);
 
     await playCue("wrong", 80);
     expect(createPlayer).toHaveBeenCalledTimes(1);
-    expect(player.volume).toBe(0.8);
+    expect(player.volume).toBeCloseTo(Math.pow(10, -0.3), 5);
     expect(player.play).toHaveBeenCalledTimes(2);
   });
 });

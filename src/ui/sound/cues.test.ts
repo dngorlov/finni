@@ -1,6 +1,17 @@
-import { cueForVerdict, readSoundVolume, stepVolume } from "./cues";
+import { cueForVerdict, gainForVolume, readSoundVolume, stepVolume } from "./cues";
 
 describe("громкость", () => {
+  it("maps the slider on a decibel curve: equal steps sound like equal changes", () => {
+    expect(gainForVolume(0)).toBe(0);
+    expect(gainForVolume(100)).toBe(1);
+    // Every 10 steps is the same 3 dB change, top to bottom.
+    const db = (v: number) => 20 * Math.log10(gainForVolume(v));
+    for (const v of [20, 40, 60, 80, 100]) expect(db(v) - db(v - 10)).toBeCloseTo(3, 5);
+    // Half the slider is clearly quieter than full, not «almost the same».
+    expect(gainForVolume(50)).toBeLessThan(0.2);
+    expect(gainForVolume(1)).toBeGreaterThan(0);
+  });
+
   it("starts at 80 when nothing is stored, and keeps an explicit mute", () => {
     expect(readSoundVolume(null)).toBe(80);
     expect(readSoundVolume("")).toBe(80);

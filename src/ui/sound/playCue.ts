@@ -3,7 +3,7 @@ import completeSound from "../../../assets/sounds/complete.wav";
 import correctSound from "../../../assets/sounds/correct.wav";
 import wrongSound from "../../../assets/sounds/wrong.wav";
 import { META_KEYS } from "../../data/metaKeys";
-import { readSoundVolume, type SoundCue } from "./cues";
+import { gainForVolume, readSoundVolume, type SoundCue } from "./cues";
 
 type Player = {
   play: () => void;
@@ -49,7 +49,7 @@ const SOURCES: Record<SoundCue, number> = {
 /** Plays one cue at 0–100. Volume 0 is silence. Failures are swallowed. */
 export function playCue(cue: SoundCue, volumePercent: number): Promise<void> {
   if (volumePercent <= 0) return Promise.resolve();
-  const gain = Math.max(0, Math.min(1, volumePercent / 100));
+  const gain = gainForVolume(volumePercent);
   return (async () => {
     try {
       const api = loadAudio();
