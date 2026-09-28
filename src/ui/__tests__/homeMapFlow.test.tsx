@@ -263,6 +263,8 @@ describe("Об авторах и источниках", () => {
     expect(screen.getByText("Андрей Мужевлёв")).toBeOnTheScreen();
     expect(screen.getByText("Сергей Гончаров")).toBeOnTheScreen();
     expect(screen.getByText("Claude (Anthropic)")).toBeOnTheScreen();
+    expect(screen.getByText("Cursor")).toBeOnTheScreen();
+    expect(screen.getByText("Grok 4.7")).toBeOnTheScreen();
     expect(screen.getByText("Press Start 2P")).toBeOnTheScreen();
   });
 });

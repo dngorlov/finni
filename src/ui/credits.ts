@@ -102,10 +102,6 @@ export const DEV_TOOLS: readonly LibraryCredit[] = [
   { pkg: "@types/react", name: "@types/react", version: "19.2.18", license: "MIT" },
 ];
 
-/*
- * TODO(hsespbteam): add every other AI model the team used (for art, texts,
- * research, etc.) with what it was used for, before submitting the Т/З.
- */
 /**
  * HSE SPb Team. TODO(команда): проверьте фамилии и роли — здесь только
  * то, что известно из переписки.
@@ -120,6 +116,8 @@ export const TEAM: readonly Credit[] = [
 
 export const AI_MODELS: readonly Credit[] = [
   { what: "Claude (Anthropic)", source: "помощник разработчиков: код, тесты, правка текстов" },
+  { what: "Cursor", source: "среда агента: код, тесты, правка текстов" },
+  { what: "Grok 4.7", source: "модель в Cursor: код, тесты, правка текстов" },
 ];
 
 export const FONTS: readonly Credit[] = [
@@ -143,16 +141,20 @@ export const FONTS: readonly Credit[] = [
 
 export const ICONS: readonly Credit[] = [
   { what: "pixelarticons", source: "Gerrit Halfmann, MIT" },
-  { what: "Пиксельные иконки и питомцы", source: "Андрей Мужевлёв (HSE SPb Team)" },
+  { what: "Пиксельные иконки и питомцы", source: "Андрей Мужевлёв (HSE SPb Team), право на распространение в прототипе подтверждено" },
   { what: "Эмодзи", source: "системные шрифты устройства" },
 ];
 
 export const IMAGES: readonly Credit[] = [
   {
     what: "Карта Москвы",
-    source: "Wikipedia (административные округа Москвы), перерисовка в пиксель-арт — Андрей Мужевлёв",
+    source:
+      "Wikipedia (административные округа Москвы), перерисовка в пиксель-арт — Андрей Мужевлёв, право на распространение в прототипе подтверждено",
   },
-  { what: "Питомцы и иконки", source: "Андрей Мужевлёв (HSE SPb Team)" },
+  {
+    what: "Питомцы и иконки",
+    source: "Андрей Мужевлёв (HSE SPb Team), право на распространение в прототипе подтверждено",
+  },
 ];
 
 export const REFERENCES: readonly Credit[] = [

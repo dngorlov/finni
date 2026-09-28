@@ -39,3 +39,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# release binaries: attach to a GitHub Release, do not commit
+*.apk
+*.aab
+*.keystore

@@ -46,7 +46,7 @@ npx expo run:android --variant release
 adb install -r android/app/build/outputs/apk/release/app-release.apk
 ```
 
-Сейчас release подписывается debug-ключом. Для RuStore нужен свой keystore: его в репозиторий не кладём, `*.jks` и `*.key` уже в `.gitignore`.
+Сейчас release подписывается debug-ключом. Для RuStore нужен свой keystore: его в репозиторий не кладём, `*.jks` и `*.key` уже в `.gitignore`. Готовый APK в git не коммитится, его прикладывают к GitHub Release. Черновик карточки: [docs/store/CARD.md](./docs/store/CARD.md).
 
 ### Демо-режим для проверяющих
 
