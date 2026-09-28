@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
@@ -29,6 +29,7 @@ import { TOPIC_TINT } from "../topicStyle";
 import type { SpotlightBox } from "../finnyScript";
 import { measureSpotlight } from "../measureSpotlight";
 import { containedMapSize } from "./mapLayout";
+import { ZoomableMap } from "./ZoomableMap";
 import { completedTaskIds, correctionTasks, type TaskTopic } from "../tasks/model";
 
 /** Background art: Andrei's Moscow map drops in here (same file name, any size, 3:4). */
@@ -143,7 +144,8 @@ export default function TaskListScreen({
           );
         }}
       >
-        <View
+        <ZoomableMap
+          size={map}
           style={[
             styles.map,
             mapReady
@@ -157,81 +159,92 @@ export default function TaskListScreen({
               : styles.mapPending,
           ]}
         >
-          {/* Explicit width/height: on iOS an absolute-fill Image kept its
-              828×1104 intrinsic size and spilled far past the box. */}
-          {mapReady ? (
-            <Image
-              source={MAP_IMAGE}
-              style={{ width: map.width, height: map.height }}
-              resizeMode="contain"
-              accessibilityIgnoresInvertColors
-            />
-          ) : null}
-          {missions.map((task) => {
-            const before = missionPrerequisite(task, content.tasks);
-            if (!before) return null;
-            const from = at(before);
-            const to = at(task);
-            return Array.from({ length: DOTS }, (_, i) => {
-              const t = (i + 1) / (DOTS + 1);
-              return (
-                <View
-                  key={`${task.id}-dot-${i}`}
-                  pointerEvents="none"
-                  style={[
-                    styles.dot,
-                    completed.has(before.id) ? styles.dotOpen : null,
-                    {
-                      left: pct(from.x + (to.x - from.x) * t),
-                      top: pct(from.y + (to.y - from.y) * t),
-                    },
-                  ]}
+          {(counterScale) => (
+            <>
+              {/* Explicit width/height: on iOS an absolute-fill Image kept its
+                  828×1104 intrinsic size and spilled far past the box.
+                  resizeMethod="scale" keeps the full bitmap so a zoomed map stays sharp. */}
+              {mapReady ? (
+                <Image
+                  source={MAP_IMAGE}
+                  style={{ width: map.width, height: map.height }}
+                  resizeMode="contain"
+                  resizeMethod="scale"
+                  accessibilityIgnoresInvertColors
                 />
-              );
-            });
-          })}
-          {missions.map((task) => {
-            const state = stateOf(task);
-            const { x, y } = at(task);
-            const isSelected = task.id === sheetTaskId;
-            const firstOpen = markFirstOpen && task.id === missions[0]?.id && state === "open";
-            return (
-              <Pressable
-                key={task.id}
-                ref={firstOpen ? pinRef : undefined}
-                collapsable={firstOpen ? false : undefined}
-                onLayout={firstOpen ? reportPin : undefined}
-                role="button"
-                aria-label={strings.missionPinA11y(task.title, state)}
-                aria-selected={isSelected || firstOpen}
-                onPress={() => setSheetTaskId(task.id)}
-                hitSlop={(minTarget - PIN) / 2}
-                style={[
-                  styles.pin,
-                  state === "locked" || state === "soon"
-                    ? styles.pinLocked
-                    : state === "done"
-                      ? styles.pinDone
-                      : styles.pinOpen,
-                  isSelected ? styles.pinSelected : null,
-                  { left: pct(x), top: pct(y) },
-                ]}
-              >
-                <Pictogram
-                  glyph={
-                    state === "soon"
-                      ? "⏳"
-                      : state === "locked"
-                        ? "🔒"
-                        : state === "done"
-                          ? "✓"
-                          : TOPIC_COPY[task.topic].icon
-                  }
-                />
-              </Pressable>
-            );
-          })}
-        </View>
+              ) : null}
+              {missions.map((task) => {
+                const before = missionPrerequisite(task, content.tasks);
+                if (!before) return null;
+                const from = at(before);
+                const to = at(task);
+                return Array.from({ length: DOTS }, (_, i) => {
+                  const t = (i + 1) / (DOTS + 1);
+                  return (
+                    <Animated.View
+                      key={`${task.id}-dot-${i}`}
+                      pointerEvents="none"
+                      style={[
+                        styles.dot,
+                        completed.has(before.id) ? styles.dotOpen : null,
+                        {
+                          left: pct(from.x + (to.x - from.x) * t),
+                          top: pct(from.y + (to.y - from.y) * t),
+                          transform: [{ scale: counterScale }],
+                        },
+                      ]}
+                    />
+                  );
+                });
+              })}
+              {missions.map((task) => {
+                const state = stateOf(task);
+                const { x, y } = at(task);
+                const isSelected = task.id === sheetTaskId;
+                const firstOpen = markFirstOpen && task.id === missions[0]?.id && state === "open";
+                return (
+                  // The spot rides the zoomed art; the counter-scale keeps the pin its own size.
+                  <Animated.View
+                    key={task.id}
+                    style={[styles.pinSpot, { left: pct(x), top: pct(y), transform: [{ scale: counterScale }] }]}
+                  >
+                    <Pressable
+                      ref={firstOpen ? pinRef : undefined}
+                      collapsable={firstOpen ? false : undefined}
+                      onLayout={firstOpen ? reportPin : undefined}
+                      role="button"
+                      aria-label={strings.missionPinA11y(task.title, state)}
+                      aria-selected={isSelected || firstOpen}
+                      onPress={() => setSheetTaskId(task.id)}
+                      hitSlop={(minTarget - PIN) / 2}
+                      style={[
+                        styles.pin,
+                        state === "locked" || state === "soon"
+                          ? styles.pinLocked
+                          : state === "done"
+                            ? styles.pinDone
+                            : styles.pinOpen,
+                        isSelected ? styles.pinSelected : null,
+                      ]}
+                    >
+                      <Pictogram
+                        glyph={
+                          state === "soon"
+                            ? "⏳"
+                            : state === "locked"
+                              ? "🔒"
+                              : state === "done"
+                                ? "✓"
+                                : TOPIC_COPY[task.topic].icon
+                        }
+                      />
+                    </Pressable>
+                  </Animated.View>
+                );
+              })}
+            </>
+          )}
+        </ZoomableMap>
       </View>
       {corrections.length > 0 ? (
         <View
@@ -685,6 +698,13 @@ const styles = StyleSheet.create({
   dotOpen: {
     backgroundColor: colors.raisedEdge,
   },
+  pinSpot: {
+    height: PIN,
+    marginLeft: -PIN / 2,
+    marginTop: -PIN / 2,
+    position: "absolute",
+    width: PIN,
+  },
   pin: {
     alignItems: "center",
     borderColor: colors.card,
@@ -692,9 +712,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     height: PIN,
     justifyContent: "center",
-    marginLeft: -PIN / 2,
-    marginTop: -PIN / 2,
-    position: "absolute",
     width: PIN,
   },
   pinOpen: {

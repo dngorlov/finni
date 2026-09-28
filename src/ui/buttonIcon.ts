@@ -10,6 +10,7 @@ export function buttonIcon(label: string): PixelIconName {
   if (text.startsWith("Понятно") || text.startsWith("Готово") || text.startsWith("Подтвердить")) return "check";
   if (text.startsWith("Закрыть") || text.startsWith("Удалить") || text.startsWith("Убрать")) return "close";
   if (text.includes("Купить") || text.startsWith("Магазин")) return "shopping-cart";
+  if (/заново/i.test(text)) return "reload";
   if (text.startsWith("Играть") || text.startsWith("Начать") || text.startsWith("Пройти")) return "play";
   if (/Отлож|Позже|Дождаться|Ждём/.test(text)) return "clock";
   if (text.includes("Положить")) return "arrow-down";

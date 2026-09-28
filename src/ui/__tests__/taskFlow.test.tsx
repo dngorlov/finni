@@ -178,7 +178,7 @@ describe("Карта заданий", () => {
       expect(screen.getByLabelText("Было: 100 монет")).toBeOnTheScreen();
       expect(screen.getByLabelText("+23 монеты")).toBeOnTheScreen();
       expect(screen.getByLabelText("Задание: Что такое бюджет? +23")).toBeOnTheScreen();
-      expect(screen.getByText("За лучший ответ можно получить ещё 7")).toBeOnTheScreen();
+      expect(screen.getByLabelText("За лучший ответ можно получить ещё 7")).toBeOnTheScreen();
       expect(screen.queryByText("Потому что ты выполнил задание.")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Итоги дня" }));
 

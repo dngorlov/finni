@@ -16,13 +16,14 @@ export const spacing = {
  * Andrei's Material 3 light scheme (seed export from the team chat, 2026-09-20).
  * Each token names its M3 source so a re-export maps one-to-one.
  * Text-on-fill pairs are checked for WCAG AA: onRaised on raisedFace 4.6:1,
- * accentText on background 6.1:1, text on background 16:1.
+ * accentText on background 6.1:1, text on background 12.9:1 (AAA; 13.5:1 on card,
+ * 10.5:1 on highlight, 9.1:1 on badgeFill).
  */
 export const colors = {
   /** surface */
   background: "#FFF8F4",
-  /** on-surface */
-  text: "#221A12",
+  /** on-surface, warmed from #221A12 to a very dark brown (testers: less black). */
+  text: "#3E2A1C",
   /** on-surface-variant */
   subtle: "#534434",
   /** surface-container-lowest */

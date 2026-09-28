@@ -42,7 +42,8 @@ export function FeedbackCard({ model, onDismiss }: { model: FeedbackModel; onDis
             </View>
           ) : null}
           {deltas.balance ? (
-            <DeltaRow icon={strings.balanceIcon} label={strings.feedbackBalance(deltas.balance)} />
+            // The coin follows the number («Баланс +5 🪙») instead of leading the row.
+            <CoinText coin text={strings.feedbackBalance(deltas.balance)} style={styles.body} />
           ) : null}
           {deltas.savings ? (
             <DeltaRow icon={strings.savingsIcon} label={strings.feedbackSavings(deltas.savings)} />
