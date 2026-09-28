@@ -28,6 +28,16 @@ const TASK_ICON: Record<NonNullable<ReturnType<typeof resolveCurrentTask>>["kind
 
 const EDGE = 4;
 
+/** Balance digits at full size; a longer balance shrinks the font instead of clipping. */
+const BALANCE_FULL_DIGITS = 4;
+const BALANCE_FONT = 16;
+
+export function balanceFontSize(balance: number): number {
+  const length = String(balance).length;
+  if (length <= BALANCE_FULL_DIGITS) return BALANCE_FONT;
+  return Math.max(10, Math.floor((BALANCE_FONT * BALANCE_FULL_DIGITS) / length));
+}
+
 function openTask(
   task: NonNullable<ReturnType<typeof resolveCurrentTask>>,
   chrome: {
@@ -122,7 +132,12 @@ export function StatusStrip({
           }}
           style={({ pressed }) => [styles.balance, pressed ? styles.balancePressed : null]}
         >
-          <CoinAmount hidden value={profile.balance} style={styles.balanceValue} size={24} />
+          <CoinAmount
+            hidden
+            value={profile.balance}
+            style={[styles.balanceValue, { fontSize: balanceFontSize(profile.balance) }]}
+            size={24}
+          />
         </Pressable>
         <Pressable
           role="button"
@@ -251,6 +266,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.badgeFill,
     borderRadius: radius.card,
     flexDirection: "row",
+    flexShrink: 0,
     gap: spacing.s,
     height: minTarget,
     justifyContent: "center",
@@ -266,7 +282,6 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     includeFontPadding: false,
     lineHeight: 24,
-    textAlign: "center",
     textAlignVertical: "center",
   },
   settingsShell: {

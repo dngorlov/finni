@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from "react-native";
 import { strings } from "../strings";
-import { type } from "../theme";
+import { font as fonts, type } from "../theme";
 import { Pictogram } from "./Pictogram";
 
 /**
@@ -243,15 +243,31 @@ export function CoinAmount({
   /** Coin size when it should differ from the digits (a hero number). */
   size?: number;
 }) {
-  const coinPx = size ?? coinSize(StyleSheet.flatten(style));
+  const flat = StyleSheet.flatten(style);
+  const coinPx = size ?? coinSize(flat);
+  const text = String(value);
   return (
-    <View aria-hidden={hidden} style={styles.amount}>
-      <Text style={style}>{value}</Text>
+    <View aria-hidden={hidden} style={[styles.amount, styles.amountFixed]}>
+      {/* One line that never shrinks: Android measured the wide pixel digits short and cut «107» to «1». */}
+      <Text numberOfLines={1} style={[style, styles.amountFixed, { minWidth: pixelTextWidth(text, flat) }]}>
+        {text}
+      </Text>
       <View style={{ marginLeft: coinGap(coinPx) }}>
         <Pictogram glyph={strings.balanceIcon} size={coinPx} />
       </View>
     </View>
   );
+}
+
+/**
+ * Press Start 2P is monospaced at exactly 1 em per glyph, so a pixel-font line is
+ * never narrower than its length × font size. Other fonts: no floor.
+ */
+export function pixelTextWidth(text: string, flat: TextStyle | undefined): number | undefined {
+  if (flat?.fontFamily !== fonts.pixel) return undefined;
+  const size = typeof flat.fontSize === "number" ? flat.fontSize : type.body;
+  const spacing = typeof flat.letterSpacing === "number" ? flat.letterSpacing : 0;
+  return Math.ceil(text.length * (size + spacing));
 }
 
 /** The coin is as tall as the digits: a touch under the font size, never under 12. */
@@ -305,6 +321,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     flexWrap: "nowrap",
+  },
+  amountFixed: {
+    flexShrink: 0,
   },
   oneLine: {
     flexWrap: "nowrap",
