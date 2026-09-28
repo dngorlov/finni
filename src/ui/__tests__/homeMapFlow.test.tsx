@@ -1,4 +1,5 @@
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { fireEvent, render, screen, userEvent } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { FinPetApp } from "../FinPetApp";
 import { DEV_TOOLS, RUNTIME_LIBRARIES } from "../credits";
 import { HomeScene, type HomePet } from "../screens/HomeScene";
@@ -82,6 +83,35 @@ describe("Главная scene", () => {
 
     await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
     expect(screen.queryByText(homeStrings.petLinesIdle[0])).not.toBeOnTheScreen();
+  });
+
+  it("hangs one narrow shelf on the right wall, clear of the buttons, only when the wall has room", async () => {
+    const layout = (width: number, height: number, y = 0) => ({
+      nativeEvent: { layout: { x: 0, y, width, height } },
+    });
+    await render(homeScene());
+    // Not measured yet: no shelf guessed into place.
+    expect(screen.queryByTestId("home-shelf", { includeHiddenElements: true })).not.toBeOnTheScreen();
+
+    await fireEvent(screen.getByTestId("home-scene"), "layout", layout(400, 700));
+    await fireEvent(screen.getByTestId("home-actions"), "layout", layout(200, 92, 44));
+    const shelf = screen.getByTestId("home-shelf", { includeHiddenElements: true });
+    expect(shelf).not.toBeVisible();
+    const box = StyleSheet.flatten(shelf.props.style);
+    // One column: narrow and tall, three cells stacked.
+    expect(box).toMatchObject({ width: 48, height: 132, position: "absolute" });
+    expect(box.flexDirection ?? "column").toBe("column");
+    expect(shelf.children).toHaveLength(3);
+    expect(typeof box.right).toBe("number");
+    // Floor is 30 % of 700 = 210; the shelf sits 120 above it, like the window.
+    expect(box.bottom).toBe(330);
+    const shelfTop = 700 - 330 - 132;
+    const actionsBottom = 16 + 44 + 92;
+    expect(shelfTop).toBeGreaterThan(actionsBottom);
+
+    // A short scene has no wall for it above the floor: it is left out, not squeezed over the buttons.
+    await fireEvent(screen.getByTestId("home-scene"), "layout", layout(400, 420));
+    expect(screen.queryByTestId("home-shelf", { includeHiddenElements: true })).not.toBeOnTheScreen();
   });
 
   it("keeps the whole «День N» label readable: it holds its width on one line", async () => {
