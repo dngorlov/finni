@@ -248,8 +248,6 @@ export const strings = {
   resultsScoreMandatory: (earned: boolean) => (earned ? "Обязательные +2" : "Обязательные 0"),
   resultsScoreWithinPlan: (earned: boolean) => (earned ? "По плану +1" : "По плану 0"),
   scoreDeposited: (earned: boolean) => (earned ? "Копилка +1" : "Копилка 0"),
-  /** «Каждый день: Сытость -15» — the drop always lands. A purchase offsets it separately. */
-  meterDailyApplied: (meter: string, n: number) => `Каждый день: ${meter} ${n}`,
   meterReasonOverspend: (n: number) => `Счастье ${n}: желаемое сверх плана.`,
   meterReasonNoPlan: (n: number) => `Счастье ${n}: плана на день не было.`,
   journalStart: "Старт",
@@ -285,7 +283,7 @@ export const strings = {
   confirmPlan: "Подтвердить план",
   confirmPlanTitle: "Подтвердить план дня?",
   confirmPlanBody:
-    "Это обещание. Монеты останутся в Балансе, пока ты не купишь в Магазине или не положишь в Копилку. Потом план не меняется.",
+    "Это обещание. Монеты останутся в Балансе, пока ты не купишь в Магазине или не положишь в Копилку. Пока не было покупок, план можно изменить.",
   planYesterday: (n: number) => `вчера ${n}`,
   planLeftover: (n: number) => `В плане осталось ${n}`,
   planOvershoot: (n: number) => `сверх плана ${n}`,
@@ -446,17 +444,9 @@ function daysWord(n: number): string {
   return "дней";
 }
 
-/** Итоги lines for a closed day. The daily drop always lands; a purchase does not cancel it. */
-export function dayCloseLines(deltas: {
-  care: number;
-  dailyMood: number;
-  overspend: number;
-  noPlan: number;
-}): string[] {
-  const lines = [
-    strings.meterDailyApplied(strings.care, deltas.care),
-    strings.meterDailyApplied(strings.mood, deltas.dailyMood),
-  ];
+/** Extra Итоги lines for a closed day: drops beyond the daily one. */
+export function dayCloseLines(deltas: { overspend: number; noPlan: number }): string[] {
+  const lines: string[] = [];
   if (deltas.overspend < 0) lines.push(strings.meterReasonOverspend(deltas.overspend));
   if (deltas.noPlan < 0) lines.push(strings.meterReasonNoPlan(deltas.noPlan));
   return lines;

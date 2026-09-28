@@ -26,6 +26,7 @@ const basket = (bin: string) => new RegExp(`^Корзина «${bin}»`);
 
 async function playBudgetWhat(user: User, { mistakes = 0 }: { mistakes?: number } = {}) {
   expect(screen.getByText("Что такое бюджет?")).toBeOnTheScreen();
+  expect(screen.queryByRole("button", { name: "Начать заново" })).not.toBeOnTheScreen();
   expect(screen.getByLabelText(/Бюджет — это план твоих денег/)).toBeOnTheScreen();
   await user.press(screen.getByRole("button", { name: "Дальше" }));
   expect(screen.getByLabelText(/Пух может получать монеты за выполнение заданий/)).toBeOnTheScreen();
@@ -138,7 +139,7 @@ describe("Карта заданий", () => {
     expect(screen.getByLabelText("Сытость -15")).toBeOnTheScreen();
     expect(screen.getByLabelText("Счастье -15")).toBeOnTheScreen();
     expect(screen.queryByRole("heading", { name: /Открылось/ })).not.toBeOnTheScreen();
-    expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
+    expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();
     expect(screen.getByRole("heading", { name: "Разбор дня" })).toBeOnTheScreen();
     expect(screen.queryByText(/плана на день не было/)).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Магазин" })).not.toBeOnTheScreen();
@@ -186,7 +187,7 @@ describe("Карта заданий", () => {
       expect(screen.getByLabelText("Сытость -15")).toBeOnTheScreen();
       expect(screen.getByLabelText("Счастье -15")).toBeOnTheScreen();
       expect(screen.queryByRole("heading", { name: /Открылось/ })).not.toBeOnTheScreen();
-      expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
+      expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();
     expect(screen.getByRole("heading", { name: "Разбор дня" })).toBeOnTheScreen();
       expect(screen.queryByText(/плана на день не было/)).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Следующий день" }));

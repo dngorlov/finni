@@ -119,8 +119,21 @@ describe("mission unlock chain", () => {
     expect(missionPrerequisite(tasks[1]!, tasks)).toBeNull();
   });
 
-  it("uses the same chain whether or not the profile is Демо-режим", () => {
-    expect(open([])).toEqual(["budget_1"]);
+  it("opens every map pin and its mini-games in Демо-режим", () => {
+    const withGame: TaskContent[] = [
+      ...tasks,
+      fixture({ id: "game", topic: "budget", parent: "budget_1" }),
+    ];
+    expect(unlockedTasks(withGame, new Set(), true).map((task) => task.id)).toEqual([
+      "budget_1",
+      "budget_2",
+      "savings_1",
+      "payments_1",
+      "payments_2",
+      "bonus",
+      "game",
+    ]);
+    expect(unlockedTasks(withGame, new Set(), false).map((task) => task.id)).not.toContain("game");
   });
 
   it("opens the Копилка and План lessons from the start, and still gates the other topics on «Что такое бюджет?»", () => {

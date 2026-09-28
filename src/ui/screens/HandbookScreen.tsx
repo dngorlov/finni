@@ -15,7 +15,7 @@ import type { PixelIconName } from "../pixelIconXml";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
-import { handbookLessons, handbookWords, teachingCards } from "../tasks/handbook";
+import { handbookLessons, handbookSections, teachingCards } from "../tasks/handbook";
 import { completedTaskIds, type TaskTopic } from "../tasks/model";
 import { colors, minTarget, spacing, type } from "../theme";
 import { TOPIC_TINT } from "../topicStyle";
@@ -43,7 +43,7 @@ function withPet(text: string, petName: string): string {
   return text.split("{pet}").join(petName);
 }
 
-/** Словарик: «Слова» and «Уроки» are the theory of Уроки the child has finished. */
+/** Словарик: «Слова» and «Уроки» of finished Уроки. Демо-режим shows every one. */
 export default function HandbookScreen() {
   const { game, meta, content } = useSession();
   const [tab, setTab] = useState<Tab>("words");
@@ -59,12 +59,12 @@ export default function HandbookScreen() {
       const profile = game.getProfile(profileId);
       const progress = game.listTaskProgress(profileId);
       setPetName(profile.petName);
-      setLessons(handbookLessons(content.tasks, completedTaskIds(progress)));
+      setLessons(handbookLessons(content.tasks, completedTaskIds(progress), profile.isDemo));
     }, [content.tasks, game, meta]),
   );
 
-  const words = handbookWords(lessons);
-  const openWord = words.find((word) => word.id === openWordId) ?? null;
+  const sections = handbookSections(lessons);
+  const openWord = sections.flatMap((section) => section.words).find((word) => word.id === openWordId) ?? null;
   const openLesson = lessons.find((task) => task.id === openLessonId) ?? null;
 
   function selectTab(next: Tab) {
@@ -100,24 +100,33 @@ export default function HandbookScreen() {
         })}
       </View>
       {tab === "words" ? (
-        words.length === 0 ? (
+        sections.length === 0 ? (
           <Text style={styles.hint}>{homeStrings.handbookEmptyWords}</Text>
         ) : (
           <>
             <Text style={styles.hint}>{homeStrings.handbookWordsHint}</Text>
-            <View style={styles.grid}>
-              {words.map((word, index) => (
-                <Pressable
-                  key={word.id}
-                  role="button"
-                  aria-label={word.title}
-                  onPress={() => setOpenWordId(word.id)}
-                  style={({ pressed }) => [styles.tile, pressed ? styles.tilePressed : null]}
-                >
-                  <View style={[styles.tileFace, { backgroundColor: TILE_FILLS[index % TILE_FILLS.length] }]}>
-                    <Text style={styles.tileLabel}>{word.title}</Text>
+            <View style={styles.sections}>
+              {sections.map((section) => (
+                <View key={section.id} style={styles.section}>
+                  <Text role="heading" style={styles.sectionTitle}>
+                    {section.title}
+                  </Text>
+                  <View style={styles.grid}>
+                    {section.words.map((word, index) => (
+                      <Pressable
+                        key={word.id}
+                        role="button"
+                        aria-label={`${word.title}, ${section.title}`}
+                        onPress={() => setOpenWordId(word.id)}
+                        style={({ pressed }) => [styles.tile, pressed ? styles.tilePressed : null]}
+                      >
+                        <View style={[styles.tileFace, { backgroundColor: TILE_FILLS[index % TILE_FILLS.length] }]}>
+                          <Text style={styles.tileLabel}>{word.title}</Text>
+                        </View>
+                      </Pressable>
+                    ))}
                   </View>
-                </Pressable>
+                </View>
               ))}
             </View>
           </>
@@ -226,6 +235,17 @@ const styles = StyleSheet.create({
   hint: {
     color: colors.subtle,
     fontSize: type.body,
+  },
+  sections: {
+    gap: spacing.l,
+  },
+  section: {
+    gap: spacing.s,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: type.section,
+    fontWeight: "800",
   },
   grid: {
     flexDirection: "row",

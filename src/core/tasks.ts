@@ -140,6 +140,12 @@ export interface MissionPin {
   district: string;
 }
 
+/** A Словарик entry: the word itself, then its definition from the Урок. */
+export interface LessonWord {
+  term: string;
+  text: string;
+}
+
 export interface TaskContent {
   id: string;
   topic: "budget" | "savings" | "payments";
@@ -169,6 +175,8 @@ export interface TaskContent {
    * between the opening card and the closing card. A lesson omits it.
    */
   deal?: number;
+  /** Words this Урок adds to Словарик. The term is the word, not a card title. */
+  words?: LessonWord[];
   nodes: TaskNode[];
 }
 
@@ -322,14 +330,17 @@ export function endsGameDay(
 }
 
 /**
- * Open missions: those whose prerequisite is completed. The same chain in
- * normal play and Демо-режим. The Игровой день never locks a pin.
+ * Open missions: those whose prerequisite is completed. Демо-режим opens
+ * every map pin and every mini-game from the start.
+ * The Игровой день never locks a pin.
  */
 export function unlockedTasks(
   tasks: readonly TaskContent[],
   completedIds: ReadonlySet<string>,
+  isDemo = false,
 ): TaskContent[] {
   return playableTasks(tasks).filter((task) => {
+    if (isDemo) return true;
     const before = missionPrerequisite(task, tasks);
     return before === null || completedIds.has(before.id);
   });

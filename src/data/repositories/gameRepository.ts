@@ -58,6 +58,11 @@ export function accessorySeenKey(profileId: string): string {
   return `accessorySeen:${profileId}`;
 }
 
+/** Meta row set once the pet has congratulated the child on reaching Миллионер. */
+export function finaleSeenKey(profileId: string): string {
+  return `finaleSeen:${profileId}`;
+}
+
 export interface AppearanceInput {
   species: string;
   color: string;
@@ -502,6 +507,10 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     };
   }
 
+  function dayHasPurchases(conn: GameDb, dayId: string): boolean {
+    return conn.select().from(tables.purchases).where(eq(tables.purchases.dayId, dayId)).get() != null;
+  }
+
   function itemPurchased(conn: GameDb, profileId: string, itemId: string): boolean {
     return (
       conn
@@ -830,6 +839,7 @@ export function createGameRepository(db: GameDb, clock: Clock) {
         tx.delete(tables.petState).where(eq(tables.petState.profileId, profileId)).run();
         tx.delete(tables.days).where(eq(tables.days.profileId, profileId)).run();
         tx.delete(tables.meta).where(eq(tables.meta.key, accessorySeenKey(profileId))).run();
+        tx.delete(tables.meta).where(eq(tables.meta.key, finaleSeenKey(profileId))).run();
         tx.delete(tables.profiles).where(eq(tables.profiles.id, profileId)).run();
       });
     },
@@ -856,6 +866,22 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     accessoryUnlock(profileId: string): AccessoryKey | null {
       const stage = stageFromCode(pet(db, profileId).stage);
       return pendingAccessoryUnlock(stage, accessorySeen(db, profileId));
+    },
+
+    /** True once, after Этап becomes Миллионер, until the pet’s card is dismissed. */
+    finalePending(profileId: string): boolean {
+      if (stageFromCode(pet(db, profileId).stage) !== "millionaire") return false;
+      const row = db.select().from(tables.meta).where(eq(tables.meta.key, finaleSeenKey(profileId))).get();
+      return row?.value !== "1";
+    },
+
+    /** The congratulations card was shown. */
+    celebrateFinale(profileId: string): void {
+      db.transaction((tx) => {
+        profile(tx, profileId);
+        setMeta(tx, finaleSeenKey(profileId), "1");
+      });
+      publish();
     },
 
     /** The card was shown: remember it and put the new Аксессуар on. */
@@ -918,7 +944,10 @@ export function createGameRepository(db: GameDb, clock: Clock) {
         }
         const existing = planForDay(tx, dayId);
         if (existing?.status === "confirmed") {
-          throw new Error("План уже подтверждён");
+          if (dayHasPurchases(tx, dayId)) throw new Error("План уже подтверждён");
+          const available = profile(tx, profileId).balance;
+          const check = validatePlan(buckets, available);
+          if (!check.ok) throw new Error("В плане больше монет, чем есть");
         }
         if (existing) {
           tx.update(tables.plans)

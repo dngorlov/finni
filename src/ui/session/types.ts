@@ -42,6 +42,10 @@ export type SessionGame = {
   accessoryUnlock(profileId: string): AccessoryKey | null;
   /** Card shown: remember it and put the new Аксессуар on. */
   celebrateAccessoryUnlock(profileId: string): void;
+  /** The pet still owes the «ты дошёл до конца» card for Миллионер. */
+  finalePending(profileId: string): boolean;
+  /** That card was dismissed. */
+  celebrateFinale(profileId: string): void;
   /** Item ids of every Цель bought, oldest first, each once. */
   boughtGoalIds(profileId: string): string[];
   openDay(profileId: string): OpenDayResult;

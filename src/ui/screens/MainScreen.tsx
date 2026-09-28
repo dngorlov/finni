@@ -7,6 +7,7 @@ import { BANK, FEATURES } from "../../core/config";
 import { META_KEYS } from "../../data/metaKeys";
 import type { DayState, ProfileView, SavingsView } from "../../data/repositories/gameRepository";
 import { AccessoryUnlockCard } from "../components/AccessoryUnlockCard";
+import { StageFinaleCard } from "../components/StageFinaleCard";
 import { GoalPicker } from "../components/GoalPicker";
 import { PixelSprite } from "../components/PixelSprite";
 import { FeedbackCard, type FeedbackModel } from "../components/FeedbackCard";
@@ -79,6 +80,28 @@ function useAccessoryUnlock(profileId: string | null) {
       return game.accessoryUnlock(profileId);
     } catch {
       return null;
+    }
+  }, [game, profileId]);
+  return useSyncExternalStore(subscribe, read, read);
+}
+
+/**
+ * The pet’s «ты дошёл до конца» card, held back while a Достижение modal is
+ * still up so the celebrations come one after the other.
+ */
+function useStageFinale(profileId: string | null) {
+  const { game } = useSession();
+  const subscribe = useCallback(
+    (listener: () => void) => (profileId ? game.subscribe(listener) : () => {}),
+    [game, profileId],
+  );
+  const read = useCallback(() => {
+    if (!profileId) return false;
+    try {
+      if (game.listAchievements(profileId).some((row) => !row.celebrated)) return false;
+      return game.finalePending(profileId);
+    } catch {
+      return false;
     }
   }, [game, profileId]);
   return useSyncExternalStore(subscribe, read, read);
@@ -289,6 +312,12 @@ export default function MainScreen({ navigation }: Props) {
   }, [setTab, tourId]);
 
   const unlockKey = useAccessoryUnlock(hub?.profile.id ?? null);
+  const finale = useStageFinale(hub?.profile.id ?? null);
+  const celebrateFinale = useCallback(() => {
+    const profileId = meta.get(META_KEYS.activeProfileId);
+    if (!profileId) return;
+    game.celebrateFinale(profileId);
+  }, [game, meta]);
   const celebrateUnlock = useCallback(() => {
     const profileId = meta.get(META_KEYS.activeProfileId);
     if (!profileId) return;
@@ -319,8 +348,18 @@ export default function MainScreen({ navigation }: Props) {
   const tour = hub.profile.isDemo ? null : tourStep(tourId);
   const markId = tour?.spotlight ?? (tour?.map ? "pin" : null);
   const hole = spotlightHole?.id === markId ? spotlightHole.box : null;
+  const showFinale =
+    finale &&
+    focused &&
+    tab === "home" &&
+    !cardOpen &&
+    !giftOpen &&
+    giftGot == null &&
+    feedback == null &&
+    tour == null;
   const showUnlock =
     unlockKey != null &&
+    !showFinale &&
     focused &&
     tab === "home" &&
     !cardOpen &&
@@ -367,7 +406,7 @@ export default function MainScreen({ navigation }: Props) {
                 dropRef={dropRef}
                 onDropLayout={placeDropShield}
                 bottomInset={STAGE_PEEK_HEIGHT}
-                active={focused && !showUnlock && tab === "home"}
+                active={focused && !showUnlock && !showFinale && tab === "home"}
                 quiet={tour != null}
               />
             </TabPane>
@@ -526,6 +565,17 @@ export default function MainScreen({ navigation }: Props) {
           chosen={tourGoal(game, content.goals, hub.profile.id)}
           hole={hole}
           onAdvance={advanceTour}
+        />
+      ) : null}
+      {showFinale ? (
+        <StageFinaleCard
+          pet={{
+            species: hub.profile.species,
+            color: hub.profile.color,
+            accessory: hub.profile.accessory,
+            petName: hub.profile.petName,
+          }}
+          onDone={celebrateFinale}
         />
       ) : null}
       {showUnlock && unlockKey ? (

@@ -79,12 +79,20 @@ describe("Аксессуар opens with Этап", () => {
     await user.press(screen.getByRole("button", { name: "Карта" }));
     await act(async () => buyGoal(ports, goal("scooter", 160)));
     await dismissAchievements(user);
+    expect(screen.queryByText(petStrings.finaleTitle)).not.toBeOnTheScreen();
     expect(screen.queryByText("Новый аксессуар: шапочка с антенной!")).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Дом" }));
+    expect(await screen.findByText(petStrings.finaleBody)).toBeOnTheScreen();
+    expect(screen.getByRole("img", { name: /Питомец Пух.*весёлый/ })).toBeOnTheScreen();
+    expect(screen.queryByText("Новый аксессуар: шапочка с антенной!")).not.toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: petStrings.finaleDone }));
+
+    expect(screen.queryByText(petStrings.finaleBody)).not.toBeOnTheScreen();
     expect(await screen.findByText("Новый аксессуар: шапочка с антенной!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: petStrings.unlockDone }));
     expect(ports.game.getProfile(profileId)).toMatchObject({ stage: "millionaire", accessory: "a3" });
+    expect(ports.game.finalePending(profileId)).toBe(false);
   });
 
   it("changes Вид, Окрас, and an opened Аксессуар on Внешний вид and keeps them", async () => {

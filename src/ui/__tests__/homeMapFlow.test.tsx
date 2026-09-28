@@ -54,7 +54,7 @@ function homeScene(pet: Partial<HomePet> = {}, random?: () => number) {
 }
 
 describe("Главная scene", () => {
-  it("keeps Магазин and Итоги as floating buttons and lets the pet speak without a tap", async () => {
+  it("keeps Магазин and Итоги under День N and the goal, and lets the pet speak without a tap", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
     const { user } = await renderApp(ports);
@@ -69,8 +69,15 @@ describe("Главная scene", () => {
     expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
+    const actions = screen.getByTestId("home-actions");
+    const hud = actions.parent;
+    let dayRow = screen.getByText("День 1").parent;
+    while (dayRow && dayRow.parent !== hud) dayRow = dayRow.parent;
+    expect(hud?.children.indexOf(dayRow!)).toBeLessThan(hud?.children.indexOf(actions) ?? -1);
+    expect(actions).toHaveStyle({ alignSelf: "flex-end", flexDirection: "row" });
+    expect(actions).toContainElement(screen.getByRole("button", { name: "Магазин" }));
     expect(screen.getByRole("button", { name: "Магазин" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Итоги" })).toBeOnTheScreen();
+    expect(actions).toContainElement(screen.getByRole("button", { name: "Итоги" }));
     expect(screen.getByText(homeStrings.petLinesIdle[0])).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
@@ -276,17 +283,18 @@ describe("Карта заданий", () => {
     ports.game.noteTaskCompleted!(profileId, "budget_what");
     await user.press(screen.getByRole("button", { name: "Словарик" }));
 
-    expect(screen.getByRole("button", { name: "Что такое бюджет?" })).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Из чего складывается бюджет?" })).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Нужно или хочется?" })).toBeOnTheScreen();
+    expect(screen.getByRole("heading", { name: "Что такое бюджет?" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "бюджет, Что такое бюджет?" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "доходы, Что такое бюджет?" })).toBeOnTheScreen();
+    expect(screen.queryByRole("heading", { name: "Планирование бюджета" })).not.toBeOnTheScreen();
+    expect(screen.queryByText("Из чего складывается бюджет?")).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Готово!" })).not.toBeOnTheScreen();
-    expect(screen.queryByRole("button", { name: "Планируем деньги" })).not.toBeOnTheScreen();
     expect(screen.queryByText(/Пух может получать монеты/)).not.toBeOnTheScreen();
 
-    await user.press(screen.getByRole("button", { name: "Из чего складывается бюджет?" }));
-    expect(screen.getByText(/Пух может получать монеты/)).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "бюджет, Что такое бюджет?" }));
+    expect(screen.getByText(/Бюджет — это план твоих денег/)).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
-    expect(screen.queryByText(/Пух может получать монеты/)).not.toBeOnTheScreen();
+    expect(screen.queryByText(/Бюджет — это план твоих денег/)).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Уроки" }));
     expect(screen.getByRole("button", { name: "Что такое бюджет?" })).toBeOnTheScreen();
@@ -300,6 +308,73 @@ describe("Карта заданий", () => {
     await user.press(screen.getByRole("button", { name: "Понятно" }));
     expect(screen.queryByText(/Бюджет — это план твоих денег/)).not.toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Что такое бюджет?" })).toBeOnTheScreen();
+  });
+
+  it("opens every word and every урок in Словарик during Демо-режим", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports, { isDemo: true, name: "Демо", petName: "Демо" });
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Карта" }));
+    expect(screen.getByRole("button", { name: "Покупки, открыто" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Сейчас или потом?, открыто" })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: /, закрыто$/ })).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: "Мини-игры" }));
+    expect(
+      screen.queryByText("Каждая игра относится к уроку и открывается, когда этот урок пройден."),
+    ).not.toBeOnTheScreen();
+    for (const title of ["Скидка или ловушка", "Что дешевле?", "Охота за ценником"]) {
+      expect(screen.getByRole("button", { name: `Играть: ${title}` })).toBeEnabled();
+    }
+    await user.press(screen.getByRole("button", { name: "Закрыть окно" }));
+
+    await user.press(screen.getByRole("button", { name: "Покупки, открыто" }));
+    for (const title of ["Скидка или ловушка", "Что дешевле?", "Охота за ценником"]) {
+      expect(screen.getByRole("button", { name: `Играть: ${title}` })).toBeEnabled();
+    }
+    await user.press(screen.getByRole("button", { name: "Закрыть окно" }));
+
+    await user.press(screen.getByRole("button", { name: "Словарик" }));
+    expect(screen.queryByText(homeStrings.handbookEmptyWords)).not.toBeOnTheScreen();
+    for (const title of [
+      "Что такое бюджет?",
+      "Планирование бюджета",
+      "Меняем план",
+      "Что такое сбережения",
+      "Копим маленькими шагами",
+      "Где живут накопления?",
+      "Платежи",
+      "Покупки",
+      "Сейчас или потом?",
+    ]) {
+      expect(screen.getByRole("heading", { name: title })).toBeOnTheScreen();
+    }
+    expect(screen.getByRole("button", { name: "бюджет, Что такое бюджет?" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "план, Планирование бюджета" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "платёж, Платежи" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "цена, Покупки" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "покупка, Сейчас или потом?" })).toBeOnTheScreen();
+    expect(screen.queryByText("Из чего складывается бюджет?")).not.toBeOnTheScreen();
+    expect(screen.queryByText("Как работает платёж")).not.toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Готово!" })).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: "Уроки" }));
+    for (const title of [
+      "Что такое бюджет?",
+      "Планирование бюджета",
+      "Меняем план",
+      "Что такое сбережения",
+      "Копим маленькими шагами",
+      "Где живут накопления?",
+      "Платежи",
+      "Покупки",
+      "Сейчас или потом?",
+    ]) {
+      expect(screen.getByRole("button", { name: title })).toBeOnTheScreen();
+    }
+    expect(screen.queryByRole("button", { name: "Скидка или ловушка" })).not.toBeOnTheScreen();
+    expect(screen.queryByText(homeStrings.handbookEmptyLessons)).not.toBeOnTheScreen();
   });
 });
 
@@ -340,5 +415,12 @@ describe("Об авторах и источниках", () => {
     expect(screen.getByText("Cursor")).toBeOnTheScreen();
     expect(screen.getByText("Grok 4.7")).toBeOnTheScreen();
     expect(screen.getByText("Press Start 2P")).toBeOnTheScreen();
+    expect(
+      screen.getByText(/Все аксессуары и цветовые расцветки были сделаны самостоятельно/),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByRole("link", { name: /craftpix\.net\/freebies\/free-pixel-art-tiny-hero-sprites/ }),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole("link", { name: /craftpix\.net\/file-licenses/ })).toBeOnTheScreen();
   });
 });

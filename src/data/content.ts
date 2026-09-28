@@ -278,6 +278,12 @@ const pinSchema = z.object({
   district: z.string().min(1),
 });
 
+/** Словарик: the word itself, not a question from a theory card. */
+const lessonWordSchema = z.object({
+  term: z.string().trim().min(1).max(40),
+  text: z.string().min(1),
+});
+
 const taskSchema = z.object({
   id: z.string().min(1),
   topic: z.enum(["budget", "savings", "payments"]),
@@ -294,6 +300,8 @@ const taskSchema = z.object({
   comingSoon: z.boolean().optional(),
   /** Each visit deals this many choice rounds from the pool. */
   deal: z.number().int().positive().optional(),
+  /** Words of a map Урок. Mini-games and corrections omit this. */
+  words: z.array(lessonWordSchema).min(1).optional(),
   nodes: z.array(taskNodeSchema).min(1),
 });
 
@@ -312,6 +320,27 @@ const tasksFileSchema = z
       const onMap = !task.correction && !task.parent;
       if (onMap && (!task.order || !task.pin || !task.description || !task.difficulty)) {
         ctx.addIssue({ code: "custom", message: `Задание ${task.id}: на карте нужны order, pin, description, difficulty` });
+      }
+      const isLesson = onMap && !task.comingSoon;
+      if (isLesson && !task.words) {
+        ctx.addIssue({ code: "custom", message: `Урок ${task.id}: в Словарике нужны слова` });
+      }
+      if (!isLesson && task.words) {
+        ctx.addIssue({ code: "custom", message: `Задание ${task.id}: слова только у урока на карте` });
+      }
+      const seen = new Set<string>();
+      for (const word of task.words ?? []) {
+        if (/[?!]/.test(word.term)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Урок ${task.id}: «${word.term}» — не слово. В Словарике только само слово`,
+          });
+        }
+        const key = word.term.toLocaleLowerCase("ru");
+        if (seen.has(key)) {
+          ctx.addIssue({ code: "custom", message: `Урок ${task.id}: слово «${word.term}» повторяется` });
+        }
+        seen.add(key);
       }
       if (task.parent && !ids.has(task.parent)) {
         ctx.addIssue({ code: "custom", message: `Задание ${task.id}: parent «${task.parent}» не найдено` });

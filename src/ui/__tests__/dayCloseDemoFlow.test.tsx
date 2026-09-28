@@ -49,8 +49,8 @@ describe("Итоги дня + Демо-режим combined loop", () => {
       await user.press(screen.getByRole("button", { name: "Итоги" }));
       expect(screen.getByLabelText("план 21 · потрачено 0")).toBeOnTheScreen();
       expect(screen.getAllByLabelText("план 1 · потрачено 0")).toHaveLength(2);
-      expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
-      expect(screen.getByText("Каждый день: Счастье -15")).toBeOnTheScreen();
+      expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();
+      expect(screen.queryByText("Каждый день: Счастье -15")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Назад" }));
 
       await user.press(screen.getByRole("button", { name: "Карта" }));
@@ -76,9 +76,10 @@ describe("Итоги дня + Демо-режим combined loop", () => {
       expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Планирование бюджета, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Что такое сбережения, открыто" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Где живут накопления?, закрыто" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Платежи, закрыто" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Покупки, закрыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Где живут накопления?, открыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Платежи, открыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Покупки, открыто" })).toBeOnTheScreen();
+      expect(screen.queryByRole("button", { name: /, закрыто$/ })).not.toBeOnTheScreen();
       await openTab(user, "Дом");
 
       await closeDemoDayAndAdvance(user, ports);
@@ -115,9 +116,10 @@ describe("Итоги дня + Демо-режим combined loop", () => {
       expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Планирование бюджета, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Что такое сбережения, открыто" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Где живут накопления?, закрыто" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Платежи, закрыто" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Покупки, закрыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Где живут накопления?, открыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Платежи, открыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Покупки, открыто" })).toBeOnTheScreen();
+      expect(screen.queryByRole("button", { name: /, закрыто$/ })).not.toBeOnTheScreen();
       await openTab(user, "Дом");
 
       await openMoney(user, "Журнал");

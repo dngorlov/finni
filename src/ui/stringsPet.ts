@@ -54,4 +54,10 @@ export const petStrings = {
   unlockBody: (petName: string, stage: Stage) =>
     `Этап «${STAGE_NAMES[stage]}» открыт, и ${petName || "питомец"} уже примеряет обновку. Снять или поменять можно в Настройках → «Внешний вид».`,
   unlockDone: "Класс!",
+
+  /** Spoken once, when Этап first becomes Миллионер. */
+  finaleTitle: "Поздравляю!",
+  finaleBody:
+    "Ты дошёл до конца и стал финансово грамотным. Но ты можешь продолжать играть, если тебе всё ещё интересно.",
+  finaleDone: "Играть дальше",
 } as const;

@@ -10,12 +10,18 @@ export function teachingCards(task: TaskContent): TaskNode[] {
   );
 }
 
-/** Pinned Уроки the child has finished, in map order. Open-but-unfinished pins stay out. */
+/**
+ * Pinned Уроки in map order. The child sees only finished ones.
+ * Демо-режим lists every written pin, finished or not.
+ */
 export function handbookLessons(
   tasks: readonly TaskContent[],
   completedIds: ReadonlySet<string>,
+  all = false,
 ): TaskContent[] {
-  return taskUnlockOrder(tasks).filter((task) => !task.comingSoon && completedIds.has(task.id));
+  return taskUnlockOrder(tasks).filter(
+    (task) => !task.comingSoon && (all || completedIds.has(task.id)),
+  );
 }
 
 export interface HandbookWord {
@@ -24,13 +30,25 @@ export interface HandbookWord {
   text: string;
 }
 
-/** One Слова tile per theory card of the finished Уроки, in lesson order. */
-export function handbookWords(lessons: readonly TaskContent[]): HandbookWord[] {
-  return lessons.flatMap((task) =>
-    teachingCards(task).map((card) => ({
-      id: `${task.id}:${card.id}`,
-      title: card.title ?? card.text,
-      text: card.text,
-    })),
-  );
+/** One Урок’s words, under that lesson’s own heading. */
+export interface HandbookSection {
+  id: string;
+  title: string;
+  words: HandbookWord[];
+}
+
+/**
+ * Finished Уроки in map order, each with its own words.
+ * A tile is the word (`term`), never a theory-card title.
+ */
+export function handbookSections(lessons: readonly TaskContent[]): HandbookSection[] {
+  return lessons.flatMap((task) => {
+    const words = (task.words ?? []).map((word) => ({
+      id: `${task.id}:${word.term}`,
+      title: word.term,
+      text: word.text,
+    }));
+    if (words.length === 0) return [];
+    return [{ id: task.id, title: task.title, words }];
+  });
 }

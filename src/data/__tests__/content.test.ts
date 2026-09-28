@@ -181,7 +181,12 @@ describe("loadContent", () => {
     for (const task of pins) {
       expect(task.pin).toBeDefined();
       expect(task.order).toBeGreaterThan(0);
+      expect(task.words?.length).toBeGreaterThan(0);
+      for (const word of task.words ?? []) {
+        expect(word.term).not.toMatch(/[?!]/);
+      }
     }
+    expect(content.tasks.filter((t) => t.parent || t.correction).every((t) => t.words == null)).toBe(true);
     // Все девять уроков написаны: «скоро» не осталось.
     expect(pins.filter((t) => t.comingSoon)).toEqual([]);
     for (const topic of ["budget", "savings", "payments"] as const) {

@@ -68,6 +68,7 @@ export default function TaskListScreen({
   const { game, meta, content } = useSession();
   const { focus } = usePlayChrome();
   const [progress, setProgress] = useState<TaskProgressView[]>([]);
+  const [demo, setDemo] = useState(false);
   const [sheetTaskId, setSheetTaskId] = useState<string | null>(null);
   const [gamesOpen, setGamesOpen] = useState(false);
   const [slot, setSlot] = useState({ width: 0, height: 0 });
@@ -87,6 +88,7 @@ export default function TaskListScreen({
     useCallback(() => {
       const profileId = meta.get(META_KEYS.activeProfileId);
       if (!profileId) return;
+      setDemo(game.getProfile(profileId).isDemo);
       setProgress(game.listTaskProgress(profileId));
     }, [game, meta]),
   );
@@ -100,7 +102,7 @@ export default function TaskListScreen({
   const byKey = new Map(progress.map((row) => [row.taskKey, row]));
   const completed = completedTaskIds(progress);
   const openIds = new Set(
-    unlockedTasks(content.tasks, completed).map((task) => task.id),
+    unlockedTasks(content.tasks, completed, demo).map((task) => task.id),
   );
   const missions = taskUnlockOrder(content.tasks);
   const corrections = correctionTasks(content.tasks, progress);
@@ -186,7 +188,7 @@ export default function TaskListScreen({
                       pointerEvents="none"
                       style={[
                         styles.dot,
-                        completed.has(before.id) ? styles.dotOpen : null,
+                        demo || completed.has(before.id) ? styles.dotOpen : null,
                         {
                           left: pct(from.x + (to.x - from.x) * t),
                           top: pct(from.y + (to.y - from.y) * t),
@@ -274,6 +276,7 @@ export default function TaskListScreen({
       </FabStack>
       <GamesSheet
         visible={gamesOpen}
+        explainLock={!demo}
         games={miniGames(content.tasks).map((task) => ({
           task,
           state: stateOf(task),
@@ -456,22 +459,24 @@ function GameRow({
   );
 }
 
-/** Every mini-game, with the Урок it belongs to. Locked until that Урок is done. */
+/** Every mini-game, with the Урок it belongs to. Locked until that Урок is done, except in Демо-режим. */
 function GamesSheet({
   visible,
   games,
+  explainLock,
   onClose,
   onPlay,
 }: {
   visible: boolean;
   games: { task: TaskContent; state: PinState; parent: TaskContent | null }[];
+  explainLock: boolean;
   onClose: () => void;
   onPlay: (taskId: string) => void;
 }) {
   return (
     <BottomSheet visible={visible} onClose={onClose}>
       <Text style={styles.sheetTitle}>{strings.missionGames}</Text>
-      <Text style={styles.sheetBody}>{strings.missionGamesLead}</Text>
+      {explainLock ? <Text style={styles.sheetBody}>{strings.missionGamesLead}</Text> : null}
       {games.map((child) => {
         const locked = child.state === "locked" || child.state === "soon";
         return (

@@ -9,9 +9,9 @@ async function renderApp(ports = createFakePorts()) {
 }
 
 describe("plan from Main", () => {
-  it("lets a returning child confirm a План, then locks it and marks the hub ready", async () => {
+  it("lets a returning child confirm a План and still change it before any purchase", async () => {
     const ports = createFakePorts();
-    seedReturningChild(ports, { unlockMoney: true });
+    const profileId = seedReturningChild(ports, { unlockMoney: true });
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Деньги" }));
@@ -53,24 +53,56 @@ describe("plan from Main", () => {
     expect(screen.getByText("Подтвердить план дня?")).toBeOnTheScreen();
     expect(
       screen.getByLabelText(
-        "Это обещание. Монеты останутся в Балансе, пока ты не купишь в Магазине или не положишь в Копилку. Потом план не меняется.",
+        "Это обещание. Монеты останутся в Балансе, пока ты не купишь в Магазине или не положишь в Копилку. Пока не было покупок, план можно изменить.",
       ),
     ).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
 
-    expect(screen.getByLabelText("план 22 · потрачено 0")).toBeOnTheScreen();
-    expect(screen.getByText("Обещание на сегодня. Менять уже нельзя.")).toBeOnTheScreen();
-    expect(screen.queryByText("Это обещание на сегодня. Монеты пока в Балансе.")).not.toBeOnTheScreen();
-    expect(screen.queryByRole("button", { name: "Обязательные, больше" })).not.toBeOnTheScreen();
+    expect(screen.getByText("Пока не было покупок, план можно изменить.")).toBeOnTheScreen();
+    expect(screen.getByText("Это обещание на сегодня. Монеты пока в Балансе.")).toBeOnTheScreen();
+    expect(screen.queryByText("Обещание на сегодня. Менять уже нельзя.")).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Подтвердить план" })).not.toBeOnTheScreen();
-    expect(screen.queryByLabelText(/^Осталось разложить/)).not.toBeOnTheScreen();
-    expect(screen.queryByText(/Вчера: \d+/)).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText(/^план \d+ · потрачено/)).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: "Желаемые, больше" }));
+    expect(screen.getByLabelText("Желаемые 2")).toBeOnTheScreen();
+    expect(ports.game.dayState(profileId).plan).toMatchObject({
+      status: "confirmed",
+      buckets: { mandatory: 22, optional: 2, savings: 1 },
+    });
 
     expect(screen.getByRole("button", { name: "План" })).toBeSelected();
     expect(screen.queryByText("План готов")).not.toBeOnTheScreen();
     expect(screen.queryByText("Составь план дня")).not.toBeOnTheScreen();
     expect(screen.getByLabelText("Баланс 100")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Закончить день" })).not.toBeOnTheScreen();
+  });
+
+  it("locks a confirmed План after a purchase and keeps it editable after Положить", async () => {
+    const ports = createFakePorts();
+    const profileId = seedReturningChild(ports, { unlockMoney: true });
+    const day = ports.game.dayState(profileId);
+    ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 20, optional: 5, savings: 10 });
+    ports.game.confirmPlan(profileId, day.dayId, 20);
+    ports.game.transferToSavings(profileId, day.dayId, 10);
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Деньги" }));
+    await user.press(screen.getByRole("button", { name: "План" }));
+    expect(screen.getByText("Пока не было покупок, план можно изменить.")).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Желаемые, больше" }));
+    expect(screen.getByLabelText("Желаемые 6")).toBeOnTheScreen();
+    expect(ports.game.dayState(profileId).plan.buckets.optional).toBe(6);
+
+    const lunch = ports.content.catalog.find((item) => item.id === "lunch");
+    if (!lunch) throw new Error("Нет обеда в контенте");
+    ports.game.purchase(profileId, day.dayId, lunch);
+    await user.press(screen.getByRole("button", { name: "Копилка" }));
+    await user.press(screen.getByRole("button", { name: "План" }));
+    expect(screen.getByText("Обещание на сегодня. Менять уже нельзя.")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 20 · потрачено 12")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Желаемые, больше" })).not.toBeOnTheScreen();
+    expect(screen.queryByText("Пока не было покупок, план можно изменить.")).not.toBeOnTheScreen();
   });
 
   it("blocks confirm when the План exceeds Баланс and keeps the draft editable", async () => {

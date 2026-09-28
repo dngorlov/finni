@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { BackButton } from "../components/BackButton";
 import { Card } from "../components/Card";
 import { Screen } from "../components/Screen";
@@ -58,6 +58,18 @@ function CreditGroup({ title, items }: { title: string; items: readonly Credit[]
         <View key={item.what} style={styles.row}>
           <Text style={styles.rowName}>{item.what}</Text>
           <Text style={styles.rowMeta}>{item.source}</Text>
+          {item.links?.map((link) => (
+            <Text
+              key={link.url}
+              role="link"
+              style={styles.link}
+              onPress={() => {
+                void Linking.openURL(link.url);
+              }}
+            >
+              {`${link.label}: ${link.url}`}
+            </Text>
+          ))}
         </View>
       ))}
     </Card>
@@ -105,5 +117,10 @@ const styles = StyleSheet.create({
   rowMeta: {
     color: colors.subtle,
     fontSize: 14,
+  },
+  link: {
+    color: colors.accentText,
+    fontSize: 14,
+    textDecorationLine: "underline",
   },
 });

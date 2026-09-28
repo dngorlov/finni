@@ -60,7 +60,7 @@ export function Fab({
   );
 }
 
-/** Column of FABs floating over a screen corner. Дом keeps Магазин and Итоги on the right. */
+/** Column of FABs floating over a screen corner. Карта keeps Словарик on the right; Дом keeps Подарок on the left. */
 export function FabStack({
   children,
   bottom = spacing.m,

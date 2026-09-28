@@ -122,16 +122,21 @@ export default function PlanScreen() {
     );
   }
 
+  const profileId = meta.get(META_KEYS.activeProfileId);
   const confirmed = day.plan.status === "confirmed";
+  const hasPurchases =
+    profileId != null && game.purchasedItemIds(profileId, day.dayId).length > 0;
+  // A confirmed promise stays editable until the first purchase of the day.
+  const locked = confirmed && hasPurchases;
   const bills = todayBills(day.n, content.bills, content.catalog);
   const floor = planMandatoryFloor(bills.total, day.available);
   const billsShort = bills.total - floor;
   const check = validatePlan(buckets, day.available, floor);
   const goalDays = goal ? daysToGoalAt(goal.remaining, buckets.savings) : null;
   const persist = (next: PlanBuckets) => {
-    const profileId = meta.get(META_KEYS.activeProfileId);
-    if (!profileId || confirmed) return;
+    if (!profileId || locked) return;
     setBuckets(next);
+    if (confirmed && !validatePlan(next, day.available, floor).ok) return;
     game.saveDraftPlan(profileId, day.dayId, next);
   };
 
@@ -154,7 +159,7 @@ export default function PlanScreen() {
     load();
   };
 
-  const shown = confirmed ? day.plan.buckets : buckets;
+  const shown = locked ? day.plan.buckets : buckets;
   const free = Math.max(0, day.available - shown.mandatory - shown.optional - shown.savings);
   const slices = [
     { id: "mandatory", label: strings.bucketMandatory, color: CHART_COLORS.mandatory, amount: shown.mandatory },
@@ -167,7 +172,7 @@ export default function PlanScreen() {
   return (
     <Screen
       footer={
-        confirmed ? null : askingConfirm ? (
+        locked || confirmed ? null : askingConfirm ? (
           <>
             <View style={styles.confirmSheet}>
               <CoinText text={strings.confirmPlanTitle} style={styles.section} />
@@ -197,24 +202,26 @@ export default function PlanScreen() {
     >
       <ScreenTitle style={styles.title}>{strings.navPlan}</ScreenTitle>
       <HeroCard caption={moneyStrings.planCaption} value={day.available} label={strings.planAvailable(day.available)}>
-        {confirmed || income <= 0 ? null : <Text style={styles.income}>{strings.planIncomeToday(income)}</Text>}
-        {confirmed ? null : <Text style={styles.promise}>{strings.planPromise}</Text>}
+        {locked || income <= 0 ? null : <Text style={styles.income}>{strings.planIncomeToday(income)}</Text>}
+        {locked ? null : <Text style={styles.promise}>{strings.planPromise}</Text>}
       </HeroCard>
       <MoneyCard>
-        <Text style={styles.section}>{confirmed ? moneyStrings.planSplit : moneyStrings.planHow}</Text>
-        {confirmed ? (
+        <Text style={styles.section}>{locked ? moneyStrings.planSplit : moneyStrings.planHow}</Text>
+        {locked ? (
           <View style={styles.lockedRow}>
             <PixelIcon name="lock" size={20} color={moneyColors.plus} />
             <Text style={styles.locked}>{moneyStrings.planLocked}</Text>
           </View>
+        ) : confirmed ? (
+          <Text style={styles.locked}>{moneyStrings.planRevise}</Text>
         ) : null}
         <SplitBar
           slices={slices.map((row) => ({ id: row.id, value: row.amount, color: row.color }))}
           label={moneyStrings.planChartA11y(chartParts.map((row) => ({ label: row.label, amount: row.amount, percent: 0 })))}
         />
-        {confirmed ? null : <Leftover remainder={check.remainder} />}
+        {locked ? null : <Leftover remainder={check.remainder} />}
       </MoneyCard>
-      {confirmed
+      {locked
         ? PILES.map((pile) => (
             <FactPile
               key={pile.id}

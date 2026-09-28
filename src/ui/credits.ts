@@ -13,11 +13,19 @@ export type LibraryCredit = {
   license: string;
 };
 
+export type CreditLink = {
+  /** Short label in front of the address, e.g. «Источник». */
+  label: string;
+  url: string;
+};
+
 export type Credit = {
   /** What was used. */
   what: string;
   /** Who made it, where it came from, license. */
   source: string;
+  /** Pages a reader can open from this row. */
+  links?: readonly CreditLink[];
 };
 
 /** Runtime dependencies (package.json "dependencies"). */
@@ -109,7 +117,10 @@ export const DEV_TOOLS: readonly LibraryCredit[] = [
 export const TEAM: readonly Credit[] = [
   { what: "Сергей Гончаров", source: "разработка: код приложения, карта заданий, мини-игры, банк, экраны" },
   { what: "Дмитрий Горлов", source: "разработка: архитектура, данные, экраны" },
-  { what: "Андрей Мужевлёв", source: "дизайн: пиксель-арт, питомцы, иконки, карта Москвы, палитра" },
+  {
+    what: "Андрей Мужевлёв",
+    source: "дизайн: пиксель-арт, аксессуары и цветовые расцветки питомца, иконки, карта Москвы, палитра",
+  },
   { what: "Савва Власов", source: "образовательный сценарий: уроки, карточки, тесты, мини-игры" },
   { what: "Александр Лузин", source: "продукт: требования и постановка задач" },
 ];
@@ -141,7 +152,7 @@ export const FONTS: readonly Credit[] = [
 
 export const ICONS: readonly Credit[] = [
   { what: "pixelarticons", source: "Gerrit Halfmann, MIT" },
-  { what: "Пиксельные иконки и питомцы", source: "Андрей Мужевлёв (HSE SPb Team), право на распространение в прототипе подтверждено" },
+  { what: "Пиксельные иконки", source: "Андрей Мужевлёв (HSE SPb Team), право на распространение в прототипе подтверждено" },
   { what: "Эмодзи", source: "системные шрифты устройства" },
 ];
 
@@ -152,8 +163,16 @@ export const IMAGES: readonly Credit[] = [
       "Wikipedia (административные округа Москвы), перерисовка в пиксель-арт — Андрей Мужевлёв, право на распространение в прототипе подтверждено",
   },
   {
-    what: "Питомцы и иконки",
-    source: "Андрей Мужевлёв (HSE SPb Team), право на распространение в прототипе подтверждено",
+    what: "Питомец",
+    source:
+      "Free Pixel Art Tiny Hero Sprites, CraftPix. Все аксессуары и цветовые расцветки были сделаны самостоятельно.",
+    links: [
+      {
+        label: "Источник",
+        url: "https://craftpix.net/freebies/free-pixel-art-tiny-hero-sprites/",
+      },
+      { label: "Лицензия", url: "https://craftpix.net/file-licenses/" },
+    ],
   },
 ];
 

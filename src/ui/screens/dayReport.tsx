@@ -143,13 +143,12 @@ export function InsightsCard({ insights, pet }: { insights: readonly Insight[]; 
 type PetLine = { key: string; text: string; sprite: SpriteName; tint: string };
 
 function petLines(deltas: DaySummaryView["meterDeltas"]): PetLine[] {
-  const [care, mood, ...extra] = dayCloseLines(deltas);
-  const lines: PetLine[] = [
-    { key: "care", text: care, sprite: "food", tint: colors.track },
-    { key: "mood", text: mood, sprite: "mood", tint: colors.track },
-  ];
-  extra.forEach((text, index) => lines.push({ key: `extra${index}`, text, sprite: "mood-down", tint: colors.highlight }));
-  return lines;
+  return dayCloseLines(deltas).map((text, index) => ({
+    key: `extra${index}`,
+    text,
+    sprite: "mood-down",
+    tint: colors.highlight,
+  }));
 }
 
 /** Сытость and Счастье for the closed day, and every reason under them, in one card. */

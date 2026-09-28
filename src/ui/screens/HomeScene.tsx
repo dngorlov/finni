@@ -42,8 +42,8 @@ function dayLabelWidth(label: string): number {
 /**
  * Главная like «Говорящий Том»: the pet stands big in a pixel room, the day and
  * the Цель float as small pills on top. Магазин and Итоги are round buttons
- * bottom-right, and Подарок sits bottom-left while an Ежедневный подарок is
- * waiting. Nothing scrolls.
+ * just under that row, and Подарок sits bottom-left
+ * while an Ежедневный подарок is waiting. Nothing scrolls.
  */
 export function HomeScene({
   pet,
@@ -157,8 +157,8 @@ export function HomeScene({
     : FALLBACK_PET;
   const floorHeight = measured ? Math.round(box.height * FLOOR_SHARE) : 160;
   const petBottom = Math.round(floorHeight * 0.35) + bottomInset;
-  // Nudge left so the pet clears the round buttons on the right. With Подарок
-  // on the left as well, leave the pet centered between the two corners.
+  // Nudge left so the pet's head clears Магазин and Итоги at the top-right.
+  // With Подарок on the bottom-left as well, leave the pet centered between the sides.
   const petLeft = measured
     ? Math.max(spacing.s, Math.round((box.width - petSize) / 2 - (giftReady ? 0 : spacing.l)))
     : undefined;
@@ -307,6 +307,20 @@ export function HomeScene({
             </View>
           </View>
         ) : null}
+        <View testID="home-actions" pointerEvents="box-none" style={styles.actionRow}>
+          <Fab
+            label={strings.navShop}
+            icon={<PixelIcon name="shopping-cart" size={32} color={waiting ? colors.subtle : colors.onRaised} />}
+            disabled={waiting}
+            accessibilityHint={waiting ? strings.waitingEconomyHint : undefined}
+            onPress={onShop}
+          />
+          <Fab
+            label={strings.tabResults}
+            icon={<PixelIcon name="clipboard" size={32} color={colors.onRaised} />}
+            onPress={onResults}
+          />
+        </View>
       </View>
 
       {giftReady && onGift ? (
@@ -318,20 +332,6 @@ export function HomeScene({
           />
         </FabStack>
       ) : null}
-      <FabStack bottom={spacing.m + bottomInset}>
-        <Fab
-          label={strings.navShop}
-          icon={<PixelIcon name="shopping-cart" size={32} color={waiting ? colors.subtle : colors.onRaised} />}
-          disabled={waiting}
-          accessibilityHint={waiting ? strings.waitingEconomyHint : undefined}
-          onPress={onShop}
-        />
-        <Fab
-          label={strings.tabResults}
-          icon={<PixelIcon name="clipboard" size={32} color={colors.onRaised} />}
-          onPress={onResults}
-        />
-      </FabStack>
     </View>
   );
 }
@@ -430,6 +430,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: spacing.m,
     top: spacing.m,
+  },
+  actionRow: {
+    alignSelf: "flex-end",
+    flexDirection: "row",
+    gap: spacing.m,
   },
   hudRow: {
     alignItems: "center",

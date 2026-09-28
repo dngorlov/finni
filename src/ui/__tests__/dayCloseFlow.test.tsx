@@ -34,8 +34,8 @@ describe("Итоги дня", () => {
       await user.press(screen.getByRole("button", { name: "Итоги" }));
       expect(screen.getByLabelText("план 21 · потрачено 0")).toBeOnTheScreen();
       expect(screen.getAllByLabelText("план 1 · потрачено 0")).toHaveLength(2);
-      expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
-      expect(screen.getByText("Каждый день: Счастье -15")).toBeOnTheScreen();
+      expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();
+      expect(screen.queryByText("Каждый день: Счастье -15")).not.toBeOnTheScreen();
       expect(screen.queryByText(/плана на день не было/)).not.toBeOnTheScreen();
       expect(screen.queryByText(/доверяет/)).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Назад" }));
@@ -80,8 +80,8 @@ describe("Итоги дня", () => {
     expect(screen.getByLabelText("план 45 · потрачено 45")).toBeOnTheScreen();
     expect(screen.getByLabelText("план 0 · потрачено 0")).toBeOnTheScreen();
     expect(screen.getByLabelText("план 15 · потрачено 15")).toBeOnTheScreen();
-    expect(screen.getByText("Каждый день: Сытость -15")).toBeOnTheScreen();
-    expect(screen.getByText("Каждый день: Счастье -15")).toBeOnTheScreen();
+    expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();
+    expect(screen.queryByText("Каждый день: Счастье -15")).not.toBeOnTheScreen();
     expect(screen.getByLabelText("Этап 1 из 3, Новичок. Цель: Скейтборд, 15 из 90")).toBeOnTheScreen();
     expect(screen.getByText("Новичок")).toBeOnTheScreen();
     expect(screen.queryByText(/Про!/)).not.toBeOnTheScreen();
@@ -100,7 +100,7 @@ describe("Итоги дня", () => {
     await user.press(screen.getByRole("button", { name: "Следующий день" }));
     await user.press(screen.getByRole("button", { name: "Итоги" }));
     expect(screen.getByText("Счастье -10: плана на день не было.")).toBeOnTheScreen();
-    expect(screen.getByText("Каждый день: Счастье -15")).toBeOnTheScreen();
+    expect(screen.queryByText("Каждый день: Счастье -15")).not.toBeOnTheScreen();
   });
 
   it("uses Следующий день on a demo profile so the next Игровой день can open", async () => {

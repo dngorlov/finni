@@ -83,6 +83,8 @@ type StoredProfile = ProfileView & {
   stageCredit: number;
   /** Mirrors the `accessorySeen:<id>` meta row of the SQLite repository. */
   accessorySeen: number;
+  /** Mirrors the `finaleSeen:<id>` meta row. */
+  finaleSeen: boolean;
   achievements: EarnedAchievement[];
   dailyRewardClaimed: number;
   dailyRewardClaimedOn: string | null;
@@ -130,6 +132,7 @@ function viewOf(row: StoredProfile): ProfileView {
     deposits: _deposits,
     stageCredit: _stageCredit,
     accessorySeen: _accessorySeen,
+    finaleSeen: _finaleSeen,
     achievements: _achievements,
     dailyRewardClaimed: _dailyRewardClaimed,
     dailyRewardClaimedOn: _dailyRewardClaimedOn,
@@ -298,6 +301,7 @@ export function createFakePorts(): SessionPorts {
       deposits: [],
       stageCredit: 0,
       accessorySeen: 0,
+      finaleSeen: false,
       achievements: [],
       dailyRewardClaimed: 0,
       dailyRewardClaimedOn: null,
@@ -375,6 +379,14 @@ export function createFakePorts(): SessionPorts {
         if (pending) row.accessory = pending;
         publish();
       },
+      finalePending(profileId) {
+        const row = requireRow(profiles, profileId);
+        return row.stage === "millionaire" && !row.finaleSeen;
+      },
+      celebrateFinale(profileId) {
+        requireRow(profiles, profileId).finaleSeen = true;
+        publish();
+      },
       boughtGoalIds(profileId) {
         const row = requireRow(profiles, profileId);
         return [...new Set(row.purchases.filter((item) => item.boughtAsActiveGoal).map((item) => item.itemId))];
@@ -447,8 +459,14 @@ export function createFakePorts(): SessionPorts {
         if (buckets.mandatory < 0 || buckets.optional < 0 || buckets.savings < 0) {
           throw new Error("Суммы плана не могут быть отрицательными");
         }
-        if (row.planStatus === "confirmed") throw new Error("План уже подтверждён");
-        row.planStatus = "draft";
+        if (row.planStatus === "confirmed") {
+          const bought = row.purchases.some((item) => item.dayId === dayId);
+          if (bought) throw new Error("План уже подтверждён");
+          const check = validatePlan(buckets, row.balance);
+          if (!check.ok) throw new Error("В плане больше монет, чем есть");
+        } else {
+          row.planStatus = "draft";
+        }
         row.buckets = { ...buckets };
       },
       confirmPlan(profileId, dayId, minMandatory = 0) {

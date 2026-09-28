@@ -49,7 +49,7 @@ The coins granted once when a Child profile is created.
 _Avoid_: приветственный подарок
 
 **План (Plan)**:
-The day's promised split of available coins into Обязательные, Желаемые, and Копилка — a promise, not a coin movement. It stays Закрыто until the Урок «Планирование бюджета» is completed; a closed one lets the Игровой день end with no promise, and an open one still waits for confirmation. An open one left unconfirmed drops Счастье when the day ends. When the shelf has no Желаемые, that bucket stays at 0 and is not offered.
+The day's promised split of available coins into Обязательные, Желаемые, and Копилка — a promise, not a coin movement. A confirmed one can still be changed until the child buys something that Игровой день; a purchase locks it. It stays Закрыто until the Урок «Планирование бюджета» is completed; a closed one lets the Игровой день end with no promise, and an open one still waits for confirmation. An open one left unconfirmed drops Счастье when the day ends. When the shelf has no Желаемые, that bucket stays at 0 and is not offered.
 _Avoid_: бюджет, бронь, список покупок
 
 **Итоги дня (Day summary)**:

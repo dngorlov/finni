@@ -5,7 +5,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { META_KEYS } from "../metaKeys";
 import { MIGRATIONS } from "../migrations";
-import { accessorySeenKey, createGameRepository } from "../repositories/gameRepository";
+import { accessorySeenKey, createGameRepository, finaleSeenKey } from "../repositories/gameRepository";
 import { runMigrations } from "../runMigrations";
 import * as schema from "../schema";
 import { openMemoryGame } from "../testSupport/memoryDb";
@@ -203,7 +203,7 @@ describe("grants and the balance invariant", () => {
 });
 
 describe("plan validation", () => {
-  it("lets a draft change and locks the plan after confirm; confirm is blocked when buckets exceed the balance", () => {
+  it("lets a draft change, keeps a confirmed plan editable until a purchase, and blocks an over-budget confirm", () => {
     const { game, sqlite, profileId } = seed();
     const opened = game.openDay(profileId);
     if (opened.status !== "opened") throw new Error("expected opened");
@@ -219,15 +219,25 @@ describe("plan validation", () => {
     game.saveDraftPlan(profileId, dayId, { mandatory: 12, optional: 8, savings: 10 });
     expect(game.confirmPlan(profileId, dayId)).toEqual({ ok: true });
 
-    expect(() =>
-      game.saveDraftPlan(profileId, dayId, { mandatory: 12, optional: 0, savings: 0 }),
-    ).toThrow(/подтверждён/);
+    game.saveDraftPlan(profileId, dayId, { mandatory: 12, optional: 0, savings: 0 });
+    expect(game.transferToSavings(profileId, dayId, 10)).toMatchObject({ status: "ok" });
+    game.saveDraftPlan(profileId, dayId, { mandatory: 12, optional: 4, savings: 10 });
+    expect(() => game.saveDraftPlan(profileId, dayId, { mandatory: 80, optional: 80, savings: 80 })).toThrow(
+      /больше монет/,
+    );
 
-    const plan = sqlite.prepare("SELECT status, mandatory FROM plans WHERE dayId = ?").get(dayId) as {
+    expect(game.purchase(profileId, dayId, lunch)).toEqual({ status: "ok" });
+    expect(() => game.saveDraftPlan(profileId, dayId, { mandatory: 12, optional: 1, savings: 0 })).toThrow(
+      /подтверждён/,
+    );
+
+    const plan = sqlite.prepare("SELECT status, mandatory, optional, savings FROM plans WHERE dayId = ?").get(dayId) as {
       status: string;
       mandatory: number;
+      optional: number;
+      savings: number;
     };
-    expect(plan).toEqual({ status: "confirmed", mandatory: 12 });
+    expect(plan).toEqual({ status: "confirmed", mandatory: 12, optional: 4, savings: 10 });
   });
 });
 
@@ -1152,8 +1162,12 @@ describe("Аксессуар and Внешний вид", () => {
     game.celebrateAccessoryUnlock(profileId);
     expect(game.accessoryUnlock(profileId)).toBeNull();
 
+    expect(game.finalePending(profileId)).toBe(false);
     expect(buyPreset(game, profileId, opened.dayId, "telescope", 160)).toMatchObject({ status: "ok" });
     expect(game.getProfile(profileId)).toMatchObject({ stage: "millionaire", accessory: "a3" });
+    expect(game.finalePending(profileId)).toBe(true);
+    game.celebrateFinale(profileId);
+    expect(game.finalePending(profileId)).toBe(false);
     expect(game.accessoryUnlock(profileId)).toBe("a3");
     game.celebrateAccessoryUnlock(profileId);
     expect(game.accessoryUnlock(profileId)).toBeNull();
@@ -1188,7 +1202,14 @@ describe("Аксессуар and Внешний вид", () => {
     expect(game.accessoryUnlock(profileId)).toBe("a2");
     game.celebrateAccessoryUnlock(profileId);
     expect(meta.get(accessorySeenKey(profileId))).toBe("1");
+    expect(game.finalePending(profileId)).toBe(false);
+    sqlite.prepare("UPDATE petState SET stage = 2 WHERE profileId = ?").run(profileId);
+    expect(game.finalePending(profileId)).toBe(true);
+    game.celebrateFinale(profileId);
+    expect(meta.get(finaleSeenKey(profileId))).toBe("1");
+    expect(game.finalePending(profileId)).toBe(false);
     game.deleteProfile(profileId);
     expect(meta.get(accessorySeenKey(profileId))).toBeNull();
+    expect(meta.get(finaleSeenKey(profileId))).toBeNull();
   });
 });

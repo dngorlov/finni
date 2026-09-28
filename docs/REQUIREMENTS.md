@@ -34,7 +34,7 @@
 - Before each game period: distribute available amount across **≥3 areas** — mandatory expenses, optional expenses, savings
 - Enforce: distributed total ≤ available budget; display remaining balance
 - Plan editable until confirmation; after confirmation, show **plan vs. actual expenses** comparison
-- **Resolved:** a "game period" = **Игровой день** — one economy cycle; a new one unlocks on the next local calendar day in normal play, back-to-back in Демо-режиме (ADR-0002). Area labels: **Обязательные / Желаемые / Копилка**. Draft План is a promise, not a transfer: each row is the integer plus a horizontal track (0…today's available) plus −/+ (tap ±1, hold repeats), with copy that coins stay in Баланс and that Копилка is Положить later; later days show draft-only «вчера N» from last closed actuals (including «вчера 0»). After confirm, Магазин (open tab) and Копилка home show leftover («В плане осталось N» or «сверх плана N»); buy / Положить confirm shows leftover after the tap and warns «Это сверх плана.» without blocking. Confirmed plan is locked for the day; plan-vs-actual columns stay on План during the day and in Итоги. On a waiting day, План, Копилка, and Банк show «Откроется завтра» and take no coins. (ROADMAP §2.1, §4.2; ADR-0002, ADR-0004)
+- **Resolved:** a "game period" = **Игровой день** — one economy cycle; a new one unlocks on the next local calendar day in normal play, back-to-back in Демо-режиме (ADR-0002). Area labels: **Обязательные / Желаемые / Копилка**. Draft План is a promise, not a transfer: each row is the integer plus a horizontal track (0…today's available) plus −/+ (tap ±1, hold repeats), with copy that coins stay in Баланс and that Копилка is Положить later; later days show draft-only «вчера N» from last closed actuals (including «вчера 0»). After confirm, Магазин (open tab) and Копилка home show leftover («В плане осталось N» or «сверх плана N»); buy / Положить confirm shows leftover after the tap and warns «Это сверх плана.» without blocking. A confirmed plan can still be changed until a purchase that day; that purchase locks it, and plan-vs-actual columns stay on План during the day and in Итоги. On a waiting day, План, Копилка, and Банк show «Откроется завтра» and take no coins. (ROADMAP §2.1, §4.2; ADR-0002, ADR-0004)
 
 ## 6. Purchases & Expenses
 - Catalog of priced items/actions of two types: mandatory and optional — minimum **8 items**
@@ -76,7 +76,7 @@
 ## 11. History & Learning Progress
 - Visible: completed tasks, progress toward current goal, results of the last game period
 - Short help section explaining key terms
-- **Resolved:** no Прогресс screen (ADR-0004). Итоги on Дом is the reopenable record (last closed day + overall counts). Журнал is a Деньги section. Словарик on Карта has «Слова» and «Уроки», and both list only Уроки the child has finished: «Слова» is the theory-card titles, «Уроки» opens those cards. An open but unfinished урок is absent. (ROADMAP §2.5, §4.2; ADR-0004)
+- **Resolved:** no Прогресс screen (ADR-0004). Итоги on Дом is the reopenable record (last closed day + overall counts). Журнал is a Деньги section. Словарик on Карта has «Слова» and «Уроки», and both list only Уроки the child has finished: «Слова» is each урок’s words under that урок’s heading, all visible at once, and «Уроки» opens the theory cards. An open but unfinished урок is absent. (ROADMAP §2.5, §4.2; ADR-0004)
 
 ## 12. Adult Section
 - Entry barrier: simple adult gate (doc's examples: hold a button, solve an arithmetic problem)

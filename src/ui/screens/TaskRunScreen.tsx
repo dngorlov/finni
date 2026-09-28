@@ -258,6 +258,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
   const roundAt = rounds.findIndex((item) => item.id === node?.id);
   const showMeter = task.deal != null && roundAt >= 0;
   const showPurse = run.nodes.some((item) => item.options?.some((option) => (option.kept ?? 0) > 0));
+  const showRestart = !endsGameDay(task);
 
   return (
     <Screen footer={footer}>
@@ -270,15 +271,17 @@ export default function TaskRunScreen({ navigation, route }: Props) {
             {task.title}
           </Text>
         )}
-        <Pressable
-          role="button"
-          aria-label={strings.taskRestart}
-          onPress={() => setConfirmRestart(true)}
-          style={({ pressed }) => [styles.restart, pressed ? styles.restartPressed : null]}
-        >
-          <PixelIcon name="reload" size={20} color={colors.accentText} />
-          <Text style={styles.restartLabel}>{strings.taskRestart}</Text>
-        </Pressable>
+        {showRestart ? (
+          <Pressable
+            role="button"
+            aria-label={strings.taskRestart}
+            onPress={() => setConfirmRestart(true)}
+            style={({ pressed }) => [styles.restart, pressed ? styles.restartPressed : null]}
+          >
+            <PixelIcon name="reload" size={20} color={colors.accentText} />
+            <Text style={styles.restartLabel}>{strings.taskRestart}</Text>
+          </Pressable>
+        ) : null}
       </View>
       <View style={isCard ? styles.cardHero : styles.petRow}>
         <PetView
@@ -418,7 +421,9 @@ export default function TaskRunScreen({ navigation, route }: Props) {
         </View>
       ) : null}
       {sceneFeedback ? <FeedbackCard model={sceneFeedback} onDismiss={() => setSceneFeedback(null)} /> : null}
-      {confirmRestart ? <RestartConfirm onRestart={restart} onKeep={() => setConfirmRestart(false)} /> : null}
+      {showRestart && confirmRestart ? (
+        <RestartConfirm onRestart={restart} onKeep={() => setConfirmRestart(false)} />
+      ) : null}
     </Screen>
   );
 }

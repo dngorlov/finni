@@ -67,6 +67,7 @@ export const moneyStrings = {
   planJobMandatory: "Сначала счета и всё нужное.",
   planJobOptional: "Что хочется купить.",
   planLocked: "Обещание на сегодня. Менять уже нельзя.",
+  planRevise: "Пока не было покупок, план можно изменить.",
   planSplit: "Как делим",
   planFree: "Свободно",
   planChartA11y: (parts: readonly ShareLine[]) =>
