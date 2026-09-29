@@ -1,5 +1,9 @@
+import { loadContent } from "../../data/content";
+import { taskUnlockOrder } from "../../core/tasks";
+import { mapEdges } from "../screens/MapArrows";
 import {
   IDENTITY_VIEW,
+  arrowShape,
   clampShift,
   clampView,
   clampZoom,
@@ -83,5 +87,55 @@ describe("Карта zoom and pan", () => {
     expect(doubleTapView({ scale: 2.4, x: 10, y: 5 }, { x: 0, y: 0 }, size)).toEqual(IDENTITY_VIEW);
     const zoomed = doubleTapView(IDENTITY_VIEW, { x: 150, y: 200 }, size);
     expect(zoomed).toEqual({ scale: 2, x: 0, y: 0 });
+  });
+});
+
+/** Numbers of an SVG path, as points. */
+function pathPoints(d: string): { x: number; y: number }[] {
+  const numbers = (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+  const points: { x: number; y: number }[] = [];
+  for (let i = 0; i + 1 < numbers.length; i += 2) points.push({ x: numbers[i], y: numbers[i + 1] });
+  return points;
+}
+
+describe("Карта arrows", () => {
+  const centre = { x: 160, y: 200 };
+
+  it("starts and ends an arrow at the pin edges, never under a pin", () => {
+    const from = { x: 160, y: 200 };
+    const to = { x: 60, y: 260 };
+    const shape = arrowShape(from, to, { gap: 27, head: 10, centre });
+    expect(shape).not.toBeNull();
+    const [start] = pathPoints(shape!.line);
+    const lineEnd = pathPoints(shape!.line).at(-1)!;
+    const [tip, ...wings] = pathPoints(shape!.head);
+    expect(Math.hypot(start.x - from.x, start.y - from.y)).toBeCloseTo(27, 0);
+    // The tip touches the target pin's edge; the line stops at the head's base.
+    expect(Math.hypot(tip.x - to.x, tip.y - to.y)).toBeCloseTo(27, 0);
+    expect(Math.hypot(lineEnd.x - to.x, lineEnd.y - to.y)).toBeCloseTo(37, 0);
+    for (const wing of wings) expect(Math.hypot(wing.x - to.x, wing.y - to.y)).toBeGreaterThan(27);
+  });
+
+  it("bows a curve out of the centre, and skips pins too close for an arrow", () => {
+    const shape = arrowShape({ x: 200, y: 200 }, { x: 200, y: 300 }, { gap: 27, head: 10, centre });
+    const control = pathPoints(shape!.line)[1];
+    // Right of the centre, going down: it bends further right.
+    expect(control.x).toBeGreaterThan(200);
+    expect(arrowShape({ x: 0, y: 0 }, { x: 50, y: 0 }, { gap: 27, head: 10, centre })).toBeNull();
+  });
+
+  it("follows the team's sketch: three paths out of «Что такое бюджет?», one per topic", () => {
+    const tasks = loadContent().tasks;
+    const edges = mapEdges(taskUnlockOrder(tasks), tasks).map((edge) => `${edge.from.id}>${edge.to.id}`);
+    expect(edges).toEqual([
+      "budget_what>budget_plan",
+      "budget_plan>budget_change",
+      "budget_what>savings_what",
+      "savings_what>savings_steps",
+      "savings_steps>savings_where",
+      "budget_what>payments_pay",
+      "payments_pay>payments_shop",
+      "payments_shop>payments_later",
+    ]);
   });
 });

@@ -350,6 +350,23 @@ describe("Карта заданий", () => {
     expect(screen.getByRole("button", { name: "Начать" })).toBeOnTheScreen();
   });
 
+  it("draws a curved arrow along each step of the map path, under the pins", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports);
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Карта" }));
+    // Not laid out yet: nothing to draw on.
+    expect(screen.queryByTestId("map-arrows", { includeHiddenElements: true })).not.toBeOnTheScreen();
+    await fireEvent(screen.getByTestId("map-slot"), "layout", layoutOf(360, 480));
+    const layer = screen.getByTestId("map-arrows", { includeHiddenElements: true });
+    expect(layer).not.toBeVisible();
+    // Nine lessons: the start and three paths of 2, 3 and 3 steps.
+    expect(screen.getAllByTestId("map-arrow", { includeHiddenElements: true })).toHaveLength(8);
+    // The pins stay tappable above the arrows.
+    expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
+  });
+
   it("lists every mini-game from Мини-игры, still locked until its lesson is done", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
