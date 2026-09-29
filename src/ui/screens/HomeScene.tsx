@@ -19,12 +19,6 @@ const FLOOR_SHARE = 0.3;
 const SPEECH_MS = 3500;
 /** Quiet gap before the pet starts the next line on its own. */
 const QUIET_MS = 8000;
-/** Window on the left wall: its bottom edge above the floor, and its side. */
-const WINDOW_LIFT = spacing.l + 96;
-/** One narrow wooden shelf on the right wall: three cells stacked. */
-const SHELF_WIDTH = 48;
-const SHELF_HEIGHT = 132;
-const SHELF_CELLS = 3;
 /** Info mark is 32 dp; slop keeps the tap at the 48 dp minimum. */
 const DAY_INFO_SLOP = (minTarget - 32) / 2;
 
@@ -107,8 +101,6 @@ export function HomeScene({
   random?: () => number;
 }) {
   const [box, setBox] = useState({ width: 0, height: 0 });
-  // Bottom of Магазин / Итоги in scene space; the shelf stays clear of them and the HUD.
-  const [actionsBottom, setActionsBottom] = useState(0);
   const [said, setLine] = useState<string | null>(null);
   // Speech pauses with the pet: nothing hangs in the air while Дом is hidden or the tour speaks.
   const line = active && !quiet ? said : null;
@@ -173,18 +165,6 @@ export function HomeScene({
 
   const say = () => showRef.current();
 
-  // The open «День N» note pushes the buttons down for a moment; the shelf keeps its place.
-  const onActionsLayout = (event: LayoutChangeEvent) => {
-    if (dayTip) return;
-    const { y, height } = event.nativeEvent.layout;
-    const bottom = Math.round(spacing.m + y + height); // styles.hud.top
-    setActionsBottom((current) => (current === bottom ? current : bottom));
-  };
-  const shelfBottom = floorHeight + WINDOW_LIFT;
-  const shelfTop = box.height - shelfBottom - SHELF_HEIGHT;
-  // Short scenes (small phones, big Этап card) have no wall for it: leave it out rather than overlap.
-  const showShelf = measured && actionsBottom > 0 && shelfTop >= actionsBottom + spacing.s && shelfBottom >= bottomInset;
-
   const progress = cost > 0 ? Math.max(0, Math.min(1, accumulated / cost)) : 0;
   const goalLabel = `${homeStrings.goalA11y(goalName, accumulated, cost)}${threshold ? `. ${threshold}` : ""}`;
   const goalBody = (
@@ -216,10 +196,10 @@ export function HomeScene({
 
   return (
     <View testID="home-scene" style={styles.scene} onLayout={onLayout}>
-      {/* Room: wall, window, shelf, skirting board, floor planks. Pure decoration. */}
+      {/* Room: wall, window, skirting board, floor planks. Pure decoration. */}
       <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
         <View style={[styles.wall, { bottom: floorHeight }]} />
-        <View style={[styles.window, { bottom: floorHeight + WINDOW_LIFT }]}>
+        <View style={[styles.window, { bottom: floorHeight + spacing.l + 96 }]}>
           <View style={styles.pane}>
             <View style={styles.sun} />
           </View>
@@ -227,13 +207,6 @@ export function HomeScene({
           <View style={styles.pane} />
           <View style={styles.pane} />
         </View>
-        {showShelf ? (
-          <View testID="home-shelf" style={[styles.shelf, { bottom: shelfBottom }]}>
-            {Array.from({ length: SHELF_CELLS }, (_, index) => (
-              <View key={index} style={styles.shelfCell} />
-            ))}
-          </View>
-        ) : null}
         <View style={[styles.floor, { height: floorHeight }]}>
           <View style={styles.skirting} />
           <View style={styles.plank} />
@@ -334,7 +307,7 @@ export function HomeScene({
             </View>
           </View>
         ) : null}
-        <View testID="home-actions" pointerEvents="box-none" onLayout={onActionsLayout} style={styles.actionRow}>
+        <View testID="home-actions" pointerEvents="box-none" style={styles.actionRow}>
           <Fab
             label={strings.navShop}
             icon={<PixelIcon name="shopping-cart" size={32} color={waiting ? colors.subtle : colors.onRaised} />}
@@ -400,19 +373,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 6,
     width: 12,
-  },
-  shelf: {
-    backgroundColor: colors.raisedEdge,
-    gap: 4,
-    height: SHELF_HEIGHT,
-    padding: 4,
-    position: "absolute",
-    right: spacing.l + spacing.m,
-    width: SHELF_WIDTH,
-  },
-  shelfCell: {
-    backgroundColor: colors.card,
-    flex: 1,
   },
   floor: {
     backgroundColor: colors.badgeFill,
