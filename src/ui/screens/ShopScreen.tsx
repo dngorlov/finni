@@ -73,6 +73,7 @@ export default function ShopScreen({ navigation }: Props) {
   const [bought, setBought] = useState<string[]>([]);
   const [ownedOnce, setOwnedOnce] = useState<Set<string>>(new Set());
   const [streaks, setStreaks] = useState<Record<string, number>>({});
+  const [runs, setRuns] = useState<Record<string, number>>({});
   const [savings, setSavings] = useState<SavingsView | null>(null);
   const [drawer, setDrawer] = useState<Drawer>({ name: "closed" });
   const [receipt, setReceipt] = useState<PurchaseResultModel | null>(null);
@@ -99,15 +100,25 @@ export default function ShopScreen({ navigation }: Props) {
     const journal = game.listJournal(profileId);
     setOwnedOnce(ownedOnceItemIds(journal, content.catalog, purchasedToday));
     const nextStreaks: Record<string, number> = {};
+    const nextRuns: Record<string, number> = {};
     for (const item of content.catalog) {
-      if (item.habit) nextStreaks[item.id] = habitStreak(purchaseDaysOf(journal, item.id), next.n);
+      if (!item.habit) continue;
+      const days = purchaseDaysOf(journal, item.id);
+      nextStreaks[item.id] = habitStreak(days, next.n);
+      // The bar fills as soon as the item is bought: days in a row counting today.
+      nextRuns[item.id] = days.includes(next.n) ? habitStreak(days, next.n + 1) : nextStreaks[item.id];
     }
     setStreaks(nextStreaks);
+    setRuns(nextRuns);
   }, [content.catalog, game, meta]);
 
   /** Today's face of an item: a habit item shows the Счастье it gives now. */
   const shown = (item: CatalogItemContent): CatalogItemContent => withHabit(item, streaks[item.id] ?? 0);
-  const habitOf = (item: CatalogItemContent) => habitView(item, streaks[item.id] ?? 0);
+  const habitOf = (item: CatalogItemContent) => {
+    const view = habitView(item, streaks[item.id] ?? 0);
+    if (!view) return null;
+    return { ...view, filled: Math.min(view.segments, runs[item.id] ?? view.filled) };
+  };
 
   useFocusEffect(load);
 
