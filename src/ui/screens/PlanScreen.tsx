@@ -402,10 +402,10 @@ const styles = StyleSheet.create({
   },
   stage: {
     flexGrow: 1,
-    gap: 4,
-    justifyContent: "center",
+    gap: spacing.s,
     paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
+    paddingBottom: spacing.s,
+    paddingTop: spacing.m,
   },
   title: {
     color: colors.text,
@@ -435,14 +435,12 @@ const styles = StyleSheet.create({
   },
   top: {
     alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: spacing.s,
-    justifyContent: "space-between",
   },
   dots: {
     flexDirection: "row",
-    gap: 4,
+    gap: spacing.s,
+    justifyContent: "center",
   },
   dotHit: {
     alignItems: "center",
@@ -491,10 +489,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderTopLeftRadius: radius.card,
     borderTopRightRadius: radius.card,
-    gap: 4,
-    paddingBottom: spacing.s,
+    gap: spacing.l,
+    paddingBottom: spacing.m,
     paddingHorizontal: spacing.m,
-    paddingTop: 4,
+    paddingTop: spacing.m,
   },
   status: {
     alignSelf: "center",
