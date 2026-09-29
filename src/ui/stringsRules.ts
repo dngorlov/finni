@@ -74,9 +74,10 @@ export const rulesStrings = {
   planFormula: "Обязательные + Желаемые + Копилка ≤ Баланс",
   planFloor:
     "И ещё: Обязательные должны покрывать сегодняшние счета. Если монет меньше, чем счета, хватит всего баланса.",
-  billsIntro: (days: number) => `Счета идут по кругу из ${days} дней:`,
-  billsDay: (day: number, names: string, total: number, note?: string) =>
-    `День ${day}: ${names} = ${coins(total)}${note ? `. ${note}` : ""}`,
+  billsIntro: (days: number) =>
+    `Счета — это минимум на обязательное (еда и витамины). Подойдёт любой набор из обязательных покупок. Минимум идёт по кругу из ${days} дней:`,
+  billsDay: (day: number, total: number, note?: string) =>
+    `День ${day}: минимум ${coins(total)}${note ? `. ${note}` : ""}`,
   billsRepeat: (next: number) => `День ${next} снова как день 1, и так далее.`,
 
   shopTitle: "3. Покупки и шкалы",
@@ -85,6 +86,12 @@ export const rulesStrings = {
     `${name} (${mandatory ? "обязательное" : "желаемое"}) — ${coins(price)}: ${effects}`,
   careEffect: (delta: number) => `Сытость ${signed(delta)}`,
   moodEffect: (delta: number) => `Счастье ${signed(delta)}`,
+  habitIntro:
+    "Привычки. «Подряд» — это сколько прошлых игровых дней подряд (вчера, позавчера…) ты покупал этот товар. Сегодняшние покупки не считаются, поэтому все покупки за один день дают одинаково. Пропустил день — счёт с нуля.",
+  habitGrow: (name: string, base: number, step: number, max: number) =>
+    `${name} — курс: Счастье = ${base} + ${step} за каждый день подряд, но не больше ${base + max}.`,
+  habitFade: (name: string, base: number, step: number, min: number) =>
+    `${name} — надоедает: Счастье = ${base} − ${step} за каждый день подряд, но не меньше ${min}.`,
   meterStart: (care: number, mood: number) => `Новый питомец: Сытость ${care}, Счастье ${mood}.`,
   dayEnd: (care: number, mood: number) =>
     `Конец каждого игрового дня: Сытость ${signed(-care)}, Счастье ${signed(-mood)}. Покупка это не отменяет, её прибавка уже на шкале.`,

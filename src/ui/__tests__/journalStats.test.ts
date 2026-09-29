@@ -1,3 +1,4 @@
+import { loadContent } from "../../data/content";
 import type { JournalEntry } from "../../data/repositories/gameRepository";
 import {
   bucketSpendOnDay,
@@ -5,6 +6,7 @@ import {
   groupByDay,
   inPeriod,
   itemLookup,
+  itemTitle,
   journalStats,
   percents,
   savingsOps,
@@ -140,5 +142,23 @@ describe("Копилка", () => {
   it("sums deposits", () => {
     expect(savingsStats(journal)).toEqual({ total: 16, count: 2, average: 8 });
     expect(savingsStats([])).toEqual({ total: 0, count: 0, average: 0 });
+  });
+});
+
+describe("items retired from Магазин", () => {
+  const content = loadContent();
+  const current = itemLookup(content.catalog, content.goals);
+
+  it("keeps old Журнал rows named and in their bucket after the catalogue changed", () => {
+    expect(content.catalog.some((item) => item.id === "lunch")).toBe(false);
+    expect(itemTitle("lunch", content.catalog, content.goals)).toBe("Обед");
+    expect(itemTitle("medicine", content.catalog, content.goals)).toBe("Лекарство");
+    expect(classify(entry(1, "purchase", -12, "lunch"), current)).toMatchObject({ category: "mandatory" });
+    expect(classify(entry(1, "purchase", -5, "candy"), current)).toMatchObject({ category: "optional" });
+  });
+
+  it("shows an unknown id as it is and counts it as other, without throwing", () => {
+    expect(itemTitle("gone", content.catalog, content.goals)).toBe("gone");
+    expect(classify(entry(1, "purchase", -3, "gone"), current)).toMatchObject({ category: "other" });
   });
 });

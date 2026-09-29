@@ -8,9 +8,9 @@ import { openMoney, openTab } from "../testSupport/flowHelpers";
 import { colors } from "../theme";
 
 const content = loadContent();
-const lunch = content.catalog.find((item) => item.id === "lunch")!;
-const candy = content.catalog.find((item) => item.id === "candy")!;
-const tinyCatalog: CatalogItem[] = [lunch, candy];
+const soup = content.catalog.find((item) => item.id === "soup")!;
+const cinema = content.catalog.find((item) => item.id === "cinema")!;
+const tinyCatalog: CatalogItem[] = [soup, cinema];
 
 async function renderApp(ports = createFakePorts()) {
   const user = userEvent.setup();
@@ -18,15 +18,15 @@ async function renderApp(ports = createFakePorts()) {
   return { user, ports };
 }
 
-/** Day 1: Обед 12, Конфета 5, 15 into Копилка; then day 2 opens. */
+/** Day 1: Суп 8, Билет в кино 10, 15 into Копилка; then day 2 opens. */
 async function playDayOneThenOpenDayTwo() {
   const ports = createFakePorts();
   const profileId = seedReturningChild(ports, { unlockMoney: true });
   const day = ports.game.dayState(profileId);
-  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 12, optional: 5, savings: 15 });
+  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 8, optional: 10, savings: 15 });
   ports.game.confirmPlan(profileId, day.dayId);
-  ports.game.purchase(profileId, day.dayId, lunch);
-  ports.game.purchase(profileId, day.dayId, candy);
+  ports.game.purchase(profileId, day.dayId, soup);
+  ports.game.purchase(profileId, day.dayId, cinema);
   ports.game.transferToSavings(profileId, day.dayId, 15);
   ports.game.closeDay(profileId, tinyCatalog);
   const app = await renderApp(ports);
@@ -60,25 +60,25 @@ describe("Журнал stats", () => {
     // Всё время: day 1 and the start. Day 2 has no movements, so it is not listed.
     expect(screen.getByText("День 1")).toBeOnTheScreen();
     expect(screen.getByText("Старт")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Ушло: 32 монет")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Ушло: 33 монет")).toBeOnTheScreen();
     expect(screen.getByLabelText("Пришло: 100 монет")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Итого: 68 монет")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Итого: 67 монет")).toBeOnTheScreen();
     expect(within(screen.getByLabelText("Пришло: 100 монет")).getByText("100")).toHaveStyle({
       color: moneyColors.plus,
     });
-    expect(within(screen.getByLabelText("Ушло: 32 монет")).getByText("32")).toHaveStyle({
+    expect(within(screen.getByLabelText("Ушло: 33 монет")).getByText("33")).toHaveStyle({
       color: moneyColors.minus,
     });
-    expect(within(screen.getByLabelText("Итого: 68 монет")).getByText("68")).toHaveStyle({
+    expect(within(screen.getByLabelText("Итого: 67 монет")).getByText("67")).toHaveStyle({
       color: moneyColors.plus,
     });
     expect(
-      within(screen.getByRole("img", { name: /^Траты, Всё время/ })).getByText("32", {
+      within(screen.getByRole("img", { name: /^Траты, Всё время/ })).getByText("33", {
         includeHiddenElements: true,
       }),
     ).toHaveStyle({ color: moneyColors.minus });
-    expect(screen.getByText("-32", { includeHiddenElements: true })).toHaveStyle({ color: moneyColors.minus });
-    expect(within(screen.getByLabelText("Покупка: Обед -12")).getByText("-12")).toHaveStyle({
+    expect(screen.getByText("-33", { includeHiddenElements: true })).toHaveStyle({ color: moneyColors.minus });
+    expect(within(screen.getByLabelText("Покупка: Суп -8")).getByText("-8")).toHaveStyle({
       color: moneyColors.minus,
     });
     expect(within(screen.getByLabelText("Стартовый бюджет +100")).getByText("+100")).toHaveStyle({
@@ -108,20 +108,20 @@ describe("Журнал stats", () => {
     expect(screen.queryByText("День 2")).not.toBeOnTheScreen();
     expect(screen.getByText("День 1")).toBeOnTheScreen();
     expect(screen.getByText("Старт")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Покупка: Обед -12")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Необходимое: 12 монет")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Желаемое: 5 монет")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Покупка: Суп -8")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Необходимое: 8 монет")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Желаемое: 10 монет")).toBeOnTheScreen();
     expect(screen.getByLabelText("Копилка: 15 монет")).toBeOnTheScreen();
     expect(
       screen.getByRole("img", {
-        name: "Траты, Вчера: Необходимое 12 монет; Желаемое 5 монет; Копилка 15 монет",
+        name: "Траты, Вчера: Необходимое 8 монет; Желаемое 10 монет; Копилка 15 монет",
       }),
     ).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Доходы" }));
     expect(screen.getByRole("button", { name: "Доходы" })).toBeSelected();
     expect(screen.getByLabelText("Стартовый бюджет: 100 монет")).toBeOnTheScreen();
-    expect(screen.queryByLabelText("Необходимое: 12 монет")).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText("Необходимое: 8 монет")).not.toBeOnTheScreen();
     expect(screen.queryByLabelText(/Пособие/)).not.toBeOnTheScreen();
     expect(screen.getByLabelText("Пришло: 100 монет")).toBeOnTheScreen();
     expect(
@@ -138,7 +138,7 @@ describe("План yesterday", () => {
     await openMoney(user, "План");
 
     // One pile per step: Обязательные, then Копилка, then Желаемые.
-    expect(screen.getByText("Вчера: 12")).toBeOnTheScreen();
+    expect(screen.getByText("Вчера: 8")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Далее" }));
     expect(screen.getByText("Вчера: 15")).toBeOnTheScreen();
     expect(screen.getByText(" · сегодня на 15 меньше")).toBeOnTheScreen();
@@ -149,8 +149,8 @@ describe("План yesterday", () => {
       text: "Копилка: 1 монета",
     });
     await user.press(screen.getByRole("button", { name: "Далее" }));
-    expect(screen.getByText("Вчера: 5")).toBeOnTheScreen();
-    expect(screen.getByText(" · сегодня на 5 меньше")).toBeOnTheScreen();
+    expect(screen.getByText("Вчера: 10")).toBeOnTheScreen();
+    expect(screen.getByText(" · сегодня на 10 меньше")).toBeOnTheScreen();
   });
 });
 

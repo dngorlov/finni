@@ -1,4 +1,5 @@
 import { METERS } from "./config";
+import type { Habit } from "./habits";
 
 /** Plan buckets — Обязательные / Желаемые / Копилка (§2.1). */
 export interface PlanBuckets {
@@ -36,23 +37,31 @@ export function validatePlan(
   };
 }
 
-/** One entry of the Счета cycle: mandatory item ids due that Игровой день. */
+/**
+ * One entry of the Счета cycle: the least the child spends on Обязательные
+ * (еда и витамины) that Игровой день. Any mix of mandatory items counts.
+ */
 export interface DayBills {
-  items: readonly string[];
-  /** Optional kid-facing reason, e.g. «Питомец простыл — нужно лекарство». */
+  min: number;
+  /** Optional kid-facing reason shown on the План step. */
   note?: string;
 }
 
 /** Счета for Игровой день `n` (1-based): the content cycle repeats. */
 export function billsForDay(n: number, cycle: readonly DayBills[]): DayBills {
-  if (cycle.length === 0) return { items: [] };
+  if (cycle.length === 0) return { min: 0 };
   const index = (((n - 1) % cycle.length) + cycle.length) % cycle.length;
   return cycle[index];
 }
 
-/** Sum of today's Счета prices. Unknown ids cost 0 (content validation rejects them). */
-export function billsTotal(bills: DayBills, catalog: readonly Pick<CatalogItem, "id" | "price">[]): number {
-  return bills.items.reduce((sum, id) => sum + (catalog.find((item) => item.id === id)?.price ?? 0), 0);
+/** Coins today's Счета ask for on Обязательные. */
+export function billsTotal(bills: DayBills): number {
+  return Math.max(0, bills.min);
+}
+
+/** Today's Счета are paid once the day's Обязательные purchases reach the minimum. */
+export function billsCovered(bills: DayBills, mandatorySpent: number): boolean {
+  return mandatorySpent >= billsTotal(bills);
 }
 
 /**
@@ -107,13 +116,15 @@ export interface CatalogItem {
   kind: "mandatory" | "optional";
   price: number;
   effect: MeterEffect;
-  /** Обед also raises Счастье. Absent on every other item. */
+  /** A second meter the item raises (Вишня: Сытость and Счастье). */
   also?: MeterEffect;
   /** One-shot Желаемые leave Магазин after any purchase. */
   once?: boolean;
+  /** Days in a row change its Счастье (see `habits.ts`). */
+  habit?: Habit;
 }
 
-/** Meter moves a purchase applies. Обед returns both Сытость and Счастье. */
+/** Meter moves a purchase applies: the main effect, then `also` when the item has one. */
 export function itemMeterEffects(item: Pick<CatalogItem, "effect" | "also">): MeterEffect[] {
   return item.also ? [item.effect, item.also] : [item.effect];
 }

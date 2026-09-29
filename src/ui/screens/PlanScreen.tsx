@@ -76,7 +76,7 @@ export default function PlanScreen() {
     if (!profileId) return;
     const next = game.dayState(profileId);
     setDay(next);
-    const floor = planMandatoryFloor(todayBills(next.n, content.bills, content.catalog).total, next.available);
+    const floor = planMandatoryFloor(todayBills(next.n, content.bills).total, next.available);
     // A fresh draft starts with today's Счета already in Обязательные.
     setBuckets(next.plan.status === "none" ? { ...EMPTY, mandatory: floor } : next.plan.buckets);
     const journal = game.listJournal(profileId);
@@ -138,7 +138,7 @@ export default function PlanScreen() {
   }
 
   const available = day.available;
-  const bills = todayBills(day.n, content.bills, content.catalog);
+  const bills = todayBills(day.n, content.bills);
   const floor = planMandatoryFloor(bills.total, available);
   const billsShort = bills.total - floor;
   const check = validatePlan(buckets, available, floor);
@@ -201,7 +201,7 @@ export default function PlanScreen() {
       ? billsShort > 0
         ? strings.planBillsShort(billsShort)
         : bills.total > 0
-          ? moneyStrings.planNeedMin(bills.parts.map((part) => part.name), bills.total)
+          ? moneyStrings.planNeedMin(bills.total)
           : null
       : pile.id === "savings"
         ? goal

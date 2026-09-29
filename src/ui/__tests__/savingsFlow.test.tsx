@@ -93,7 +93,7 @@ describe("Копилка", () => {
     expect(screen.getByRole("button", { name: "Купить из копилки" })).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Купить из копилки" }));
-    expect(screen.getByText("Счастье +93")).toBeOnTheScreen();
+    expect(screen.getByText("Счастье +94")).toBeOnTheScreen();
     expect(screen.getByText("Копилка -90")).toBeOnTheScreen();
     expect(screen.getByText("Теперь ты Про!")).toBeOnTheScreen();
     expect(screen.queryByText(/Баланс/)).not.toBeOnTheScreen();
@@ -105,7 +105,7 @@ describe("Копилка", () => {
     await user.press(screen.getByRole("button", { name: "Выбрать новую цель" }));
     expect(
       screen.getByRole("button", {
-        name: "Самокат. 160 монет. Счастье +95. Доехать до парка самому. Купишь — питомец перейдёт на этап «Миллионер»",
+        name: "Самокат. 160 монет. Счастье +96. Доехать до парка самому. Купишь — питомец перейдёт на этап «Миллионер»",
       }),
     ).toBeOnTheScreen();
     expect(screen.getByText("Доехать до парка самому", { includeHiddenElements: true })).toBeOnTheScreen();

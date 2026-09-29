@@ -10,16 +10,6 @@ function daysWord(n: number): string {
   return "дней";
 }
 
-/** «обед», «обед и проезд», «обед, проезд и лекарство». */
-function joinAnd(words: readonly string[]): string {
-  if (words.length <= 1) return words.join("");
-  return `${words.slice(0, -1).join(", ")} и ${words[words.length - 1]}`;
-}
-
-function capitalize(text: string): string {
-  return text.charAt(0).toLocaleUpperCase("ru") + text.slice(1);
-}
-
 function coinsWord(n: number): string {
   const mod10 = Math.abs(n) % 10;
   const mod100 = Math.abs(n) % 100;
@@ -74,11 +64,8 @@ export const moneyStrings = {
   planStepMandatory: "Сначала то, без чего не обойтись.",
   planStepSavings: "Сколько отложить в Копилку.",
   planJobOptional: "Что хочется купить.",
-  /** Step 1 requirement; `bills` are today's Счета names («Обед», «Проезд»). */
-  planNeedMin: (bills: readonly string[], n: number) =>
-    bills.length === 0
-      ? `Нужно минимум ${n}`
-      : `${capitalize(joinAnd(bills.map((name) => name.toLocaleLowerCase("ru"))))}: минимум ${n}`,
+  /** Step 1 requirement: today's Счета minimum for Обязательные. */
+  planNeedMin: (n: number) => `Нужно минимум ${n} на обязательное: еда и витамины`,
   planNeedMore: (n: number) => `Добавь ещё ${n} — на счета`,
   planFreeNow: (n: number) => `Свободно: ${n}`,
   planNext: "Далее",

@@ -9,6 +9,16 @@ export function dailyRuleText(care: number, mood: number): string {
   return `Каждый день ${drop}. Совершая покупки, можно их восполнить!`;
 }
 
+/** «1 день / 3 дня / 5 дней». */
+function daysWord(n: number): string {
+  const mod100 = Math.abs(n) % 100;
+  const mod10 = mod100 % 10;
+  if (mod100 >= 11 && mod100 <= 14) return "дней";
+  if (mod10 === 1) return "день";
+  if (mod10 >= 2 && mod10 <= 4) return "дня";
+  return "дней";
+}
+
 /** Магазин copy added with the shop-row redesign. Older shop strings stay in strings.ts. */
 export const shopStrings = {
   careWord: "сытость",
@@ -32,4 +42,10 @@ export const shopStrings = {
   resultPet: "Питомец",
   /** «Покупка компенсирует снижение: сытость -15 и счастье -15.» The day's drop still lands. */
   resultShield: (phrase: string) => `Покупка компенсирует снижение: ${phrase}.`,
+
+  /** Привычка bar on a Магазин card: «Курс: +4» (витамины) or «Надоедает: +3» (мороженое). The number is today's Счастье. */
+  habitLabel: (kind: "grow" | "fade", mood: number) => `${kind === "grow" ? "Курс" : "Надоедает"}: +${mood}`,
+  /** «Витамины подряд 2 дня: счастье +4». */
+  habitA11y: (name: string, streak: number, mood: number) =>
+    `${name} подряд ${streak} ${daysWord(streak)}: счастье +${mood}`,
 } as const;

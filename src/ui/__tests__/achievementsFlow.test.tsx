@@ -1,15 +1,18 @@
 import { act, render, screen, userEvent } from "@testing-library/react-native";
+import type { CatalogItem } from "../../core/economy";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 import { openMoney, openTab } from "../testSupport/flowHelpers";
 
 const content = loadContent();
-const lunch = content.catalog.find((item) => item.id === "lunch")!;
-const transport = content.catalog.find((item) => item.id === "transport")!;
-const medicine = content.catalog.find((item) => item.id === "medicine")!;
-const candy = content.catalog.find((item) => item.id === "candy")!;
 const iceCream = content.catalog.find((item) => item.id === "ice-cream")!;
+
+/** Retired shop rows. Достижения still count them; Магазин no longer sells them. */
+const lunch: CatalogItem = { id: "lunch", kind: "mandatory", price: 12, effect: { meter: "care", delta: 10 } };
+const transport: CatalogItem = { id: "transport", kind: "mandatory", price: 8, effect: { meter: "mood", delta: 5 } };
+const medicine: CatalogItem = { id: "medicine", kind: "mandatory", price: 15, effect: { meter: "mood", delta: 20 } };
+const candy: CatalogItem = { id: "candy", kind: "optional", price: 5, effect: { meter: "mood", delta: 5 } };
 
 async function renderApp(ports = createFakePorts()) {
   const user = userEvent.setup();
@@ -76,26 +79,28 @@ describe("Достижения", () => {
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Магазин" }));
-    await user.press(screen.getByRole("button", { name: "Купить Обед" }));
+    await user.press(screen.getByRole("button", { name: "Купить Суп" }));
     await user.press(screen.getByRole("button", { name: "Купить" }));
     expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
 
     await user.press(screen.getByRole("button", { name: "Желаемое" }));
-    await user.press(screen.getByRole("button", { name: "Купить Конфета" }));
+    await user.press(screen.getByRole("button", { name: "Купить Мороженое" }));
     await user.press(screen.getByRole("button", { name: "Купить" }));
     expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
 
-    await user.press(screen.getByRole("button", { name: "Купить Мороженое" }));
-    await user.press(screen.getByRole("button", { name: "Купить" }));
+    const profileId = ports.meta.get("activeProfileId");
+    if (!profileId) throw new Error("Нет активного профиля");
+    await act(async () => {
+      ports.game.purchase(profileId, ports.game.dayState(profileId).dayId, candy);
+    });
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
     expect(screen.getByText("Два вкуса")).toBeOnTheScreen();
     expect(screen.getByText("Конфета и мороженое куплены.")).toBeOnTheScreen();
     expect(screen.queryByText("Есть ещё.")).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Ура!" }));
     expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
-    await user.press(screen.getByRole("button", { name: "Понятно" }));
 
     await user.press(screen.getByRole("button", { name: "Назад" }));
     await openMoney(user, "Журнал");

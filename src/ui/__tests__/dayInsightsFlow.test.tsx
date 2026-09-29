@@ -18,19 +18,19 @@ function spokenInsights(): string[] {
     .map((node) => String(node.props["aria-label"]));
 }
 
-/** Plan confirmed; Желаемые bought, today's Счета (Обед + Проезд = 20) left unpaid. */
+/** Plan confirmed; Желаемые bought, today's Счета (минимум 20 на обязательное) left unpaid. */
 function closeWantsFirstDay(ports: ReturnType<typeof createFakePorts>) {
   const profileId = seedReturningChild(ports, { unlockMoney: true });
   const day = ports.game.dayState(profileId);
-  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 20, optional: 13, savings: 0 });
+  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 20, optional: 14, savings: 0 });
   ports.game.confirmPlan(profileId, day.dayId, 20);
-  ports.game.purchase(profileId, day.dayId, item("candy"));
+  ports.game.purchase(profileId, day.dayId, item("cinema"));
   ports.game.purchase(profileId, day.dayId, item("ice-cream"));
   ports.game.closeDay(profileId, content.catalog, content.bills);
 }
 
 const WANTS_TIP =
-  "Совет: Ты мог потратить 13 монет на обязательное — питомец был бы сыт, — но потратил их на желаемое.";
+  "Совет: Ты мог потратить 14 монет на обязательное — питомец был бы сыт, — но потратил их на желаемое.";
 
 describe("Разбор дня", () => {
   it("explains on Итоги дня that coins for Обязательное went to Желаемое, praise first", async () => {
@@ -49,8 +49,8 @@ describe("Разбор дня", () => {
     const day = ports.game.dayState(profileId);
     ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 20, optional: 0, savings: 10 });
     ports.game.confirmPlan(profileId, day.dayId, 20);
-    ports.game.purchase(profileId, day.dayId, item("lunch"));
-    ports.game.purchase(profileId, day.dayId, item("transport"));
+    // Any mix of Обязательные counts: 8 + 5 + 3 + 2 + 2 = 20, today's minimum.
+    for (const id of ["soup", "vitamins", "cherry", "tea", "tea"]) ports.game.purchase(profileId, day.dayId, item(id));
     ports.game.transferToSavings(profileId, day.dayId, 10);
     ports.game.closeDay(profileId, content.catalog, content.bills);
     await renderApp(ports);
@@ -70,7 +70,7 @@ describe("Разбор дня", () => {
     await renderApp(ports);
 
     expect(spokenInsights().at(-1)).toBe(
-      "Совет: Питомцу не хватило обеда: на счета не хватило 20 монет. Завтра начни с обязательного.",
+      "Совет: Питомцу не хватило еды: на обязательное не хватило 20 монет. Завтра начни с обязательного.",
     );
     expect(screen.getByText("Счастье -10: плана на день не было.")).toBeOnTheScreen();
   });
@@ -93,7 +93,7 @@ describe("Итоги and Итоги дня share one report", () => {
     expect(screen.getByText("Игровой день 1")).toBeOnTheScreen();
     for (const name of daySections) expect(screen.getAllByRole("heading", { name })).toHaveLength(1);
     expect(spokenInsights()).toEqual(onDaySummary);
-    expect(screen.getByLabelText("план 13 · потрачено 13")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 14 · потрачено 14")).toBeOnTheScreen();
     expect(screen.getByLabelText("Сытость -15")).toBeOnTheScreen();
     expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();
     expect(screen.getByRole("heading", { name: "Всего" })).toBeOnTheScreen();

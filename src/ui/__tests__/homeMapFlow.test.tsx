@@ -1,4 +1,4 @@
-import { act, render, screen, userEvent } from "@testing-library/react-native";
+import { act, fireEvent, render, screen, userEvent } from "@testing-library/react-native";
 import { BANK, ECONOMY, METERS, SAVINGS } from "../../core/config";
 import { DAILY_REWARD_COINS } from "../../core/dailyReward";
 import { loadContent } from "../../data/content";
@@ -9,6 +9,10 @@ import { HomeScene, type HomePet } from "../screens/HomeScene";
 import { QUIET_MS, quietSchedule, SPEECH_MS, speechPool } from "../screens/petSpeech";
 import { homeStrings } from "../stringsHome";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
+
+const layoutOf = (width: number, height: number, y = 0) => ({
+  nativeEvent: { layout: { x: 0, y, width, height } },
+});
 
 async function renderApp(ports = createFakePorts()) {
   const user = userEvent.setup();
@@ -291,6 +295,23 @@ describe("Карта заданий", () => {
     expect(screen.getByRole("button", { name: "Начать" })).toBeOnTheScreen();
   });
 
+  it("draws a curved arrow along each step of the map path, under the pins", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports);
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Карта" }));
+    // Not laid out yet: nothing to draw on.
+    expect(screen.queryByTestId("map-arrows", { includeHiddenElements: true })).not.toBeOnTheScreen();
+    await fireEvent(screen.getByTestId("map-slot"), "layout", layoutOf(360, 480));
+    const layer = screen.getByTestId("map-arrows", { includeHiddenElements: true });
+    expect(layer).not.toBeVisible();
+    // Nine lessons: the start and three paths of 2, 3 and 3 steps.
+    expect(screen.getAllByTestId("map-arrow", { includeHiddenElements: true })).toHaveLength(8);
+    // The pins stay tappable above the arrows.
+    expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
+  });
+
   it("lists every mini-game from Мини-игры, still locked until its lesson is done", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
@@ -514,11 +535,16 @@ describe("Как всё считается", () => {
     expect(text).toContain(`по последним ${SAVINGS.estimateWindow} взносам`);
 
     const content = loadContent();
-    const lunch = content.catalog.find((item) => item.id === "lunch")!;
-    expect(text).toContain(`${lunch.name} (обязательное) — ${lunch.price} монет`);
+    const soup = content.catalog.find((item) => item.id === "soup")!;
+    expect(text).toContain(`${soup.name} (обязательное) — ${soup.price} монет: Сытость +${soup.effect.delta}`);
+    const cherry = content.catalog.find((item) => item.id === "cherry")!;
+    expect(text).toContain(`${cherry.name} (обязательное) — ${cherry.price} монеты: Сытость +2, Счастье +2`);
+    expect(text).not.toContain("Лекарство");
     const guitar = content.goals.find((goal) => goal.id === "guitar")!;
     expect(text).toContain(`${guitar.name} ${guitar.price} (Счастье +${guitar.effect.delta})`);
-    expect(text).toContain(`Счета идут по кругу из ${content.bills.length} дней`);
+    expect(text).toContain("Счета — это минимум на обязательное (еда и витамины)");
+    expect(text).toContain(`Минимум идёт по кругу из ${content.bills.length} дней`);
+    content.bills.forEach((day, index) => expect(text).toContain(`День ${index + 1}: минимум ${day.min} монет`));
 
     await user.press(screen.getByRole("button", { name: strings.back }));
     expect(screen.getByRole("button", { name: "Как всё считается" })).toBeOnTheScreen();

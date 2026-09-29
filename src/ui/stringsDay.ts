@@ -50,7 +50,7 @@ export function insightText(insight: Insight): string {
       }, — но потратил их на желаемое.`;
     case "billsMissed":
       return insight.missedFood
-        ? `Питомцу не хватило обеда: на счета не хватило ${insight.missing} ${coinsWord(insight.missing)}. Завтра начни с обязательного.`
+        ? `Питомцу не хватило еды: на обязательное не хватило ${insight.missing} ${coinsWord(insight.missing)}. Завтра начни с обязательного.`
         : `На счета не хватило ${insight.missing} ${coinsWord(insight.missing)}. Завтра начни с обязательного.`;
     case "overspentWants":
       return `На желаемое ушло на ${insight.over} ${coinsWord(insight.over)} больше плана. Завтра заложи на него чуть больше — или купи что-то одно.`;

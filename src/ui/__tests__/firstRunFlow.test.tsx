@@ -314,7 +314,7 @@ describe("first-run flow (Appendix A 1–4)", () => {
     expect(screen.getByText("Новичок")).toBeOnTheScreen();
     expectMainChrome();
     expect(screen.queryByText("Выбери цель")).not.toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Текущая задача: купить обед и проезд" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Текущая задача: купить обязательное ещё на 20 монет" })).toBeOnTheScreen();
     expect(screen.queryByText("Что такое бюджет?")).not.toBeOnTheScreen();
     expect(screen.getByLabelText(/Питомец Пух.*Вид 2.*спокойный/)).toBeOnTheScreen();
 

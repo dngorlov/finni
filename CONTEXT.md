@@ -65,14 +65,14 @@ The automatic analysis of a closed Игровой день: what the child's act
 _Avoid_: оценка, ошибки, рейтинг
 
 **Обязательные расходы (Mandatory expenses)**:
-Purchases the pet needs (food, school supplies, transport, medicine). Every Игровой день takes 15 from Сытость and 15 from Счастье. A purchase adds its meter gain on top of that drop.
+Purchases the pet needs: food and vitamins (Суп, Вишня, Чай, Витамины). Each one raises Сытость. Every Игровой день takes 15 from Сытость and 15 from Счастье. A purchase adds its meter gain on top of that drop.
 
 **Счета (Day bills)**:
-The mandatory items due on a given Game Day, from a fixed content cycle. The План's Обязательные cannot be set below them, unless Магазин is Закрыто.
+The least a Game Day asks the child to spend on Обязательные, from a fixed content cycle of coin minimums (20–25). Any mix of mandatory items counts. The План's Обязательные cannot be set below it, unless Магазин is Закрыто.
 _Avoid_: список обязательных, долги, нужное, необходимое
 
 **Желаемые расходы (Optional expenses)**:
-Non-essential purchases that lift Счастье. The shelf is Конфета and Мороженое. Spending more than the План promised drops Счастье once. A Цель is not a Желаемое.
+Non-essential purchases that lift Счастье. The shelf is Плюшевый мишка, Мороженое, Билет в кино and Пицца. Spending more than the План promised drops Счастье once. A Цель is not a Желаемое.
 _Avoid_: приятное, хотелки
 
 **Три решения (The three decision types)**:
@@ -126,11 +126,11 @@ The extra item the pet wears. It opens with Этап — none on Новичок,
 _Avoid_: украшение, шапка, hat
 
 **Сытость (Satiety)**:
-The pet meter fed by buying Обед. Every Игровой день it falls by 15. Buying Обед adds its gain on top of that drop.
+The pet meter fed by Обязательные (and by Мороженое and Пицца). Every Игровой день it falls by 15. A purchase adds its gain on top of that drop.
 _Avoid_: здоровье, забота, голод
 
 **Счастье (Mood)**:
-The pet meter fed by Желаемые расходы, by Обязательные other than Обед, by Обед, and by buying the Цель. Every Игровой день it falls by 15, and a purchase adds its gain on top of that drop. Spending more than the План promised for Желаемые drops it once more. An open План left unconfirmed drops it once more; a closed План does not.
+The pet meter fed by Желаемые расходы, by Обязательные other than Суп, and by buying the Цель. Every Игровой день it falls by 15, and a purchase adds its gain on top of that drop. Spending more than the План promised for Желаемые drops it once more. An open План left unconfirmed drops it once more; a closed План does not.
 _Avoid_: настроение, радость
 
 **Этап (Stage)**:
@@ -156,7 +156,7 @@ A financial-literacy mission — an Урок, a mini-game that belongs to an У�
 _Avoid_: квест, тест
 
 **Текущая задача (Current task)**:
-The single next action suggested under the meters. It points at a Задание, at today's unpaid Счета when Баланс can pay them (named, «купить обед и проезд»), at taking coins out of Копилка when Баланс cannot pay those Счета and the pot has coins («снять деньги с копилки»), at confirming the План, at choosing a Цель, or at buying the Цель once Копилка covers its price. When Баланс cannot pay the Счета and the pot is empty, those Счета are not the task — the next Задание is. Buying the Цель also opens a buy modal.
+The single next action suggested under the meters. It points at a Задание, at today's unpaid Счета when Баланс can pay them («купить обязательное ещё на 12 монет»), at taking coins out of Копилка when Баланс cannot pay those Счета and the pot has coins («снять деньги с копилки»), at confirming the План, at choosing a Цель, or at buying the Цель once Копилка covers its price. When Баланс cannot pay the Счета and the pot is empty, those Счета are not the task — the next Задание is. Buying the Цель also opens a buy modal.
 _Avoid_: Задание, квест, подсказка, туториал
 
 **Карта заданий (Mission map)**:

@@ -1,6 +1,6 @@
 import { FEATURES } from "../../core/config";
 import type { DayInsightInput } from "../../core/dayInsights";
-import { billsForDay, type DayBills } from "../../core/economy";
+import { billsForDay, billsTotal, type DayBills } from "../../core/economy";
 import type { CatalogItemContent } from "../../data/content";
 import type { ActiveGoalView, DaySummaryView, JournalEntry } from "../../data/repositories/gameRepository";
 
@@ -21,18 +21,11 @@ export function dayInsightInput(input: {
   savingsLessonDone: boolean;
   goal: ActiveGoalView | null;
 }): DayInsightInput {
-  const { summary, catalog } = input;
+  const { summary } = input;
   const dayRows = input.journal.filter((entry) => entry.dayN === summary.n);
-  const bought = new Set(
-    dayRows.filter((entry) => entry.kind === "purchase" && entry.itemId).map((entry) => entry.itemId as string),
-  );
-  const due = billsForDay(summary.n, input.bills).items.flatMap((id) => {
-    const item = catalog.find((row) => row.id === id);
-    return item ? [item] : [];
-  });
-  const missed = due.filter((item) => !bought.has(item.id));
-  const dueTotal = due.reduce((sum, item) => sum + item.price, 0);
-  const missedTotal = missed.reduce((sum, item) => sum + item.price, 0);
+  // Счета are a coin minimum for Обязательные; every Обязательное feeds the pet.
+  const dueTotal = billsTotal(billsForDay(summary.n, input.bills));
+  const paid = Math.min(dueTotal, summary.actual.mandatory);
   // The lesson that opens Копилка can end the day, so that day had no Копилка yet.
   const openedSavingsToday = dayRows.some((entry) => entry.labelKey === `task_reward:${FEATURES.savingsTaskId}`);
   return {
@@ -40,8 +33,8 @@ export function dayInsightInput(input: {
     actual: summary.actual,
     bills: {
       due: dueTotal,
-      paid: dueTotal - missedTotal,
-      missedFood: missed.some((item) => item.effect.meter === "care"),
+      paid,
+      missedFood: paid < dueTotal,
     },
     savingsOpen: input.isDemo || (input.savingsLessonDone && !openedSavingsToday),
     noPlanPenalty: summary.meterDeltas.noPlan,

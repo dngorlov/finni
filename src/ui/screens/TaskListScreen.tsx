@@ -28,6 +28,7 @@ import { colors, minTarget, radius, spacing, type } from "../theme";
 import { TOPIC_TINT } from "../topicStyle";
 import type { SpotlightBox } from "../finnyScript";
 import { measureSpotlight } from "../measureSpotlight";
+import { MapArrows, mapEdges } from "./MapArrows";
 import { containedMapSize } from "./mapLayout";
 import { ZoomableMap } from "./ZoomableMap";
 import { completedTaskIds, correctionTasks, type TaskTopic } from "../tasks/model";
@@ -35,7 +36,6 @@ import { completedTaskIds, correctionTasks, type TaskTopic } from "../tasks/mode
 /** Background art: Andrei's Moscow map drops in here (same file name, any size, 3:4). */
 const MAP_IMAGE = require("../../../assets/map/moscow.png");
 const PIN = 44;
-const DOTS = 5;
 
 const TOPIC_COPY: Record<TaskTopic, { title: string; icon: string }> = {
   budget: { title: strings.taskTopicBudget, icon: strings.taskTopicBudgetIcon },
@@ -135,6 +135,7 @@ export default function TaskListScreen({
         <Text style={styles.hint}>{strings.mapHint}</Text>
       </View>
       <View
+        testID="map-slot"
         collapsable={false}
         style={styles.mapSlot}
         onLayout={(event) => {
@@ -175,30 +176,15 @@ export default function TaskListScreen({
                   accessibilityIgnoresInvertColors
                 />
               ) : null}
-              {missions.map((task) => {
-                const before = missionPrerequisite(task, content.tasks);
-                if (!before) return null;
-                const from = at(before);
-                const to = at(task);
-                return Array.from({ length: DOTS }, (_, i) => {
-                  const t = (i + 1) / (DOTS + 1);
-                  return (
-                    <Animated.View
-                      key={`${task.id}-dot-${i}`}
-                      pointerEvents="none"
-                      style={[
-                        styles.dot,
-                        demo || completed.has(before.id) ? styles.dotOpen : null,
-                        {
-                          left: pct(from.x + (to.x - from.x) * t),
-                          top: pct(from.y + (to.y - from.y) * t),
-                          transform: [{ scale: counterScale }],
-                        },
-                      ]}
-                    />
-                  );
-                });
-              })}
+              {mapReady ? (
+                <MapArrows
+                  edges={mapEdges(missions, content.tasks)}
+                  size={map}
+                  // Selected pins grow 15 %; the arrows stop clear of that too.
+                  gap={Math.ceil((PIN / 2) * 1.15) + 2}
+                  walked={(edge) => demo || completed.has(edge.from.id)}
+                />
+              ) : null}
               {missions.map((task) => {
                 const state = stateOf(task);
                 const { x, y } = at(task);
@@ -690,18 +676,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     top: 0,
-  },
-  dot: {
-    backgroundColor: colors.disabledFace,
-    borderRadius: 3,
-    height: 6,
-    marginLeft: -3,
-    marginTop: -3,
-    position: "absolute",
-    width: 6,
-  },
-  dotOpen: {
-    backgroundColor: colors.raisedEdge,
   },
   pinSpot: {
     height: PIN,

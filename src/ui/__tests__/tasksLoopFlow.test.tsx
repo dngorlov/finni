@@ -5,7 +5,7 @@ import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 import { passAdultGate } from "../testSupport/flowHelpers";
 
 const content = loadContent();
-const candy = content.catalog.find((item) => item.id === "candy")!;
+const tea = content.catalog.find((item) => item.id === "tea")!;
 const iceCream = content.catalog.find((item) => item.id === "ice-cream")!;
 
 async function renderApp(ports = createFakePorts()) {
@@ -38,14 +38,14 @@ describe("Задания combined loop", () => {
       await user.press(screen.getByRole("button", { name: "Карта" }));
       expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();
       expect(screen.getByText("Карта заданий")).toBeOnTheScreen();
-      expect(screen.getAllByRole("button", { name: /, закрыто$/ })).toHaveLength(6);
+      expect(screen.getAllByRole("button", { name: /, закрыто$/ })).toHaveLength(8);
       expect(screen.queryByRole("button", { name: /, скоро$/ })).not.toBeOnTheScreen();
       expect(screen.queryByText("Почини рюкзак")).not.toBeOnTheScreen();
       await backToMain(user);
 
       const day = ports.game.dayState(profileId);
       while (ports.game.getProfile(profileId).balance >= iceCream.price) {
-        ports.game.purchase(profileId, day.dayId, candy);
+        ports.game.purchase(profileId, day.dayId, tea);
       }
 
       await user.press(screen.getByRole("button", { name: "Магазин" }));

@@ -176,8 +176,8 @@ export const strings = {
 
   shopMandatoryTab: "Необходимое",
   shopOptionalTab: "Желаемое",
-  shopPrice: (n: number) => `${n} монет`,
-  shopAfterBuy: (n: number) => `после покупки: ${n} монет`,
+  shopPrice: (n: number) => `${n} ${coinsWord(n)}`,
+  shopAfterBuy: (n: number) => `после покупки: ${n} ${coinsWord(n)}`,
   shopMeterDelta: (n: number) => `+${n}`,
   shopMeterA11y: (meter: string, delta: number) => `${meter} +${delta}`,
   shopGoalChip: "Цель",
@@ -209,8 +209,9 @@ export const strings = {
   currentTaskPlan: "Текущая задача: спланировать день",
   currentTaskWithdraw: "Текущая задача: снять деньги с копилки",
   currentTaskShop: "Текущая задача: купить нужное в Магазине",
-  /** «Текущая задача: купить обед и проезд» — today's unpaid Счета by name. */
-  currentTaskBills: (items: string) => `Текущая задача: купить ${items}`,
+  /** «Текущая задача: купить обязательное ещё на 12 монет» — what today's Счета still ask for. */
+  currentTaskBills: (left: number) =>
+    `Текущая задача: купить обязательное ещё на ${left} ${coinsWord(left) === "монета" ? "монету" : coinsWord(left)}`,
   currentTaskLesson: (title: string) => `Текущая задача: урок «${title}»`,
   pickNewGoal: "Выбрать новую цель",
 

@@ -2,59 +2,91 @@
   "contentVersion": 1,
   "items": [
     {
-      "id": "lunch",
-      "name": "Обед",
-      "icon": "🍱",
-      "kind": "mandatory",
-      "price": 12,
-      "effect": { "meter": "care", "delta": 10 },
-      "also": { "meter": "mood", "delta": 5 },
-      "description": "Питомцу нужно есть каждый день"
-    },
-    {
-      "id": "school",
-      "name": "Школьные принадлежности",
-      "icon": "✏️",
-      "kind": "mandatory",
-      "price": 10,
-      "effect": { "meter": "mood", "delta": 5 },
-      "description": "Тетради и ручки, чтобы учиться"
-    },
-    {
-      "id": "transport",
-      "name": "Проезд",
-      "icon": "🚌",
+      "id": "soup",
+      "name": "Суп",
+      "icon": "🍲",
+      "sprite": "soup",
       "kind": "mandatory",
       "price": 8,
-      "effect": { "meter": "mood", "delta": 5 },
-      "description": "Доехать до школы и обратно"
+      "effect": { "meter": "care", "delta": 12 },
+      "description": "Горячая еда: сытость сразу вверх"
     },
     {
-      "id": "medicine",
-      "name": "Лекарство",
-      "icon": "💊",
+      "id": "cherry",
+      "name": "Вишня",
+      "icon": "🍒",
+      "sprite": "cherry",
       "kind": "mandatory",
-      "price": 15,
-      "effect": { "meter": "mood", "delta": 20 },
-      "description": "Если питомцу нездоровится"
+      "price": 3,
+      "effect": { "meter": "care", "delta": 2 },
+      "also": { "meter": "mood", "delta": 2 },
+      "description": "Спелые ягоды на перекус"
     },
     {
-      "id": "candy",
-      "name": "Конфета",
-      "icon": "🍬",
-      "kind": "optional",
+      "id": "tea",
+      "name": "Чай",
+      "icon": "🍵",
+      "sprite": "tea",
+      "kind": "mandatory",
+      "price": 2,
+      "effect": { "meter": "care", "delta": 2 },
+      "also": { "meter": "mood", "delta": 1 },
+      "description": "Тёплый чай к завтраку"
+    },
+    {
+      "id": "vitamins",
+      "name": "Витамины",
+      "icon": "💊",
+      "sprite": "pill",
+      "kind": "mandatory",
       "price": 5,
-      "effect": { "meter": "mood", "delta": 5 },
-      "description": "Сладкое для счастья"
+      "effect": { "meter": "care", "delta": 5 },
+      "also": { "meter": "mood", "delta": 2 },
+      "habit": { "kind": "grow", "step": 1, "max": 3 },
+      "description": "Чтобы питомец был бодрым. Каждый день подряд — больше счастья"
+    },
+    {
+      "id": "teddy",
+      "name": "Плюшевый мишка",
+      "icon": "🧸",
+      "sprite": "teddy_bear",
+      "kind": "optional",
+      "price": 15,
+      "effect": { "meter": "mood", "delta": 22 },
+      "description": "Мягкий друг для обнимашек"
     },
     {
       "id": "ice-cream",
       "name": "Мороженое",
       "icon": "🍦",
+      "sprite": "ice_cream",
       "kind": "optional",
-      "price": 8,
-      "effect": { "meter": "mood", "delta": 6 },
-      "description": "Холодное в жаркий день"
+      "price": 4,
+      "effect": { "meter": "care", "delta": 1 },
+      "also": { "meter": "mood", "delta": 5 },
+      "habit": { "kind": "fade", "step": 1, "min": 1 },
+      "description": "Холодное лакомство. Каждый день подряд — меньше счастья"
+    },
+    {
+      "id": "cinema",
+      "name": "Билет в кино",
+      "icon": "🎟️",
+      "sprite": "cinema_ticket",
+      "kind": "optional",
+      "price": 10,
+      "effect": { "meter": "mood", "delta": 15 },
+      "description": "Мультфильм на большом экране"
+    },
+    {
+      "id": "pizza",
+      "name": "Пицца",
+      "icon": "🍕",
+      "sprite": "pizza",
+      "kind": "optional",
+      "price": 15,
+      "effect": { "meter": "care", "delta": 10 },
+      "also": { "meter": "mood", "delta": 5 },
+      "description": "Вкусно, но дороже супа"
     }
   ],
   "goals": [
@@ -64,7 +96,7 @@
       "icon": "🧱",
       "stage": "novice",
       "price": 60,
-      "effect": { "meter": "mood", "delta": 70 },
+      "effect": { "meter": "mood", "delta": 92 },
       "description": "Собрать что-то своё"
     },
     {
@@ -73,7 +105,7 @@
       "icon": "⌚",
       "stage": "novice",
       "price": 75,
-      "effect": { "meter": "mood", "delta": 84 },
+      "effect": { "meter": "mood", "delta": 93 },
       "description": "Часы, которые считают шаги"
     },
     {
@@ -82,7 +114,7 @@
       "icon": "🛹",
       "stage": "novice",
       "price": 90,
-      "effect": { "meter": "mood", "delta": 93 },
+      "effect": { "meter": "mood", "delta": 94 },
       "description": "Кататься во дворе после школы"
     },
     {
@@ -91,7 +123,7 @@
       "icon": "🎨",
       "stage": "pro",
       "price": 120,
-      "effect": { "meter": "mood", "delta": 94 },
+      "effect": { "meter": "mood", "delta": 95 },
       "description": "Краски и бумага для своих картин"
     },
     {
@@ -100,7 +132,7 @@
       "icon": "🛴",
       "stage": "pro",
       "price": 160,
-      "effect": { "meter": "mood", "delta": 95 },
+      "effect": { "meter": "mood", "delta": 96 },
       "description": "Доехать до парка самому"
     },
     {
@@ -109,7 +141,7 @@
       "icon": "📱",
       "stage": "pro",
       "price": 200,
-      "effect": { "meter": "mood", "delta": 96 },
+      "effect": { "meter": "mood", "delta": 97 },
       "description": "Звонить своим, когда нужно"
     },
     {
@@ -118,7 +150,7 @@
       "icon": "🎸",
       "stage": "millionaire",
       "price": 220,
-      "effect": { "meter": "mood", "delta": 97 },
+      "effect": { "meter": "mood", "delta": 98 },
       "description": "Играть свои песни"
     },
     {
@@ -127,7 +159,7 @@
       "icon": "🚲",
       "stage": "millionaire",
       "price": 240,
-      "effect": { "meter": "mood", "delta": 98 },
+      "effect": { "meter": "mood", "delta": 99 },
       "description": "Длинные поездки в парк"
     },
     {
@@ -141,13 +173,10 @@
     }
   ],
   "bills": [
-    { "items": ["lunch", "transport"] },
-    { "items": ["lunch", "transport", "school"] },
-    {
-      "items": ["lunch", "transport", "medicine"],
-      "note": "Питомец простыл — сегодня нужно лекарство."
-    },
-    { "items": ["lunch", "transport", "school"] },
-    { "items": ["lunch", "transport"] }
+    { "min": 20 },
+    { "min": 22 },
+    { "min": 25 },
+    { "min": 22 },
+    { "min": 20 }
   ]
 }

@@ -12,6 +12,7 @@ import { ECONOMY, FEATURES, METERS } from "../../core/config";
 import { dayId as makeDayId } from "../../core/days";
 import {
   applyMeterDelta,
+  billsCovered,
   billsForDay,
   checkPurchase,
   dayCloseMeterDeltas,
@@ -23,6 +24,7 @@ import {
   type DayBills,
   type PlanBuckets,
 } from "../../core/economy";
+import { habitStreak, withHabit } from "../../core/habits";
 import { checkDeposit, depositInterest, depositPayout, findOffer, maturesOnDay } from "../../core/bank";
 import { customGoalItemId, parseCustomGoalDraft } from "../../core/customGoal";
 import {
@@ -455,6 +457,23 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     }
   }
 
+  /**
+   * Meter moves of one purchase on Игровой день `dayN`. A habit item reads its
+   * streak from the saved purchases of earlier days (no extra column).
+   */
+  function purchaseEffects(conn: GameDb, profileId: string, dayN: number, item: CatalogItem) {
+    if (!item.habit) return itemMeterEffects(item);
+    const rows = conn
+      .select({ dayId: tables.purchases.dayId })
+      .from(tables.purchases)
+      .where(and(eq(tables.purchases.profileId, profileId), eq(tables.purchases.itemId, item.id)))
+      .all();
+    const days = conn.select().from(tables.days).where(eq(tables.days.profileId, profileId)).all();
+    const nById = new Map(days.map((day) => [day.id, day.n]));
+    const boughtOn = rows.map((row) => nById.get(row.dayId)).filter((n): n is number => n != null);
+    return itemMeterEffects(withHabit(item, habitStreak(boughtOn, dayN)));
+  }
+
   function requireOpenDay(conn: GameDb, profileId: string, dayId: string) {
     const day = conn.select().from(tables.days).where(eq(tables.days.id, dayId)).get();
     if (!day || day.profileId !== profileId) throw new Error("Игровой день не найден");
@@ -691,18 +710,20 @@ export function createGameRepository(db: GameDb, clock: Clock) {
       .from(tables.savingsTransfers)
       .where(and(eq(tables.savingsTransfers.dayId, day.id), eq(tables.savingsTransfers.kind, "in")))
       .all();
-    const mandatoryIds =
-      bills.length > 0
-        ? billsForDay(day.n, bills).items
-        : catalog.filter((item) => item.kind === "mandatory").map((item) => item.id);
+    const actual = actualForDay(tx, day.id);
+    // Счета are a coin minimum for Обязательные. Without a cycle (tests, old
+    // callers) every mandatory catalog item must be bought.
     const boughtIds = new Set(bought.map((row) => row.itemId));
-    const mandatoryCovered = mandatoryIds.every((id) => boughtIds.has(id));
+    const mandatoryCovered =
+      bills.length > 0
+        ? billsCovered(billsForDay(day.n, bills), actual.mandatory)
+        : catalog.filter((item) => item.kind === "mandatory").every((item) => boughtIds.has(item.id));
     const confirmed = plan?.status === "confirmed" ? plan : null;
     const withinPlan = planKept({
       plan: confirmed
         ? { mandatory: confirmed.mandatory, optional: confirmed.optional, savings: confirmed.savings }
         : null,
-      actual: actualForDay(tx, day.id),
+      actual,
     });
     const deposited = deposits.length > 0;
     const score = dayScore({ mandatoryCovered, withinPlan, deposited });
@@ -1011,10 +1032,11 @@ export function createGameRepository(db: GameDb, clock: Clock) {
 
     purchase(profileId: string, dayId: string, item: CatalogItem): PurchaseResult {
       const result = db.transaction((tx) => {
-        requireOpenDay(tx, profileId, dayId);
+        const day = requireOpenDay(tx, profileId, dayId);
         if (item.once && itemPurchased(tx, profileId, item.id)) {
           return { status: "blocked" as const, missing: 0 };
         }
+        const effects = purchaseEffects(tx, profileId, day.n, item);
         const result = debit(tx, profileId, dayId, item.price, "purchase", `purchase:${item.id}`, {
           itemId: item.id,
         });
@@ -1033,7 +1055,7 @@ export function createGameRepository(db: GameDb, clock: Clock) {
             createdAt: nowMs(),
           })
           .run();
-        for (const effect of itemMeterEffects(item)) {
+        for (const effect of effects) {
           applyMeter(tx, profileId, dayId, effect.meter, effect.delta, `purchase:${item.id}`);
         }
         if (asActive) clearGoals(tx, profileId);
@@ -1164,7 +1186,8 @@ export function createGameRepository(db: GameDb, clock: Clock) {
 
     purchaseFromSavings(profileId: string, dayId: string, item: CatalogItem): PurchaseResult {
       const result = db.transaction((tx) => {
-        requireOpenDay(tx, profileId, dayId);
+        const day = requireOpenDay(tx, profileId, dayId);
+        const effects = purchaseEffects(tx, profileId, day.n, item);
         const active = activeGoal(tx, profileId);
         if (!active || active.key !== item.id) {
           throw new Error("Купить из копилки можно только текущую Цель");
@@ -1213,7 +1236,7 @@ export function createGameRepository(db: GameDb, clock: Clock) {
             createdAt: nowMs(),
           })
           .run();
-        for (const effect of itemMeterEffects(item)) {
+        for (const effect of effects) {
           applyMeter(tx, profileId, dayId, effect.meter, effect.delta, `purchase:${item.id}`);
         }
         clearGoals(tx, profileId);
@@ -1474,9 +1497,9 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     },
 
     /**
-     * `bills` is the Счета cycle from content: only the items due on this
-     * Игровой день count as «необходимое закрыто». An empty cycle falls back
-     * to every mandatory catalog item.
+     * `bills` is the Счета cycle from content: «необходимое закрыто» once the
+     * day's Обязательные purchases reach this Игровой день's minimum. An empty
+     * cycle falls back to every mandatory catalog item.
      */
     closeDay(
       profileId: string,

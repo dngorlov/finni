@@ -31,7 +31,7 @@ describe("plan from Main", () => {
     expect(screen.getByRole("heading", { name: "Обязательные" })).toBeOnTheScreen();
     expect(screen.getByLabelText("Можно распределить: 100")).toBeOnTheScreen();
     expect(screen.getByText("Сначала то, без чего не обойтись.")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Обед и проезд: минимум 20")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Нужно минимум 20 на обязательное: еда и витамины")).toBeOnTheScreen();
     expect(screen.getByLabelText("Обязательные 20")).toBeOnTheScreen();
     expect(screen.getByLabelText("Свободно: 80")).toBeOnTheScreen();
     expect(screen.getByRole("slider", { name: "Обязательные" })).toHaveAccessibilityValue({
@@ -162,13 +162,13 @@ describe("plan from Main", () => {
     expect(screen.getByLabelText("Желаемые 6")).toBeOnTheScreen();
     expect(ports.game.dayState(profileId).plan.buckets.optional).toBe(6);
 
-    const lunch = ports.content.catalog.find((item) => item.id === "lunch");
-    if (!lunch) throw new Error("Нет обеда в контенте");
-    ports.game.purchase(profileId, day.dayId, lunch);
+    const soup = ports.content.catalog.find((item) => item.id === "soup");
+    if (!soup) throw new Error("Нет супа в контенте");
+    ports.game.purchase(profileId, day.dayId, soup);
     await user.press(screen.getByRole("button", { name: "Копилка" }));
     await user.press(screen.getByRole("button", { name: "План" }));
     expect(screen.getByText("Обещание на сегодня. Менять уже нельзя.")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Обязательные: план 20 · потрачено 12")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Обязательные: план 20 · потрачено 8")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Изменить план" })).not.toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Желаемые, больше" })).not.toBeOnTheScreen();
     expect(screen.queryByText("Пока не было покупок, план можно изменить.")).not.toBeOnTheScreen();

@@ -3,6 +3,7 @@ import { ACCESSORY_KEYS, ACCESSORY_STAGE } from "../core/accessories";
 import { depositPayout } from "../core/bank";
 import { DAILY_REWARD_COINS } from "../core/dailyReward";
 import { billsTotal } from "../core/economy";
+import { moodEffectOf } from "../core/habits";
 import { estimateDaysToGoal } from "../core/savings";
 import { nextStage, STAGE_NAMES, stageGoalFloor, type Stage } from "../core/stages";
 import { earnedReward, endsGameDay, rewardTopUp, verdictPoints, type TaskContent, type Verdict } from "../core/tasks";
@@ -77,7 +78,6 @@ function coinsSection(content: RulesContent): RuleSection {
 }
 
 function planSection(content: RulesContent): RuleSection {
-  const names = new Map(content.catalog.map((entry) => [entry.id, entry.name]));
   const lines: RuleLine[] = [
     text(s.planPromise),
     formula(s.planFormula),
@@ -85,8 +85,7 @@ function planSection(content: RulesContent): RuleSection {
     text(s.billsIntro(content.bills.length)),
   ];
   content.bills.forEach((day, index) => {
-    const list = day.items.map((id) => names.get(id) ?? id).join(" + ");
-    lines.push(item(s.billsDay(index + 1, list, billsTotal(day, content.catalog), day.note)));
+    lines.push(item(s.billsDay(index + 1, billsTotal(day), day.note)));
   });
   lines.push(text(s.billsRepeat(content.bills.length + 1)));
   return { title: s.planTitle, lines };
@@ -99,6 +98,20 @@ function shopSection(content: RulesContent): RuleSection {
       .map((effect) => (effect.meter === "care" ? s.careEffect(effect.delta) : s.moodEffect(effect.delta)))
       .join(", ");
     lines.push(item(s.itemLine(entry.name, entry.price, effects, entry.kind === "mandatory")));
+  }
+  const habits = content.catalog.flatMap((entry) => {
+    const mood = moodEffectOf(entry);
+    return entry.habit && mood ? [{ name: entry.name, base: mood.delta, habit: entry.habit }] : [];
+  });
+  if (habits.length > 0) lines.push(text(s.habitIntro));
+  for (const { name, base, habit } of habits) {
+    lines.push(
+      formula(
+        habit.kind === "grow"
+          ? s.habitGrow(name, base, habit.step, habit.max)
+          : s.habitFade(name, base, habit.step, habit.min),
+      ),
+    );
   }
   lines.push(
     text(s.meterStart(METERS.initialCare, METERS.initialMood)),

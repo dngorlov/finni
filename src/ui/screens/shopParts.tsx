@@ -3,7 +3,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { CatalogItemContent } from "../../data/content";
 import { METERS } from "../../core/config";
 import { itemMeterEffects } from "../../core/economy";
+import type { HabitView } from "../../core/habits";
 import { CoinText } from "../components/CoinText";
+import { isItemSprite, ItemSprite } from "../components/ItemSprite";
 import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
 import type { PixelIconName } from "../pixelIconXml";
@@ -52,11 +54,12 @@ export function dailyDropPhrase(item: CatalogItemContent): string | null {
   return parts.length > 0 ? parts.join(" и ") : null;
 }
 
-export function rowAnnouncement(item: CatalogItemContent, balance: number, flags: RowFlags) {
+export function rowAnnouncement(item: CatalogItemContent, balance: number, flags: RowFlags, habit?: HabitView | null) {
   const parts = [item.name, strings.shopPrice(item.price)];
   for (const effect of itemMeterEffects(item)) {
     parts.push(strings.shopMeterA11y(meterWord(effect.meter), effect.delta));
   }
+  if (habit) parts.push(shopStrings.habitA11y(item.name, habit.streak, habit.mood));
   if (flags.goal) parts.push(strings.shopGoalChip);
   if (flags.bought) parts.push(strings.shopBought);
   if (item.once) parts.push(strings.shopOnceChip);
@@ -86,12 +89,15 @@ export function goalAnnouncement(
   return parts.join(". ");
 }
 
-/** Big square picture of the item on a tile tinted by its kind. */
+/**
+ * Big square picture of the item on a tile tinted by its kind. Shop items have
+ * a 16 px pixel sprite (drawn about 56 dp on a 72 tile); a Цель has an emoji.
+ */
 export function ItemTile({
   item,
   size = 72,
 }: {
-  item: { icon: string; kind?: "mandatory" | "optional" };
+  item: { icon: string; sprite?: string; kind?: "mandatory" | "optional" };
   size?: number;
 }) {
   return (
@@ -103,9 +109,13 @@ export function ItemTile({
         { backgroundColor: item.kind === "mandatory" ? tint.mandatoryTile : tint.optionalTile },
       ]}
     >
-      <Text style={[styles.tileEmoji, { fontSize: Math.round(size * 0.66), lineHeight: Math.round(size * 0.9) }]}>
-        {item.icon}
-      </Text>
+      {isItemSprite(item.sprite) ? (
+        <ItemSprite name={item.sprite} size={Math.round(size * 0.78)} />
+      ) : (
+        <Text style={[styles.tileEmoji, { fontSize: Math.round(size * 0.66), lineHeight: Math.round(size * 0.9) }]}>
+          {item.icon}
+        </Text>
+      )}
     </View>
   );
 }
@@ -169,6 +179,33 @@ export function ItemEffects({
           <Text style={styles.effectText}>{shopStrings.effectGain(effect.delta, meterWordLower(effect.meter))}</Text>
         </View>
       ))}
+    </View>
+  );
+}
+
+/**
+ * Привычка: a short bar that fills one segment per day in a row, and today's
+ * Счастье beside it. `announce` makes it one spoken line (drawer); in a row the
+ * row label already says it.
+ */
+export function HabitMeter({ name, habit, announce }: { name: string; habit: HabitView; announce: boolean }) {
+  const segments = Array.from({ length: habit.segments }, (_, index) => index < habit.filled);
+  return (
+    <View
+      testID="habit-meter"
+      style={styles.habit}
+      {...(announce ? { accessible: true, accessibilityLabel: shopStrings.habitA11y(name, habit.streak, habit.mood) } : hiddenFromReader)}
+    >
+      <View style={styles.habitBar}>
+        {segments.map((on, index) => (
+          <View
+            key={index}
+            testID={on ? "habit-segment-on" : "habit-segment-off"}
+            style={[styles.habitSegment, on ? styles.habitSegmentOn : null]}
+          />
+        ))}
+      </View>
+      <Text style={styles.habitLabel}>{shopStrings.habitLabel(habit.kind, habit.mood)}</Text>
     </View>
   );
 }
@@ -260,6 +297,7 @@ export function ShopRow({
   flags,
   balance,
   marked,
+  habit,
   onOpen,
   onBuy,
 }: {
@@ -267,6 +305,8 @@ export function ShopRow({
   flags: RowFlags;
   balance: number;
   marked: boolean;
+  /** Привычка bar; null for ordinary items. */
+  habit?: HabitView | null;
   onOpen: () => void;
   onBuy: () => void;
 }) {
@@ -275,7 +315,7 @@ export function ShopRow({
     <View style={[styles.row, marked ? styles.rowMarked : null]}>
       <Pressable
         role="button"
-        aria-label={rowAnnouncement(item, balance, flags)}
+        aria-label={rowAnnouncement(item, balance, flags, habit)}
         aria-selected={marked}
         onPress={onOpen}
         style={styles.rowInfo}
@@ -297,6 +337,7 @@ export function ShopRow({
           <View {...hiddenFromReader} style={styles.rowDetails}>
             <ItemTags item={item} flags={flags} />
             <ItemEffects item={item} announce={false} />
+            {habit ? <HabitMeter name={item.name} habit={habit} announce={false} /> : null}
           </View>
         </View>
       </Pressable>
@@ -456,6 +497,30 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     lineHeight: 18,
     textAlignVertical: "center",
+  },
+  habit: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.s,
+  },
+  habitBar: {
+    flexDirection: "row",
+    gap: 3,
+  },
+  habitSegment: {
+    backgroundColor: colors.track,
+    borderRadius: 3,
+    height: 10,
+    width: 14,
+  },
+  habitSegmentOn: {
+    backgroundColor: colors.accent,
+  },
+  habitLabel: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "700",
   },
   rowButton: {
     borderRadius: 12,

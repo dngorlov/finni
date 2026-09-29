@@ -18,11 +18,11 @@ describe("Цель: только три на этапе (ADR-0015)", () => {
     await openMoney(user, "Копилка");
     await user.press(screen.getByRole("button", { name: "Цель" }));
 
-    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет\. Счастье \+70/ })).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: /^Смарт-часы\. 75 монет\. Счастье \+84/ })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Конструктор\. 60 монет\. Счастье \+92/ })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Смарт-часы\. 75 монет\. Счастье \+93/ })).toBeOnTheScreen();
     expect(
       screen.getByRole("button", {
-        name: "Скейтборд. 90 монет. Счастье +93. Кататься во дворе после школы. Купишь — питомец перейдёт на этап «Про». Цель",
+        name: "Скейтборд. 90 монет. Счастье +94. Кататься во дворе после школы. Купишь — питомец перейдёт на этап «Про». Цель",
       }),
     ).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Своя цель" })).not.toBeOnTheScreen();
