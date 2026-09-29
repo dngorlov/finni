@@ -153,6 +153,7 @@ export const FONTS: readonly Credit[] = [
 export const ICONS: readonly Credit[] = [
   { what: "pixelarticons", source: "Gerrit Halfmann, MIT" },
   { what: "Пиксельные иконки", source: "Андрей Мужевлёв (HSE SPb Team), право на распространение в прототипе подтверждено" },
+  { what: "Товары магазина", source: "Андрей Мужевлёв (HSE SPb Team), право на распространение в прототипе подтверждено" },
   { what: "Эмодзи", source: "системные шрифты устройства" },
 ];
 
