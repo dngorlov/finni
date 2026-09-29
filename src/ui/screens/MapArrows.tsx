@@ -8,17 +8,15 @@ import { arrowShape, type Point, type Size } from "./mapLayout";
 export type MapEdge = { from: TaskContent; to: TaskContent };
 
 /**
- * The path drawn on Карта: each pin's prerequisite leads to it. The first Урок
- * is the start of all three paths, so a topic's first pin that is open from the
- * start still hangs off it. Drawing only — which pins open stays in core/tasks.
+ * The path drawn on Карта: one arrow from each pin's prerequisite to the pin.
+ * «Что такое бюджет?» leads to the next budget Урок and to the first Урок of
+ * every other topic; then each topic runs in order. Drawing only — which pins
+ * open stays in core/tasks.
  */
 export function mapEdges(pins: readonly TaskContent[], tasks: readonly TaskContent[]): MapEdge[] {
-  const start = pins[0];
-  if (!start) return [];
   return pins.flatMap((task) => {
-    if (task === start) return [];
-    const before = missionPrerequisite(task, tasks) ?? start;
-    return pins.includes(before) ? [{ from: before, to: task }] : [];
+    const before = missionPrerequisite(task, tasks);
+    return before && pins.includes(before) ? [{ from: before, to: task }] : [];
   });
 }
 

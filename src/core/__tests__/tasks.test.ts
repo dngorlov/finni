@@ -136,19 +136,18 @@ describe("mission unlock chain", () => {
     expect(unlockedTasks(withGame, new Set(), false).map((task) => task.id)).not.toContain("game");
   });
 
-  it("opens the Копилка and План lessons from the start, and still gates the other topics on «Что такое бюджет?»", () => {
+  it("keeps the Копилка and План lessons closed until «Что такое бюджет?», like every other topic", () => {
     const real = [
       fixture({ id: "budget_what", topic: "budget", order: 1 }),
       fixture({ id: "budget_plan", topic: "budget", order: 2 }),
+      fixture({ id: "budget_change", topic: "budget", order: 3 }),
       fixture({ id: "savings_what", topic: "savings", order: 1 }),
       fixture({ id: "payments_pay", topic: "payments", order: 1 }),
     ];
-    expect(unlockedTasks(real, new Set()).map((task) => task.id)).toEqual([
-      "budget_what",
-      "budget_plan",
-      "savings_what",
-    ]);
-    expect(unlockedTasks(real, new Set(["budget_what"])).map((task) => task.id)).toContain("payments_pay");
+    const ids = (done: string[]) => unlockedTasks(real, new Set(done)).map((task) => task.id);
+    expect(ids([])).toEqual(["budget_what"]);
+    expect(ids(["budget_what"])).toEqual(["budget_what", "budget_plan", "savings_what", "payments_pay"]);
+    expect(ids(["budget_what", "budget_plan"])).toContain("budget_change");
   });
 });
 

@@ -91,7 +91,8 @@ describe("звуки задания", () => {
 
   it("plays a miss, a right answer, and the end of the mission", async () => {
     const ports = createFakePorts();
-    seedReturningChild(ports);
+    const profileId = seedReturningChild(ports);
+    ports.game.claimTaskReward(profileId, ports.game.dayState(profileId).dayId, "budget_what", 10);
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Карта" }));

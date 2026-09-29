@@ -1,4 +1,4 @@
-import { ECONOMY, FEATURES } from "./config";
+import { ECONOMY } from "./config";
 import type { MeterKind } from "./economy";
 
 /** Задание node graph as shipped in assets/content/tasks.json (§5.3). */
@@ -303,15 +303,13 @@ export function playableTasks(tasks: readonly TaskContent[]): TaskContent[] {
 
 /**
  * The Задание that must be completed before `task` opens, or null if it is
- * open from the start. «Что такое бюджет?», «Что такое сбережения», and
- * «Планирование бюджета» are open at first. Finishing «Что такое бюджет?»
- * opens the first Урок of every topic that is still closed; after that each
- * topic goes in order.
+ * open from the start. Only «Что такое бюджет?» is open at first. Finishing
+ * it opens «Планирование бюджета» and the first Урок of every other topic;
+ * after that each topic goes in order.
  */
 export function missionPrerequisite(task: TaskContent, tasks: readonly TaskContent[]): TaskContent | null {
   if (task.correction) return null;
   if (task.parent) return tasks.find((t) => t.id === task.parent) ?? null;
-  if (task.id === FEATURES.savingsTaskId || task.id === FEATURES.planTaskId) return null;
   const ordered = taskUnlockOrder(tasks);
   if (task.requires) return ordered.find((t) => t.id === task.requires) ?? null;
   const order = task.order ?? 1;
