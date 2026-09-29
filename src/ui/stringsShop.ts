@@ -43,9 +43,9 @@ export const shopStrings = {
   /** «Покупка компенсирует снижение: сытость -15 и счастье -15.» The day's drop still lands. */
   resultShield: (phrase: string) => `Покупка компенсирует снижение: ${phrase}.`,
 
-  /** Привычка bar on a Магазин card: «Бонус за подряд: +4» (витамины) or «Меньше за подряд: +3» (мороженое). The number is today's Счастье. */
+  /** Привычка bar on a Магазин card: «Бонус за повтор: +4» (витамины) or «Уменьшение за повтор: +3» (мороженое). The number is today's Счастье. */
   habitLabel: (kind: "grow" | "fade", mood: number) =>
-    `${kind === "grow" ? "Бонус за подряд" : "Меньше за подряд"}: +${mood}`,
+    `${kind === "grow" ? "Бонус за повтор" : "Уменьшение за повтор"}: +${mood}`,
   /** «Витамины подряд 2 дня: счастье +4». */
   habitA11y: (name: string, streak: number, mood: number) =>
     `${name} подряд ${streak} ${daysWord(streak)}: счастье +${mood}`,

@@ -97,7 +97,7 @@ export const rulesStrings = {
   habitGrow: (name: string, base: number, step: number, max: number) =>
     `${name} — бонус за повтор: Счастье = ${base} + ${step} за каждый день подряд, но не больше ${base + max}.`,
   habitFade: (name: string, base: number, step: number, min: number) =>
-    `${name} — меньше за повтор: Счастье = ${base} − ${step} за каждый день подряд, но не меньше ${min}.`,
+    `${name} — уменьшение за повтор: Счастье = ${base} − ${step} за каждый день подряд, но не меньше ${min}.`,
   meterStart: (care: number, mood: number) => `Новый питомец: Сытость ${care}, Счастье ${mood}.`,
   dayEnd: (care: number, mood: number) =>
     `Конец каждого игрового дня: Сытость ${signed(-care)}, Счастье ${signed(-mood)}. Покупка это не отменяет, её прибавка уже на шкале.`,
