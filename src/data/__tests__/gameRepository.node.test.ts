@@ -1226,3 +1226,34 @@ describe("Аксессуар and Внешний вид", () => {
     expect(meta.get(finaleSeenKey(profileId))).toBeNull();
   });
 });
+
+describe("purchase habits", () => {
+  const vitamins: CatalogItem = {
+    id: "vitamins",
+    kind: "mandatory",
+    price: 5,
+    effect: { meter: "care", delta: 5 },
+    also: { meter: "mood", delta: 2 },
+    habit: { kind: "grow", step: 1, max: 3 },
+  };
+
+  function gains(sqlite: import("better-sqlite3").Database, profileId: string, meter: "care" | "mood"): number[] {
+    const rows = sqlite
+      .prepare("SELECT delta FROM meterEvents WHERE profileId = ? AND source = 'purchase:vitamins' AND meter = ? ORDER BY rowid")
+      .all(profileId, meter) as { delta: number }[];
+    return rows.map((row) => row.delta);
+  }
+
+  it("reads the streak from saved purchases: grows day by day, same value within a day, resets after a gap", () => {
+    const { game, sqlite, profileId } = seed(new ManualClock(new Date(2026, 8, 19, 12, 0, 0)));
+    // Buys per day: days 1–3 in a row (twice on day 3), day 4 skipped, day 5 again.
+    for (const count of [1, 1, 2, 0, 1]) {
+      const opened = game.openDay(profileId);
+      if (opened.status !== "opened") throw new Error("day blocked");
+      for (let i = 0; i < count; i += 1) game.purchase(profileId, opened.dayId, vitamins);
+      game.closeDay(profileId, tinyCatalog);
+    }
+    expect(gains(sqlite, profileId, "mood")).toEqual([2, 3, 4, 4, 2]);
+    expect(gains(sqlite, profileId, "care")).toEqual([5, 5, 5, 5, 5]);
+  });
+});

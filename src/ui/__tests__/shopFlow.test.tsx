@@ -35,7 +35,7 @@ describe("Магазин", () => {
     expect(screen.getByRole("button", { name: "Суп. 8 монет. Сытость +12" })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Вишня. 3 монеты. Сытость +2. Счастье +2" })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Чай. 2 монеты. Сытость +2. Счастье +1" })).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Витамины. 5 монет. Сытость +5. Счастье +2" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Витамины. 5 монет. Сытость +5. Счастье +2. Витамины подряд 0 дней: счастье +2" })).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: /^Лекарство/ })).not.toBeOnTheScreen();
     expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     expect(screen.queryByText(/не купишь|если отложить/)).not.toBeOnTheScreen();
@@ -121,7 +121,7 @@ describe("Магазин", () => {
     await user.press(screen.getByRole("button", { name: "Магазин" }));
     await user.press(screen.getByRole("button", { name: "Желаемое" }));
     expect(screen.getByRole("button", { name: "Плюшевый мишка. 15 монет. Счастье +22" })).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Мороженое. 4 монеты. Сытость +1. Счастье +5" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Мороженое. 4 монеты. Сытость +1. Счастье +5. Мороженое подряд 0 дней: счастье +5" })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Билет в кино. 10 монет. Счастье +15" })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Пицца. 15 монет. Сытость +10. Счастье +5" })).toBeOnTheScreen();
     for (const sprite of ["teddy_bear", "ice_cream", "cinema_ticket", "pizza"]) {

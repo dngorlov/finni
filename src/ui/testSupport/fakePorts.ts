@@ -15,6 +15,7 @@ import {
   type PlanBuckets,
 } from "../../core/economy";
 import { checkDeposit, depositInterest, depositPayout, findOffer, maturesOnDay } from "../../core/bank";
+import { habitStreak, purchaseDaysOf, withHabit } from "../../core/habits";
 import { customGoalItemId, parseCustomGoalDraft } from "../../core/customGoal";
 import { applyGoalProgress, checkWithdrawal, estimateDaysToGoal, potFromTransfers } from "../../core/savings";
 import {
@@ -180,6 +181,12 @@ function appendJournal(
     itemId: input.itemId ?? null,
     goalId: input.goalId ?? null,
   });
+}
+
+/** Same rule as the repository: a habit item's streak comes from earlier days' purchases. */
+function purchaseEffects(row: StoredProfile, item: CatalogItem) {
+  if (!item.habit) return itemMeterEffects(item);
+  return itemMeterEffects(withHabit(item, habitStreak(purchaseDaysOf(row.journal, item.id), row.dayN)));
 }
 
 function emptyBuckets(): PlanBuckets {
@@ -498,7 +505,7 @@ export function createFakePorts(): SessionPorts {
           paidFrom: "balance",
           boughtAsActiveGoal: asActive,
         });
-        for (const effect of itemMeterEffects(item)) {
+        for (const effect of purchaseEffects(row, item)) {
           if (effect.meter === "care") row.care = applyMeterDelta(row.care, effect.delta);
           else row.mood = applyMeterDelta(row.mood, effect.delta);
         }
@@ -530,7 +537,7 @@ export function createFakePorts(): SessionPorts {
           paidFrom: "savings",
           boughtAsActiveGoal: true,
         });
-        for (const effect of itemMeterEffects(item)) {
+        for (const effect of purchaseEffects(row, item)) {
           if (effect.meter === "care") row.care = applyMeterDelta(row.care, effect.delta);
           else row.mood = applyMeterDelta(row.mood, effect.delta);
         }

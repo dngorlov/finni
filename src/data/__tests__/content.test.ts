@@ -10,6 +10,14 @@ describe("loadContent", () => {
     expect(content.contentVersion).toBe(1);
   });
 
+  it("gives Витамины a growing habit and Мороженое a fading one, and no other item a habit", () => {
+    const habits = content.catalog.filter((item) => item.habit).map((item) => [item.id, item.habit]);
+    expect(habits).toEqual([
+      ["vitamins", { kind: "grow", step: 1, max: 3 }],
+      ["ice-cream", { kind: "fade", step: 1, min: 1 }],
+    ]);
+  });
+
   it("ships three opening cards in Первый запуск order", () => {
     expect(content.intro.map((card) => [card.id, card.button, card.title, card.body])).toEqual([
       [

@@ -21,10 +21,12 @@ import { strings } from "../strings";
 import { shopStrings } from "../stringsShop";
 import { colors, spacing, type } from "../theme";
 import { billsCovered, billsForDay } from "../../core/economy";
+import { habitStreak, habitView, purchaseDaysOf, withHabit } from "../../core/habits";
 import { confirmedLeftover, leftoverAfterTap } from "./planLeftover";
 import { PurchaseResult, type PurchaseResultModel } from "./PurchaseResult";
 import {
   DrawerHead,
+  HabitMeter,
   hiddenFromReader,
   ItemEffects,
   ItemTags,
@@ -49,8 +51,17 @@ const TABS: readonly { value: Tab; label: string }[] = [
   { value: "optional", label: strings.shopOptionalTab },
 ];
 
+/** The catalog item as the engine takes it. The engine applies the habit itself from saved purchases. */
 function engineItem(item: CatalogItemContent) {
-  return { id: item.id, kind: item.kind, price: item.price, effect: item.effect, also: item.also, once: item.once };
+  return {
+    id: item.id,
+    kind: item.kind,
+    price: item.price,
+    effect: item.effect,
+    also: item.also,
+    once: item.once,
+    habit: item.habit,
+  };
 }
 
 export default function ShopScreen({ navigation }: Props) {
@@ -61,6 +72,7 @@ export default function ShopScreen({ navigation }: Props) {
   const [balance, setBalance] = useState(0);
   const [bought, setBought] = useState<string[]>([]);
   const [ownedOnce, setOwnedOnce] = useState<Set<string>>(new Set());
+  const [streaks, setStreaks] = useState<Record<string, number>>({});
   const [savings, setSavings] = useState<SavingsView | null>(null);
   const [drawer, setDrawer] = useState<Drawer>({ name: "closed" });
   const [receipt, setReceipt] = useState<PurchaseResultModel | null>(null);
@@ -84,8 +96,18 @@ export default function ShopScreen({ navigation }: Props) {
     setBalance(next.available);
     setBought(purchasedToday);
     setSavings(game.savingsState(profileId));
-    setOwnedOnce(ownedOnceItemIds(game.listJournal(profileId), content.catalog, purchasedToday));
+    const journal = game.listJournal(profileId);
+    setOwnedOnce(ownedOnceItemIds(journal, content.catalog, purchasedToday));
+    const nextStreaks: Record<string, number> = {};
+    for (const item of content.catalog) {
+      if (item.habit) nextStreaks[item.id] = habitStreak(purchaseDaysOf(journal, item.id), next.n);
+    }
+    setStreaks(nextStreaks);
   }, [content.catalog, game, meta]);
+
+  /** Today's face of an item: a habit item shows the Счастье it gives now. */
+  const shown = (item: CatalogItemContent): CatalogItemContent => withHabit(item, streaks[item.id] ?? 0);
+  const habitOf = (item: CatalogItemContent) => habitView(item, streaks[item.id] ?? 0);
 
   useFocusEffect(load);
 
@@ -127,7 +149,8 @@ export default function ShopScreen({ navigation }: Props) {
     load();
     closeDrawer();
     setOfferPickGoal(offerGoal);
-    setReceipt({ item, paidFrom: fromSavings ? "savings" : "balance" });
+    // The streak counts earlier days only, so today's purchase does not change it.
+    setReceipt({ item: shown(item), paidFrom: fromSavings ? "savings" : "balance" });
   };
 
   const buy = (item: CatalogItemContent) => {
@@ -196,11 +219,13 @@ export default function ShopScreen({ navigation }: Props) {
     }
 
     const canPay = balance >= item.price;
+    const habit = habitOf(item);
     return (
       <>
         {head}
         <CoinText text={item.description} style={styles.body} />
-        <ItemEffects item={item} announce />
+        <ItemEffects item={shown(item)} announce />
+        {habit ? <HabitMeter name={item.name} habit={habit} announce /> : null}
         {canPay ? (
           <CoinText text={strings.shopAfterBuy(balance - item.price)} style={styles.body} />
         ) : (
@@ -301,7 +326,8 @@ export default function ShopScreen({ navigation }: Props) {
             return (
               <ShopRow
                 key={item.id}
-                item={item}
+                item={shown(item)}
+                habit={habitOf(item)}
                 flags={flags}
                 balance={balance}
                 marked={focus?.kind === "shop-bills" && flags.due && !flags.bought}

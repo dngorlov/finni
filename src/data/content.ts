@@ -12,6 +12,12 @@ const meterEffectSchema = z.object({
   delta: z.number().int(),
 });
 
+/** Days in a row change the item's Счастье: `grow` adds up to `max`, `fade` never drops below `min`. */
+const habitSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("grow"), step: z.number().int().positive(), max: z.number().int().positive() }),
+  z.object({ kind: z.literal("fade"), step: z.number().int().positive(), min: z.number().int().nonnegative() }),
+]);
+
 const catalogItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -26,6 +32,8 @@ const catalogItemSchema = z.object({
   also: meterEffectSchema.optional(),
   description: z.string().min(1),
   once: z.boolean().optional().default(false),
+  /** Привычка: buying it on consecutive Игровые дни changes its Счастье (`core/habits.ts`). */
+  habit: habitSchema.optional(),
 });
 
 const goalItemSchema = z.object({
@@ -61,6 +69,15 @@ const catalogFileSchema = z
           code: "custom",
           message: `У Этапа ${stage} должно быть 3 Цели, сейчас ${count}`,
         });
+      }
+    }
+    for (const item of file.items) {
+      if (!item.habit) continue;
+      const mood = [item.effect, item.also].find((effect) => effect?.meter === "mood");
+      if (!mood) {
+        ctx.addIssue({ code: "custom", message: `Товар «${item.id}»: привычка меняет Счастье, а его нет` });
+      } else if (item.habit.kind === "fade" && item.habit.min >= mood.delta) {
+        ctx.addIssue({ code: "custom", message: `Товар «${item.id}»: min привычки должен быть меньше Счастья` });
       }
     }
     for (const goal of file.goals) {

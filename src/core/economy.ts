@@ -1,4 +1,5 @@
 import { METERS } from "./config";
+import type { Habit } from "./habits";
 
 /** Plan buckets — Обязательные / Желаемые / Копилка (§2.1). */
 export interface PlanBuckets {
@@ -119,6 +120,8 @@ export interface CatalogItem {
   also?: MeterEffect;
   /** One-shot Желаемые leave Магазин after any purchase. */
   once?: boolean;
+  /** Days in a row change its Счастье (see `habits.ts`). */
+  habit?: Habit;
 }
 
 /** Meter moves a purchase applies: the main effect, then `also` when the item has one. */
