@@ -345,7 +345,7 @@ export default function MainScreen({ navigation }: Props) {
     return true;
   });
   const current = options.find((option) => option.id === money) ?? options[0];
-  const tour = hub.profile.isDemo ? null : tourStep(tourId);
+  const tour = tourStep(tourId);
   const markId = tour?.spotlight ?? (tour?.map ? "pin" : null);
   const hole = spotlightHole?.id === markId ? spotlightHole.box : null;
   const showFinale =
@@ -567,17 +567,6 @@ export default function MainScreen({ navigation }: Props) {
           onAdvance={advanceTour}
         />
       ) : null}
-      {showFinale ? (
-        <StageFinaleCard
-          pet={{
-            species: hub.profile.species,
-            color: hub.profile.color,
-            accessory: hub.profile.accessory,
-            petName: hub.profile.petName,
-          }}
-          onDone={celebrateFinale}
-        />
-      ) : null}
       {showUnlock && unlockKey ? (
         <AccessoryUnlockCard
           accessory={unlockKey}
@@ -595,7 +584,11 @@ export default function MainScreen({ navigation }: Props) {
 }
 
 function tourGoal(
-  game: { savingsState(profileId: string): { activeGoal: { key: string; cost: number; custom: boolean; name: string | null } | null } },
+  game: {
+    savingsState(profileId: string): {
+      activeGoal: { key: string; cost: number; custom: boolean; name: string | null } | null;
+    };
+  },
   goals: readonly { id: string; name: string }[],
   profileId: string,
 ): { name: string; cost: number } | null {

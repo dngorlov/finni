@@ -19,6 +19,7 @@ import { finnyScript } from "../finnyScript";
 import { IntroArt } from "./IntroArt";
 import { strings } from "../strings";
 import { colors, minTarget, radius, spacing, type } from "../theme";
+import { enterDemo } from "../session/demoMode";
 
 type Props = NativeStackScreenProps<RootStackParamList, "FirstRun">;
 type Phase = "cards" | "pet" | "name";
@@ -33,7 +34,7 @@ const TEXTBOX_ROLE = "textbox" as Role;
 const NEW_PET_ACCESSORY = "a1";
 
 export default function FirstRunScreen({ navigation }: Props) {
-  const { content, firstRun, meta } = useSession();
+  const { content, firstRun, meta, game } = useSession();
   const [phase, setPhase] = useState<Phase>("cards");
   const [cardIndex, setCardIndex] = useState(0);
   const [draft, setDraft] = useState<FirstRunDraft>(() => ({
@@ -45,6 +46,10 @@ export default function FirstRunScreen({ navigation }: Props) {
   const [petNameTouched, setPetNameTouched] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    enterDemo(game, meta, content);
+  }, [content, game, meta]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -186,12 +191,7 @@ function PetPhase({
         {finnyScript.petTitle}
       </ScreenTitle>
       <Text style={styles.body}>{finnyScript.petLine}</Text>
-      <PetView
-        species={draft.species}
-        color={draft.color}
-        accessory={NEW_PET_ACCESSORY}
-        pose="idle"
-      />
+      <PetView species={draft.species} color={draft.color} accessory={NEW_PET_ACCESSORY} pose="idle" />
       <View style={styles.sliders}>
         <BeadSlider
           legend={strings.speciesLegend}
@@ -268,22 +268,12 @@ function NamePhase({
                 <Pictogram glyph={strings.namePen} />
               </View>
             </View>
-            <View
-              pointerEvents="none"
-              aria-hidden
-              accessibilityElementsHidden
-              style={styles.cloudTailSlot}
-            >
+            <View pointerEvents="none" aria-hidden accessibilityElementsHidden style={styles.cloudTailSlot}>
               <View style={styles.cloudTail} />
             </View>
           </View>
         </View>
-        <PetView
-          species={draft.species}
-          color={draft.color}
-          accessory={NEW_PET_ACCESSORY}
-          pose="idle"
-        />
+        <PetView species={draft.species} color={draft.color} accessory={NEW_PET_ACCESSORY} pose="idle" />
         {petNameTouched && !isValidName(draft.petName) ? (
           <Text style={styles.validation}>{strings.nameValidation}</Text>
         ) : null}

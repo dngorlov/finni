@@ -80,10 +80,7 @@
           "id": "g1",
           "kind": "sort",
           "text": "Разложи покупки: что нужно, а что хочется?",
-          "bins": [
-            "Нужно",
-            "Хочется"
-          ],
+          "bins": ["Нужно", "Хочется"],
           "next": "g2",
           "items": [
             {
@@ -1316,7 +1313,7 @@
       "id": "savings_steps",
       "topic": "savings",
       "order": 2,
-      "requires": "budget_change",
+      "requires": "savings_what",
       "difficulty": 1,
       "title": "Копим маленькими шагами",
       "reward": 35,
@@ -1382,11 +1379,7 @@
             "price": 50
           },
           "saved": 0,
-          "amounts": [
-            2,
-            5,
-            10
-          ],
+          "amounts": [2, 5, 10],
           "income": 10,
           "temptations": [
             {
@@ -1560,11 +1553,7 @@
             }
           ],
           "saved": 30,
-          "amounts": [
-            5,
-            10,
-            20
-          ],
+          "amounts": [5, 10, 20],
           "days": 5,
           "next": "fin"
         },
@@ -1636,7 +1625,7 @@
       "id": "payments_pay",
       "topic": "payments",
       "order": 1,
-      "requires": "savings_where",
+      "requires": "savings_what",
       "difficulty": 1,
       "title": "Платежи",
       "reward": 30,
