@@ -1,6 +1,5 @@
 import { billsForDay, billsTotal, type DayBills } from "../../core/economy";
 import type { CatalogItemContent } from "../../data/content";
-import type { JournalEntry } from "../../data/repositories/gameRepository";
 
 export interface TodayBills {
   parts: { id: string; name: string; price: number }[];
@@ -20,19 +19,6 @@ export function todayBills(
     return item ? [{ id, name: item.name, price: item.price }] : [];
   });
   return { parts, total: billsTotal(bills, catalog), note: bills.note };
-}
-
-const INCOME_KINDS = new Set(["starting_grant", "task_reward", "task_scene", "daily_reward"]);
-
-/**
- * Coins that came in on Игровой день `n` — the «Сегодня пришло» line.
- * The Стартовый бюджет (logged outside any day) counts toward day 1.
- */
-export function incomeToday(journal: readonly JournalEntry[], n: number): number {
-  return journal
-    .filter((entry) => entry.amount > 0 && INCOME_KINDS.has(entry.kind))
-    .filter((entry) => entry.dayN === n || (n === 1 && entry.dayN === 0))
-    .reduce((sum, entry) => sum + entry.amount, 0);
 }
 
 /** Cheapest-first Желаемые items that fit together into `budget`. */

@@ -10,6 +10,16 @@ function daysWord(n: number): string {
   return "дней";
 }
 
+/** «обед», «обед и проезд», «обед, проезд и лекарство». */
+function joinAnd(words: readonly string[]): string {
+  if (words.length <= 1) return words.join("");
+  return `${words.slice(0, -1).join(", ")} и ${words[words.length - 1]}`;
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toLocaleUpperCase("ru") + text.slice(1);
+}
+
 function coinsWord(n: number): string {
   const mod10 = Math.abs(n) % 10;
   const mod100 = Math.abs(n) % 100;
@@ -61,22 +71,29 @@ export const moneyStrings = {
   opRowA11y: (title: string, day: string, amount: number) => `${title}, ${day}, ${amount > 0 ? "+" : ""}${amount} монет`,
 
   // План
-  planCaption: "Можно распределить",
-  /** Draft heading: the job, not a chart title. */
-  planHow: "Раздели на три кучки",
-  planJobMandatory: "Сначала счета и всё нужное.",
+  planStepMandatory: "Сначала то, без чего не обойтись.",
+  planStepSavings: "Сколько отложить в Копилку.",
   planJobOptional: "Что хочется купить.",
+  /** Step 1 requirement; `bills` are today's Счета names («Обед», «Проезд»). */
+  planNeedMin: (bills: readonly string[], n: number) =>
+    bills.length === 0
+      ? `Нужно минимум ${n}`
+      : `${capitalize(joinAnd(bills.map((name) => name.toLocaleLowerCase("ru"))))}: минимум ${n}`,
+  planNeedMore: (n: number) => `Добавь ещё ${n} — на счета`,
+  planFreeNow: (n: number) => `Свободно: ${n}`,
+  planNext: "Далее",
+  planBack: "Назад",
+  planStepOf: (step: number, total: number, label: string) => `Шаг ${step} из ${total}: ${label}`,
+  planStepGo: (step: number, label: string) => `Вернуться к шагу ${step}: ${label}`,
+  planEdit: "Изменить план",
+  planEditDone: "Готово",
+  planFactA11y: (label: string, plan: number, actual: number) => `${label}: план ${plan} · потрачено ${actual}`,
   planLocked: "Обещание на сегодня. Менять уже нельзя.",
   planRevise: "Пока не было покупок, план можно изменить.",
-  planSplit: "Как делим",
-  planFree: "Свободно",
-  planChartA11y: (parts: readonly ShareLine[]) =>
-    parts.length === 0 ? "План пока пустой" : `План на сегодня: ${shareList(parts)}`,
   planYesterday: (n: number) => `Вчера: ${n}`,
-  planCompareMore: (d: number) => `Сегодня на ${d} больше, чем вчера`,
-  planCompareLess: (d: number) => `Сегодня на ${d} меньше, чем вчера`,
-  planCompareSame: "Столько же, сколько вчера",
-  planTodayVsYesterday: "Сегодня и вчера",
+  planCompareMore: (d: number) => `сегодня на ${d} больше`,
+  planCompareLess: (d: number) => `сегодня на ${d} меньше`,
+  planCompareSame: "сегодня столько же",
 
   // Журнал
   periodToday: "Сегодня",

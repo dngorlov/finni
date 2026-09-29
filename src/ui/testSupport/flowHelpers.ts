@@ -54,12 +54,19 @@ export async function passAdultGate(user: ReturnType<typeof userEvent.setup>) {
   await user.press(screen.getByRole("button", { name: "Войти" }));
 }
 
+/** On the План wizard: +1 to each pile, step by step, then confirm twice. */
+export async function walkTinyPlan(user: ReturnType<typeof userEvent.setup>) {
+  await user.press(screen.getByRole("button", { name: "Обязательные, больше" }));
+  await user.press(screen.getByRole("button", { name: "Далее" }));
+  await user.press(screen.getByRole("button", { name: "Копилка, больше" }));
+  await user.press(screen.getByRole("button", { name: "Далее" }));
+  await user.press(screen.getByRole("button", { name: "Желаемые, больше" }));
+  await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
+  await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
+}
+
 export async function confirmTinyPlan(user: ReturnType<typeof userEvent.setup>) {
   await openMoney(user, "План");
-  await user.press(screen.getByRole("button", { name: "Обязательные, больше" }));
-  await user.press(screen.getByRole("button", { name: "Желаемые, больше" }));
-  await user.press(screen.getByRole("button", { name: "Копилка, больше" }));
-  await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
-  await user.press(screen.getByRole("button", { name: "Подтвердить план" }));
+  await walkTinyPlan(user);
   await openTab(user, "Дом");
 }

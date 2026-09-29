@@ -111,6 +111,8 @@ export function LivingPet({
   const at = useRef<Offset>({ x: 0, y: 0 });
   const motion = useRef<Motion | null>(null);
   const dragging = useRef(false);
+  // A tap jump / punch is playing: another tap must not restart it.
+  const performing = useRef(false);
   const dragFrom = useRef<Offset>({ x: 0, y: 0 });
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
   const alive = useRef(true);
@@ -180,6 +182,7 @@ export function LivingPet({
     const clip = shownRef.current.clip;
     if (!animationsOn || dragging.current || clip === "held" || clip === "fall") return;
     halt();
+    performing.current = true;
     show("jump");
     const air = (JUMP_AIR_TICKS * PET_FRAME_MS) / 2;
     Animated.sequence([
@@ -191,7 +194,10 @@ export function LivingPet({
         useNativeDriver: true,
       }),
       Animated.timing(hop, { toValue: 0, duration: air, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-    ]).start();
+    ]).start(() => {
+      // Landed, or cut short by a drag / halt: either way the jump is over.
+      performing.current = false;
+    });
   }, [animationsOn, halt, hop, latest, show]);
 
   const punch = useCallback(() => {
@@ -370,6 +376,12 @@ export function LivingPet({
         aria-label={talkLabel}
         onPress={() => {
           if (dragging.current) return;
+          // Mid-jump or mid-punch: the move plays out, the pet just says its next line.
+          const clip = shownRef.current.clip;
+          if (performing.current || clip === "jump" || clip === "attack") {
+            latest.current.onTap();
+            return;
+          }
           if (pickTapMove(latest.current.random) === "attack") punch();
           else jump();
           latest.current.onTap();

@@ -20,6 +20,7 @@ import { strings } from "../strings";
 import { ACHIEVEMENT_TOTAL, achievementStrings } from "../stringsAchievements";
 import { homeStrings } from "../stringsHome";
 import { petStrings } from "../stringsPet";
+import { rulesStrings } from "../stringsRules";
 import { colors, minTarget, radius, spacing, type } from "../theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
@@ -43,6 +44,7 @@ export default function SettingsScreen({ navigation }: Props) {
           accessibilityLabel={`${achievementStrings.section}. ${achievementStrings.progressA11y(earned, ACHIEVEMENT_TOTAL)}`}
           onPress={() => navigation.navigate("Achievements")}
         />
+        <SettingsLink label={rulesStrings.open} bordered onPress={() => navigation.navigate("Rules")} />
         <SettingsLink
           label={homeStrings.creditsTitle}
           bordered

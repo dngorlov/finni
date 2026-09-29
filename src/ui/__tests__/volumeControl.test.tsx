@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { fireEvent, render, screen } from "@testing-library/react-native";
-import { VolumeControl } from "../components/VolumeControl";
+import { act, fireEvent, render, screen, userEvent } from "@testing-library/react-native";
+import { VOLUME_REPEAT_DELAY_MS, VOLUME_REPEAT_EVERY_MS, VolumeControl } from "../components/VolumeControl";
 import { strings } from "../strings";
 
 type Node = ReturnType<typeof screen.getByRole>;
@@ -57,12 +57,12 @@ function trackHit(): Node {
   return track as unknown as Node;
 }
 
-async function renderControl() {
+async function renderControl(start = 80) {
   const changes: number[] = [];
   const commits: number[] = [];
 
   function Harness() {
-    const [value, setValue] = useState(80);
+    const [value, setValue] = useState(start);
     return (
       <VolumeControl
         value={value}
@@ -101,5 +101,95 @@ describe("VolumeControl drag", () => {
 
     expect(changes).toEqual([30, 50, 70, 40]);
     expect(commits).toEqual([40]);
+  });
+});
+
+describe("VolumeControl −/+ buttons", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  const quieter = () => screen.getByRole("button", { name: strings.soundQuieter });
+  const louder = () => screen.getByRole("button", { name: strings.soundLouder });
+
+  it("a tap steps once and commits once", async () => {
+    const { changes, commits } = await renderControl(50);
+    await fireEvent(louder(), "pressIn");
+    await fireEvent(louder(), "pressOut");
+    await fireEvent.press(louder());
+    await act(async () => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(changes).toEqual([60]);
+    expect(commits).toEqual([60]);
+    expect(screen.getByText(strings.soundLevel(60))).toBeOnTheScreen();
+  });
+
+  it("a real tap (pressIn, pressOut, press) steps once and commits once", async () => {
+    const { changes, commits } = await renderControl(50);
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await user.press(quieter());
+    await act(async () => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(changes).toEqual([40]);
+    expect(commits).toEqual([40]);
+  });
+
+  it("a press with no pressIn (screen reader) still steps and commits", async () => {
+    const { changes, commits } = await renderControl(50);
+    await fireEvent.press(quieter());
+    expect(changes).toEqual([]);
+    expect(commits).toEqual([40]);
+  });
+
+  it("holding − keeps stepping after the delay and commits once on release", async () => {
+    const { changes, commits } = await renderControl(80);
+    await fireEvent(quieter(), "pressIn");
+    expect(changes).toEqual([70]);
+
+    await act(async () => {
+      jest.advanceTimersByTime(VOLUME_REPEAT_DELAY_MS - 1);
+    });
+    expect(changes).toEqual([70]);
+
+    await act(async () => {
+      jest.advanceTimersByTime(1 + VOLUME_REPEAT_EVERY_MS * 2);
+    });
+    expect(changes).toEqual([70, 60, 50]);
+    expect(commits).toEqual([]);
+
+    await fireEvent(quieter(), "pressOut");
+    await fireEvent.press(quieter());
+    await act(async () => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(changes).toEqual([70, 60, 50]);
+    expect(commits).toEqual([50]);
+  });
+
+  it("holding + stops at 100 and still commits on release", async () => {
+    const { changes, commits } = await renderControl(70);
+    await fireEvent(louder(), "pressIn");
+    await act(async () => {
+      jest.advanceTimersByTime(VOLUME_REPEAT_DELAY_MS + VOLUME_REPEAT_EVERY_MS * 10);
+    });
+    expect(changes).toEqual([80, 90, 100]);
+    await fireEvent(louder(), "pressOut");
+    expect(commits).toEqual([100]);
+    expect(louder()).toBeDisabled();
+  });
+
+  it("stops the repeat timers on unmount", async () => {
+    const { changes } = await renderControl(80);
+    await fireEvent(quieter(), "pressIn");
+    await screen.unmount();
+    await act(async () => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(changes).toEqual([70]);
   });
 });

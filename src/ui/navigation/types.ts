@@ -11,6 +11,8 @@ export type RootStackParamList = {
   Achievements: undefined;
   /** Об авторах и источниках, opened from Настройки. */
   Credits: undefined;
+  /** Как всё считается: every game formula, opened from Настройки. */
+  Rules: undefined;
   /** Внешний вид: Вид, Окрас, and the Аксессуары this Этап opened. */
   Appearance: undefined;
   /** Set when the lesson that just ended the day opened a money tool. */

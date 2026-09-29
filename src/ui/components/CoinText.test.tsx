@@ -1,6 +1,8 @@
 import { StyleSheet } from "react-native";
 import { render, screen } from "@testing-library/react-native";
-import { CoinText, coinGap, coinSize, coinTokens, splitMoney } from "./CoinText";
+import { font } from "../theme";
+import { CoinAmount, CoinText, coinGap, coinSize, coinTokens, pixelTextWidth, splitMoney } from "./CoinText";
+import { balanceFontSize } from "./StatusStrip";
 
 function kinds(text: string): string {
   return splitMoney(text)
@@ -145,5 +147,41 @@ describe("CoinText", () => {
     const mark = screen.getByText("?");
     expect(number.parent).toBe(mark.parent);
     expect(StyleSheet.flatten(number.parent?.props.style)).toMatchObject({ flexDirection: "row", flexWrap: "nowrap" });
+  });
+});
+
+describe("CoinAmount in the pixel font (Баланс chip)", () => {
+  const pixel = { fontFamily: font.pixel, fontSize: 16, lineHeight: 24 };
+
+  it.each([
+    [107, 48],
+    [1234, 64],
+  ])("shows %i in full on one line that never shrinks", async (balance, width) => {
+    await render(<CoinAmount value={balance} style={[pixel, { fontSize: balanceFontSize(balance) }]} size={24} />);
+    const digits = screen.getByText(String(balance), { includeHiddenElements: true });
+    expect(digits).toHaveTextContent(String(balance), { exact: true });
+    expect(digits).toHaveProp("numberOfLines", 1);
+    expect(digits.props.adjustsFontSizeToFit).toBeUndefined();
+    const style = StyleSheet.flatten(digits.props.style);
+    expect(style.width).toBeUndefined();
+    expect(style.overflow).toBeUndefined();
+    expect(style.flexShrink).toBe(0);
+    // Press Start 2P is 1 em per glyph: the text box is never narrower than the digits.
+    expect(style.minWidth).toBe(width);
+    expect(StyleSheet.flatten(digits.parent?.props.style).flexShrink).toBe(0);
+  });
+
+  it("keeps 4 digits at full size and shrinks longer balances instead of clipping", () => {
+    expect(balanceFontSize(7)).toBe(16);
+    expect(balanceFontSize(107)).toBe(16);
+    expect(balanceFontSize(1234)).toBe(16);
+    expect(balanceFontSize(-20)).toBe(16);
+    expect(balanceFontSize(12345)).toBe(12);
+    expect(balanceFontSize(123456)).toBe(10);
+  });
+
+  it("puts no width floor on other fonts", () => {
+    expect(pixelTextWidth("107", { fontSize: 16 })).toBeUndefined();
+    expect(pixelTextWidth("107", { fontFamily: font.pixel, fontSize: 18, letterSpacing: 1 })).toBe(57);
   });
 });

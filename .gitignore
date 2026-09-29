@@ -44,3 +44,4 @@ yarn-error.*
 *.apk
 *.aab
 *.keystore
+*.idsig

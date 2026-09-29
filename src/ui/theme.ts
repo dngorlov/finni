@@ -61,6 +61,15 @@ export const radius = {
   card: 20,
 } as const;
 
+/**
+ * Text props for titles that must wrap only between words. Android otherwise
+ * hyphenates or splits a long Russian word («при / надлежности») mid-word.
+ */
+export const wholeWords = {
+  android_hyphenationFrequency: "none",
+  textBreakStrategy: "simple",
+} as const;
+
 /** Minimum touch target (UX constraints). */
 export const minTarget = 48;
 

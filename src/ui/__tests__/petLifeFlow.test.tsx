@@ -230,6 +230,32 @@ describe("living pet on Дом", () => {
     expect(petClip()).toBe("idle");
   });
 
+  it("does not restart a jump when tapped mid-air", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await render(homeScene({}, { random: () => 0.99 }));
+    const pet = () => screen.getByRole("button", { name: "Поговорить с питомцем Пух" });
+    await user.press(pet());
+    expect(petClip()).toBe("jump");
+    await advance(PET_FRAME_MS * 4);
+    await user.press(pet());
+    expect(petClip()).toBe("jump");
+    // A restart would keep JUMP on screen for another nine frames.
+    await advance(PET_FRAME_MS * 5);
+    expect(petClip()).toBe("idle");
+  });
+
+  it("does not restart a punch when tapped mid-swing", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await render(homeScene({}, { random: () => 0.1 }));
+    const pet = () => screen.getByRole("button", { name: "Поговорить с питомцем Пух" });
+    await user.press(pet());
+    await advance(PET_FRAME_MS * 5);
+    await user.press(pet());
+    expect(petClip()).toBe("attack");
+    await advance(PET_FRAME_MS * 4);
+    expect(petClip()).toBe("idle");
+  });
+
   it("sometimes answers a tap with a one-two punch, then goes back to IDLE", async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await render(homeScene({}, { random: () => 0.1 }));
