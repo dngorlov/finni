@@ -96,7 +96,7 @@
       "icon": "🧱",
       "stage": "novice",
       "price": 60,
-      "effect": { "meter": "mood", "delta": 70 },
+      "effect": { "meter": "mood", "delta": 92 },
       "description": "Собрать что-то своё"
     },
     {
@@ -105,7 +105,7 @@
       "icon": "⌚",
       "stage": "novice",
       "price": 75,
-      "effect": { "meter": "mood", "delta": 84 },
+      "effect": { "meter": "mood", "delta": 93 },
       "description": "Часы, которые считают шаги"
     },
     {
@@ -114,7 +114,7 @@
       "icon": "🛹",
       "stage": "novice",
       "price": 90,
-      "effect": { "meter": "mood", "delta": 93 },
+      "effect": { "meter": "mood", "delta": 94 },
       "description": "Кататься во дворе после школы"
     },
     {
@@ -123,7 +123,7 @@
       "icon": "🎨",
       "stage": "pro",
       "price": 120,
-      "effect": { "meter": "mood", "delta": 94 },
+      "effect": { "meter": "mood", "delta": 95 },
       "description": "Краски и бумага для своих картин"
     },
     {
@@ -132,7 +132,7 @@
       "icon": "🛴",
       "stage": "pro",
       "price": 160,
-      "effect": { "meter": "mood", "delta": 95 },
+      "effect": { "meter": "mood", "delta": 96 },
       "description": "Доехать до парка самому"
     },
     {
@@ -141,7 +141,7 @@
       "icon": "📱",
       "stage": "pro",
       "price": 200,
-      "effect": { "meter": "mood", "delta": 96 },
+      "effect": { "meter": "mood", "delta": 97 },
       "description": "Звонить своим, когда нужно"
     },
     {
@@ -150,7 +150,7 @@
       "icon": "🎸",
       "stage": "millionaire",
       "price": 220,
-      "effect": { "meter": "mood", "delta": 97 },
+      "effect": { "meter": "mood", "delta": 98 },
       "description": "Играть свои песни"
     },
     {
@@ -159,7 +159,7 @@
       "icon": "🚲",
       "stage": "millionaire",
       "price": 240,
-      "effect": { "meter": "mood", "delta": 98 },
+      "effect": { "meter": "mood", "delta": 99 },
       "description": "Длинные поездки в парк"
     },
     {

@@ -91,9 +91,18 @@ describe("loadContent", () => {
     expect(smartwatch.effect.delta).toBeLessThan(content.goals.find((goal) => goal.id === "skateboard")!.effect.delta);
   });
 
-  it("makes a Цель lift Счастье more than any one Желаемое, within the meter", () => {
-    // The final shop (2026-09-29) sells Счастье cheaper per coin than the novice Цели;
-    // a Цель still beats any single purchase and is the only way up an Этап.
+  it("makes a Цель worth saving for: at least as much Счастье as the same coins spent in the shop", () => {
+    // Счастье tops out at the meter, so a Цель only has to beat the shop up to a nearly full meter.
+    const bestPerCoin = Math.max(
+      ...content.catalog.flatMap((item) =>
+        itemMeterEffects(item)
+          .filter((effect) => effect.meter === "mood")
+          .map((effect) => effect.delta / item.price),
+      ),
+    );
+    for (const goal of content.goals) {
+      expect(goal.effect.delta).toBeGreaterThanOrEqual(Math.min(Math.floor(bestPerCoin * goal.price), 90));
+    }
     const bestWant = Math.max(
       ...content.catalog
         .filter((item) => item.kind === "optional")
