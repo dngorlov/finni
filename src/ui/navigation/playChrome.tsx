@@ -10,7 +10,8 @@ export type TaskFocus =
   | { kind: "lesson"; taskId: string }
   | { kind: "goal" }
   | { kind: "buy-goal" }
-  | { kind: "plan" };
+  | { kind: "plan" }
+  | { kind: "withdraw" };
 
 type PlayChromeValue = {
   tab: PlayTab;

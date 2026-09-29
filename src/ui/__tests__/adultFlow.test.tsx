@@ -1,8 +1,9 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
 import type { CatalogItem } from "../../core/economy";
 import { FinPetApp } from "../FinPetApp";
+import { moneyColors } from "../screens/moneyParts";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
-import { passAdultGate } from "../testSupport/flowHelpers";
+import { openMoney, passAdultGate } from "../testSupport/flowHelpers";
 
 const lunch: CatalogItem = {
   id: "lunch",
@@ -38,7 +39,10 @@ describe("Взрослый раздел contents and persistence", () => {
     expect(screen.getByText("Платежи: ещё впереди")).toBeOnTheScreen();
     expect(screen.getByText("Игровых дней пока нет — это нормально.")).toBeOnTheScreen();
     expect(screen.getByText("Задания 1/12")).toBeOnTheScreen();
-    expect(screen.getByText("Верных ответов: 75%, 3 из 4")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Верных ответов: 75%, 3 из 4")).toBeOnTheScreen();
+    expect(screen.getByText("75%")).toHaveStyle({ color: moneyColors.plus });
+    expect(screen.getByText("3 верных")).toHaveStyle({ color: moneyColors.plus });
+    expect(screen.getByText("1 неверный")).toHaveStyle({ color: moneyColors.minus });
     expect(screen.getByText("Уроки по календарю: 1 за 1 день")).toBeOnTheScreen();
     expect(screen.getByText("Последний урок: сегодня")).toBeOnTheScreen();
 
@@ -115,6 +119,29 @@ describe("Взрослый раздел contents and persistence", () => {
     await render(<FinPetApp ports={ports} />);
     expect(screen.getByText("Добро пожаловать в “Финни”!")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Магазин" })).not.toBeOnTheScreen();
+  });
+
+  it("adds any amount onto the child's Баланс and records Журнал", async () => {
+    const ports = createFakePorts();
+    const childId = seedReturningChild(ports);
+    const { user } = await renderApp(ports);
+
+    await passAdultGate(user);
+    expect(screen.getByLabelText("Сейчас на Балансе 100")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Добавить" })).toBeDisabled();
+    await user.type(screen.getByRole("textbox", { name: "Сколько монет" }), "25");
+    await user.press(screen.getByRole("button", { name: "Добавить" }));
+    expect(screen.getByText("На Баланс придёт 25 монет.")).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Готово" }));
+
+    expect(screen.getByLabelText("Сейчас на Балансе 125")).toBeOnTheScreen();
+    expect(ports.game.getProfile(childId).balance).toBe(125);
+
+    await user.press(screen.getByRole("button", { name: "Назад" }));
+    await user.press(screen.getByRole("button", { name: "Назад" }));
+    expect(screen.getByLabelText("Баланс 125")).toBeOnTheScreen();
+    await openMoney(user, "Журнал");
+    expect(screen.getByLabelText("Родительский бонус +25")).toBeOnTheScreen();
   });
 
   it("hides child reset and delete while Демо-режим is active", async () => {

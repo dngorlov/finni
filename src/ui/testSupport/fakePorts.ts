@@ -32,7 +32,7 @@ import {
   stageGoalFloor,
   type Stage,
 } from "../../core/stages";
-import { earnedAchievementIds, LUNCH_ITEM_ID, orderEarned, type AchievementFacts } from "../../core/achievements";
+import { achievementFactsFrom, earnedAchievementIds, orderEarned, type AchievementDay } from "../../core/achievements";
 import { createLocalId } from "../../data/localId";
 import { checkedTally, endsGameDay, rewardTopUp, type AnswerTally, type TaskStepResult } from "../../core/tasks";
 import { loadContent } from "../../data/content";
@@ -89,8 +89,7 @@ type StoredProfile = ProfileView & {
   dailyRewardClaimed: number;
   dailyRewardClaimedOn: string | null;
   confirmedPlans: number;
-  withinPlanDays: number;
-  billsPaidDays: number;
+  dayMarks: AchievementDay[];
 };
 
 function storedTask(
@@ -137,8 +136,7 @@ function viewOf(row: StoredProfile): ProfileView {
     dailyRewardClaimed: _dailyRewardClaimed,
     dailyRewardClaimedOn: _dailyRewardClaimedOn,
     confirmedPlans: _confirmedPlans,
-    withinPlanDays: _withinPlanDays,
-    billsPaidDays: _billsPaidDays,
+    dayMarks: _dayMarks,
     ...view
   } = row;
   return { ...view, accessory: clampAccessory(view.accessory, view.stage) };
@@ -224,25 +222,21 @@ export function createFakePorts(): SessionPorts {
     for (const listener of listeners) listener();
   }
 
-  function achievementFacts(row: StoredProfile): AchievementFacts {
-    const savedIn = row.transfers.filter((item) => item.kind === "in");
-    const shelf = row.purchases.filter((item) => !item.boughtAsActiveGoal);
-    return {
-      shopBuys: row.purchases.length,
-      lunchBuys: row.purchases.filter((item) => item.itemId === LUNCH_ITEM_ID).length,
-      optionalBuys: shelf.filter((item) => item.kind === "optional").length,
-      savingsIns: savedIn.length,
-      savedTotal: savedIn.reduce((sum, item) => sum + item.amount, 0),
-      goalsBought: row.purchases.filter((item) => item.boughtAsActiveGoal).length,
-      customGoalsBought: row.purchases.filter((item) => item.boughtAsActiveGoal && item.itemId.startsWith("custom:")).length,
+  function achievementFacts(row: StoredProfile) {
+    return achievementFactsFrom({
+      purchases: row.purchases.map((item) => ({
+        dayId: item.dayId,
+        itemId: item.itemId,
+        boughtAsActiveGoal: item.boughtAsActiveGoal,
+      })),
+      savingsInDayIds: row.transfers.filter((item) => item.kind === "in").map((item) => item.dayId),
       plansConfirmed: row.confirmedPlans,
       daysClosed: row.scores.length,
+      scores: row.dayMarks,
       lessonsCompleted: row.tasks.filter((task) => task.status === "completed").length,
-      bankOpens: row.deposits.length,
+      bankPaid: row.deposits.filter((dep) => dep.status === "paid").length,
       stage: row.stage,
-      daysWithinPlan: row.withinPlanDays,
-      daysBillsPaid: row.billsPaidDays,
-    };
+    });
   }
 
   function record(row: StoredProfile) {
@@ -306,8 +300,7 @@ export function createFakePorts(): SessionPorts {
       dailyRewardClaimed: 0,
       dailyRewardClaimedOn: null,
       confirmedPlans: 0,
-      withinPlanDays: 0,
-      billsPaidDays: 0,
+      dayMarks: [],
     };
     appendJournal(row, {
       amount: ECONOMY.startingBudget,
@@ -396,6 +389,13 @@ export function createFakePorts(): SessionPorts {
         const record = { claimed: row.dailyRewardClaimed, claimedOn: row.dailyRewardClaimedOn };
         const today = localDate(new Date());
         return { ready: dailyRewardReady(record, today), cells: dailyRewardCalendar(record, today) };
+      },
+      addParentBonus(profileId, amount) {
+        if (!Number.isInteger(amount) || amount <= 0) throw new Error("Сумма должна быть больше нуля");
+        const row = requireRow(profiles, profileId);
+        row.balance += amount;
+        appendJournal(row, { amount, kind: "parent_bonus", labelKey: "parent_bonus" });
+        publish();
       },
       claimDailyReward(profileId) {
         const row = requireRow(profiles, profileId);
@@ -736,6 +736,10 @@ export function createFakePorts(): SessionPorts {
           interest += depositInterest(dep.amount, dep.ratePercent);
           count += 1;
         }
+        if (count > 0) {
+          record(row);
+          publish();
+        }
         return { paid, interest, count };
       },
       listTaskProgress(profileId) {
@@ -849,8 +853,7 @@ export function createFakePorts(): SessionPorts {
         if (meterDeltas.care) row.care = applyMeterDelta(row.care, meterDeltas.care);
         if (meterDeltas.mood) row.mood = applyMeterDelta(row.mood, meterDeltas.mood);
         row.scores.push(score);
-        if (withinPlan) row.withinPlanDays += 1;
-        if (mandatoryCovered) row.billsPaidDays += 1;
+        row.dayMarks.push({ withinPlan, mandatoryCovered, deposited });
         row.dayOpen = false;
         const summary: DaySummaryView = {
           dayId: row.dayId,

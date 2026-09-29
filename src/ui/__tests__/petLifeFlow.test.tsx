@@ -225,7 +225,7 @@ describe("living pet on Дом", () => {
     await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
     expect(petClip()).toBe("jump");
     expect(screen.queryByText("Привет!")).not.toBeOnTheScreen();
-    expect(screen.getByText(homeStrings.petLinesAny.at(-1)!)).toBeOnTheScreen();
+    expect(screen.getByText(homeStrings.petLinesIdle.at(-1)!)).toBeOnTheScreen();
     await advance(PET_FRAME_MS * 9);
     expect(petClip()).toBe("idle");
   });

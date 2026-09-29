@@ -9,6 +9,9 @@ function input(overrides: Partial<CurrentTaskInput> = {}): CurrentTaskInput {
     goalReadyId: null,
     planConfirmed: false,
     billsCovered: false,
+    balance: 100,
+    unpaidBillCost: 20,
+    pot: 0,
     savingsLessonPending: true,
     planLessonPending: true,
     lessonPool: ["budget_what", "payments_pay"],
@@ -64,6 +67,55 @@ describe("Текущая задача", () => {
         }),
       ),
     ).toEqual({ kind: "buy-bills" });
+  });
+
+  it("asks to take coins from Копилка when Баланс cannot cover the Счета and the pot has coins", () => {
+    expect(
+      currentTask(
+        input({
+          savingsOpen: true,
+          planOpen: true,
+          hasGoal: true,
+          planConfirmed: true,
+          balance: 15,
+          unpaidBillCost: 20,
+          pot: 5,
+        }),
+      ),
+    ).toEqual({ kind: "withdraw-savings" });
+  });
+
+  it("moves on to the Урок when Баланс cannot cover the Счета and Копилка is empty or closed", () => {
+    expect(currentTask(input({ balance: 12, unpaidBillCost: 20, pot: 0 }))).toEqual({
+      kind: "lesson",
+      taskId: FEATURES.savingsTaskId,
+    });
+    expect(
+      currentTask(
+        input({
+          savingsOpen: false,
+          balance: 0,
+          unpaidBillCost: 20,
+          pot: 30,
+        }),
+      ),
+    ).toEqual({ kind: "lesson", taskId: FEATURES.savingsTaskId });
+    expect(
+      currentTask(
+        input({
+          savingsOpen: true,
+          planOpen: true,
+          hasGoal: true,
+          planConfirmed: true,
+          balance: 0,
+          unpaidBillCost: 20,
+          pot: 0,
+          savingsLessonPending: false,
+          planLessonPending: false,
+          lessonPool: ["payments_pay"],
+        }),
+      ),
+    ).toEqual({ kind: "lesson", taskId: "payments_pay" });
   });
 
   it("picks one open unfinished Урок after the chores, and hides the bar when none remain", () => {

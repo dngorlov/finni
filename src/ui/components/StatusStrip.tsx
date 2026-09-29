@@ -23,6 +23,7 @@ const TASK_ICON: Record<NonNullable<ReturnType<typeof resolveCurrentTask>>["kind
   "buy-goal": "star",
   "confirm-plan": "clipboard",
   "buy-bills": "shopping-cart",
+  "withdraw-savings": "coins",
   lesson: "map",
 };
 
@@ -50,6 +51,13 @@ function openTask(
   if (task.kind === "buy-bills") {
     chrome.setFocus({ kind: "shop-bills" });
     chrome.navigation.navigate("Shop");
+    return;
+  }
+  if (task.kind === "withdraw-savings") {
+    chrome.setTab("money");
+    chrome.setMoney("savings");
+    chrome.setFocus({ kind: "withdraw" });
+    chrome.navigation.navigate("Main");
     return;
   }
   if (task.kind === "lesson") {
@@ -110,6 +118,7 @@ export function StatusStrip({
       (task?.kind === "buy-goal" && focus.kind === "buy-goal") ||
       (task?.kind === "confirm-plan" && focus.kind === "plan") ||
       (task?.kind === "buy-bills" && focus.kind === "shop-bills") ||
+      (task?.kind === "withdraw-savings" && focus.kind === "withdraw") ||
       (task?.kind === "lesson" && focus.kind === "lesson" && focus.taskId === task.taskId);
     if (!matches) setFocus(null);
   }, [focus, setFocus, task]);

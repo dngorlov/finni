@@ -2,7 +2,7 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
 import { billsPhrase } from "../tasks/resolveCurrentTask";
-import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
+import { confirmActiveDayPlan, createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 
 const content = loadContent();
 const lunch = content.catalog.find((item) => item.id === "lunch")!;
@@ -174,6 +174,30 @@ describe("Магазин", () => {
     await renderApp(ports);
 
     expect(screen.getByRole("button", { name: "Текущая задача: купить проезд" })).toBeOnTheScreen();
+  });
+
+  it("asks to take coins from Копилка when Баланс cannot cover today's Счета", async () => {
+    const ports = createFakePorts();
+    const profileId = seedReturningChild(ports, { unlockMoney: true });
+    confirmActiveDayPlan(ports);
+    const day = ports.game.dayState(profileId);
+    ports.game.transferToSavings(profileId, day.dayId, 85);
+    const { user } = await renderApp(ports);
+
+    await user.press(screen.getByRole("button", { name: "Текущая задача: снять деньги с копилки" }));
+    expect(screen.getByRole("button", { name: "Закрыть окно" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Забрать" })).toBeDisabled();
+  });
+
+  it("points at the Урок when Баланс cannot cover today's Счета and Копилка is empty", async () => {
+    const ports = createFakePorts();
+    const profileId = seedReturningChild(ports);
+    const day = ports.game.dayState(profileId);
+    for (let n = 0; n < 11; n += 1) ports.game.purchase(profileId, day.dayId, iceCream);
+    await renderApp(ports);
+
+    expect(screen.getByRole("button", { name: "Текущая задача: урок «Что такое сбережения»" })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Текущая задача: купить обед и проезд" })).not.toBeOnTheScreen();
   });
 });
 

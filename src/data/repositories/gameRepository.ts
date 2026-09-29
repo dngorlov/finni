@@ -45,7 +45,7 @@ import {
   type Stage,
 } from "../../core/stages";
 import { checkedTally, endsGameDay, rewardTopUp, type AnswerTally, type TaskContent, type TaskStepResult } from "../../core/tasks";
-import { earnedAchievementIds, LUNCH_ITEM_ID, orderEarned, type AchievementFacts } from "../../core/achievements";
+import { achievementFactsFrom, earnedAchievementIds, orderEarned, type AchievementFacts } from "../../core/achievements";
 import { createLocalId } from "../localId";
 import { META_KEYS } from "../metaKeys";
 import * as tables from "../schema";
@@ -407,24 +407,24 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     const scores = conn.select().from(tables.dayScores).where(eq(tables.dayScores.profileId, profileId)).all();
     const tasks = conn.select().from(tables.taskProgress).where(eq(tables.taskProgress.profileId, profileId)).all();
     const deposits = conn.select().from(tables.deposits).where(eq(tables.deposits.profileId, profileId)).all();
-    const savedIn = transfers.filter((row) => row.kind === "in");
-    const shelf = purchases.filter((row) => row.boughtAsActiveGoal !== 1);
-    return {
-      shopBuys: purchases.length,
-      lunchBuys: purchases.filter((row) => row.itemId === LUNCH_ITEM_ID).length,
-      optionalBuys: shelf.filter((row) => row.kind === "optional").length,
-      savingsIns: savedIn.length,
-      savedTotal: savedIn.reduce((sum, row) => sum + row.amount, 0),
-      goalsBought: purchases.filter((row) => row.boughtAsActiveGoal === 1).length,
-      customGoalsBought: purchases.filter((row) => row.boughtAsActiveGoal === 1 && row.itemId.startsWith("custom:")).length,
+    return achievementFactsFrom({
+      purchases: purchases.map((row) => ({
+        dayId: row.dayId,
+        itemId: row.itemId,
+        boughtAsActiveGoal: row.boughtAsActiveGoal === 1,
+      })),
+      savingsInDayIds: transfers.filter((row) => row.kind === "in").map((row) => row.dayId),
       plansConfirmed: plans.filter((row) => row.status === "confirmed").length,
       daysClosed: closedDays.length,
+      scores: scores.map((row) => ({
+        withinPlan: row.withinPlan === 1,
+        mandatoryCovered: row.mandatoryCovered === 1,
+        deposited: row.deposited === 1,
+      })),
       lessonsCompleted: tasks.filter((row) => row.status === "completed").length,
-      bankOpens: deposits.length,
+      bankPaid: deposits.filter((row) => row.status === "paid").length,
       stage: stageFromCode(pet(conn, profileId).stage),
-      daysWithinPlan: scores.filter((row) => row.withinPlan === 1).length,
-      daysBillsPaid: scores.filter((row) => row.mandatoryCovered === 1).length,
-    };
+    });
   }
 
   /** Inserts any Достижения the facts now meet. Already stored ones stay. */
@@ -800,6 +800,15 @@ export function createGameRepository(db: GameDb, clock: Clock) {
       const record = { claimed: row.dailyRewardClaimed, claimedOn: row.dailyRewardClaimedOn };
       const today = localDate(clock.now());
       return { ready: dailyRewardReady(record, today), cells: dailyRewardCalendar(record, today) };
+    },
+
+    addParentBonus(profileId: string, amount: number): void {
+      if (!Number.isInteger(amount) || amount <= 0) throw new Error("Сумма должна быть больше нуля");
+      db.transaction((tx) => {
+        const open = openDayRow(tx, profileId);
+        credit(tx, profileId, open?.id ?? null, amount, "parent_bonus", "parent_bonus");
+      });
+      publish();
     },
 
     claimDailyReward(profileId: string): ClaimDailyRewardResult {
@@ -1306,7 +1315,7 @@ export function createGameRepository(db: GameDb, clock: Clock) {
 
     /** Pays every вклад whose term ended by today's Игровой день — once, with a Журнал row. */
     collectDeposits(profileId: string, dayId: string): CollectDepositsResult {
-      return db.transaction((tx) => {
+      const result = db.transaction((tx) => {
         const day = requireOpenDay(tx, profileId, dayId);
         const due = tx
           .select()
@@ -1323,8 +1332,11 @@ export function createGameRepository(db: GameDb, clock: Clock) {
           paid += payout;
           interest += depositInterest(row.amount, row.ratePercent);
         }
+        if (due.length > 0) recordAchievements(tx, profileId);
         return { paid, interest, count: due.length };
       });
+      if (result.count > 0) publish();
+      return result;
     },
 
     listTaskProgress(profileId: string): TaskProgressView[] {

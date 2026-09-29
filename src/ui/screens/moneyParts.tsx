@@ -108,6 +108,33 @@ export function ProgressBar({
   );
 }
 
+/** Two shares of one track, side by side. A zero share is left out; both zero stays empty. */
+export function SplitBar({
+  leading,
+  trailing,
+  leadingColor,
+  trailingColor,
+}: {
+  leading: number;
+  trailing: number;
+  leadingColor: string;
+  trailingColor: string;
+}) {
+  const lead = Math.max(0, leading);
+  const trail = Math.max(0, trailing);
+  return (
+    <View
+      aria-hidden
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.bar, styles.barSplit]}
+    >
+      {lead > 0 ? <View style={[styles.barSplitFill, { backgroundColor: leadingColor, flex: lead }]} /> : null}
+      {trail > 0 ? <View style={[styles.barSplitFill, { backgroundColor: trailingColor, flex: trail }]} /> : null}
+    </View>
+  );
+}
+
 /** Small stat tile: caption on top, pixel number below. */
 export function StatTile({
   label,
@@ -438,6 +465,12 @@ const styles = StyleSheet.create({
   },
   barFill: {
     borderRadius: 6,
+    height: 12,
+  },
+  barSplit: {
+    flexDirection: "row",
+  },
+  barSplitFill: {
     height: 12,
   },
   tileRow: {

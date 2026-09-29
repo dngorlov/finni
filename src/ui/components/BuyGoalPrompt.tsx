@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { CUSTOM_GOAL_MOOD, readCustomGoalItem } from "../../core/customGoal";
 import { meterDeltaMap } from "../../core/economy";
 import { META_KEYS } from "../../data/metaKeys";
 import { usePlayChrome } from "../navigation/playChrome";
+import { MoneyCard, moneyColors } from "../screens/moneyParts";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { resolveCurrentTask } from "../tasks/resolveCurrentTask";
@@ -12,7 +13,6 @@ import { AppModal } from "./AppModal";
 import { CoinText } from "./CoinText";
 import { FeedbackCard, type FeedbackModel } from "./FeedbackCard";
 import { PrimaryButton } from "./PrimaryButton";
-import { ScreenTitle } from "./ScreenTitle";
 import { TextButton } from "./TextButton";
 
 /** Shown while Копилка covers the active Цель. Позже hides it until the bar is tapped again. */
@@ -36,6 +36,8 @@ export function BuyGoalPrompt() {
     ? {
         id: preset.id,
         name: preset.name,
+        icon: preset.icon,
+        description: preset.description,
         price: preset.price,
         effect: preset.effect,
         stage: preset.stage,
@@ -44,6 +46,8 @@ export function BuyGoalPrompt() {
       ? {
           id: active!.key,
           name: active!.name || custom.name,
+          icon: active!.icon || strings.savingsConfetti,
+          description: "",
           price: active!.cost,
           effect: { meter: "mood" as const, delta: CUSTOM_GOAL_MOOD },
           stage: undefined,
@@ -92,13 +96,28 @@ export function BuyGoalPrompt() {
   if (feedback) return <FeedbackCard model={feedback} onDismiss={() => setFeedback(null)} />;
   if (!goal || hiddenKey === goal.id || pot < goal.price) return null;
 
+  const spoken = `${strings.savingsAchieved}. ${goal.name}. ${strings.shopPrice(goal.price)}`;
+
   return (
-    <AppModal animation="slide" transparent visible onRequestClose={dismiss}>
+    <AppModal animation="fade" transparent visible onRequestClose={dismiss}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <ScreenTitle style={styles.title}>{strings.savingsAchieved}</ScreenTitle>
-          <CoinText text={goal.name} style={styles.body} />
-          <CoinText text={strings.shopPrice(goal.price)} style={styles.body} />
+          <View accessible aria-label={spoken} style={styles.hero}>
+            <View
+              aria-hidden
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={styles.tile}
+            >
+              <Text style={styles.emoji}>{goal.icon}</Text>
+            </View>
+            <Text style={styles.heroCaption}>{strings.savingsAchieved}</Text>
+            <Text style={styles.heroName}>{goal.name}</Text>
+          </View>
+          <MoneyCard>
+            {goal.description ? <Text style={styles.body}>{goal.description}</Text> : null}
+            <CoinText labelled={false} text={strings.shopPrice(goal.price)} style={styles.price} />
+          </MoneyCard>
           <TextButton label={strings.savingsLater} onPress={dismiss} />
           <PrimaryButton label={strings.savingsBuyFromSavings} onPress={buy} />
         </View>
@@ -109,24 +128,58 @@ export function BuyGoalPrompt() {
 
 const styles = StyleSheet.create({
   backdrop: {
+    alignItems: "center",
+    backgroundColor: "rgba(34, 26, 18, 0.45)",
     flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  sheet: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: radius.card,
-    borderTopRightRadius: radius.card,
-    gap: spacing.s,
+    justifyContent: "center",
     padding: spacing.l,
   },
-  title: {
-    color: colors.text,
-    fontSize: type.title,
+  sheet: {
+    alignSelf: "stretch",
+    backgroundColor: colors.background,
+    borderRadius: radius.card + 4,
+    gap: spacing.m,
+    maxWidth: 400,
+    padding: spacing.m,
+  },
+  hero: {
+    alignItems: "center",
+    backgroundColor: moneyColors.heroFace,
+    borderRadius: radius.card,
+    gap: spacing.s,
+    padding: spacing.m,
+  },
+  tile: {
+    alignItems: "center",
+    backgroundColor: colors.highlight,
+    borderRadius: 20,
+    height: 72,
+    justifyContent: "center",
+    width: 72,
+  },
+  emoji: {
+    fontSize: 40,
+    lineHeight: 52,
+  },
+  heroCaption: {
+    color: moneyColors.heroSubtle,
+    fontSize: type.body,
     fontWeight: "700",
+    textAlign: "center",
+  },
+  heroName: {
+    color: moneyColors.heroText,
+    fontSize: type.section,
+    fontWeight: "700",
+    textAlign: "center",
   },
   body: {
     color: colors.text,
     fontSize: type.body,
+  },
+  price: {
+    color: colors.text,
+    fontSize: type.section,
+    fontWeight: "700",
   },
 });

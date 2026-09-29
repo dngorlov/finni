@@ -35,6 +35,8 @@ export type SessionGame = {
   getProfile(profileId: string): ProfileView;
   dailyRewardState(profileId: string): DailyRewardView;
   claimDailyReward(profileId: string): ClaimDailyRewardResult;
+  /** Родительский бонус: any positive whole number of coins onto Баланс. */
+  addParentBonus(profileId: string, amount: number): void;
   deleteProfile(profileId: string): void;
   /** Вид, Окрас, and an Аксессуар the current Этап has opened. Throws on a locked one. */
   setAppearance(profileId: string, input: AppearanceInput): void;

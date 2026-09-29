@@ -13,6 +13,8 @@ import { Screen } from "../components/Screen";
 import { TextButton } from "../components/TextButton";
 import type { RootStackParamList } from "../navigation/types";
 import { adultOverview, type AdultOverview } from "../session/adultOverview";
+import { AdultProgress } from "./adultProgress";
+import { HeroCard, MoneyCard, SectionTitle } from "./moneyParts";
 import { deleteChildAndDemo, resetChildProgress } from "../session/childProgress";
 import { demoExists, enterDemo, exitDemo, resetDemo } from "../session/demoMode";
 import { useSession } from "../session/SessionProvider";
@@ -24,10 +26,19 @@ type Sheet =
   | null
   | { kind: "demoOn" }
   | { kind: "demoReset" }
+  | { kind: "bonus"; amount: number }
   | { kind: "resetExplain" }
   | { kind: "resetType"; value: string }
   | { kind: "deleteExplain" }
   | { kind: "deleteType"; value: string };
+
+/** A whole number of coins, up to seven digits. Zero and junk stay unset. */
+function parseCoins(raw: string): number | null {
+  const text = raw.trim();
+  if (!/^\d{1,7}$/.test(text)) return null;
+  const amount = Number(text);
+  return amount > 0 ? amount : null;
+}
 
 const TEXTBOX_ROLE = "textbox" as Role;
 
@@ -36,14 +47,20 @@ export default function DemoScreen({ navigation }: Props) {
   const [demoOn, setDemoOn] = useState(false);
   const [canReset, setCanReset] = useState(false);
   const [overview, setOverview] = useState<AdultOverview | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [balance, setBalance] = useState(0);
+  const [amountText, setAmountText] = useState("");
   const [sheet, setSheet] = useState<Sheet>(null);
+  const coins = parseCoins(amountText);
 
   const load = useCallback(() => {
-    const profileId = meta.get(META_KEYS.activeProfileId);
-    const active = profileId ? game.getProfile(profileId) : null;
+    const activeId = meta.get(META_KEYS.activeProfileId);
+    const active = activeId ? game.getProfile(activeId) : null;
+    setProfileId(activeId);
+    setBalance(active?.balance ?? 0);
     setDemoOn(Boolean(active?.isDemo));
     setCanReset(demoExists(game, meta));
-    setOverview(profileId ? adultOverview(game, content, profileId) : null);
+    setOverview(activeId ? adultOverview(game, content, activeId) : null);
     setSheet(null);
   }, [content, game, meta]);
 
@@ -81,24 +98,45 @@ export default function DemoScreen({ navigation }: Props) {
     goFirstRun();
   };
 
+  const grantBonus = (amount: number) => {
+    if (!profileId) return;
+    game.addParentBonus(profileId, amount);
+    setAmountText("");
+    load();
+  };
+
   return (
     <Screen keyboardShouldPersistTaps="handled">
       <BackButton />
       <ScreenTitle style={styles.title}>{strings.navAdult}</ScreenTitle>
-      {overview ? (
-        <Card>
-          {overview.topics.map((line) => (
-            <Text key={line} style={styles.body}>
-              {line}
-            </Text>
-          ))}
-          <Text style={styles.body}>{overview.daysLine}</Text>
-          <Text style={styles.body}>{overview.tasksLine}</Text>
-          <Text style={styles.body}>{overview.answersLine}</Text>
-          <Text style={styles.body}>{overview.lessonsLine}</Text>
-          {overview.lastLessonLine ? <Text style={styles.body}>{overview.lastLessonLine}</Text> : null}
-        </Card>
+      {profileId ? (
+        <HeroCard compact caption={strings.balanceWord} value={balance} label={strings.adultNowBalance(balance)} />
       ) : null}
+      {profileId ? (
+        <>
+          <SectionTitle>{strings.adultAddTitle}</SectionTitle>
+          <MoneyCard>
+            <Text style={styles.body}>{strings.adultAddHint}</Text>
+            <TextInput
+              role={TEXTBOX_ROLE}
+              aria-label={strings.adultAddAmount}
+              value={amountText}
+              onChangeText={setAmountText}
+              keyboardType="number-pad"
+              style={styles.input}
+            />
+            <PrimaryButton
+              label={strings.adultAdd}
+              disabled={coins == null}
+              onPress={() => {
+                if (coins == null) return;
+                setSheet({ kind: "bonus", amount: coins });
+              }}
+            />
+          </MoneyCard>
+        </>
+      ) : null}
+      {overview ? <AdultProgress overview={overview} /> : null}
       <Card>
         <Chip label={strings.demoMode} selected={demoOn} onPress={() => (demoOn ? turnOff() : setSheet({ kind: "demoOn" }))} />
         {canReset ? <TextButton label={strings.demoReset} onPress={() => setSheet({ kind: "demoReset" })} /> : null}
@@ -115,6 +153,14 @@ export default function DemoScreen({ navigation }: Props) {
           body={strings.demoConfirmBody}
           onClose={() => setSheet(null)}
           onConfirm={turnOn}
+        />
+      ) : null}
+      {sheet?.kind === "bonus" ? (
+        <ConfirmSheet
+          title={strings.adultAddTitle}
+          body={strings.adultAddBody(sheet.amount)}
+          onClose={() => setSheet(null)}
+          onConfirm={() => grantBonus(sheet.amount)}
         />
       ) : null}
       {sheet?.kind === "demoReset" ? (

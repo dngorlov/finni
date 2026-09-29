@@ -13,6 +13,7 @@ export function buttonIcon(label: string): PixelIconName {
   if (/заново/i.test(text)) return "reload";
   if (text.startsWith("Играть") || text.startsWith("Начать") || text.startsWith("Пройти")) return "play";
   if (/Отлож|Позже|Дождаться|Ждём/.test(text)) return "clock";
+  if (text.startsWith("Добавить")) return "coins";
   if (text.includes("Положить")) return "arrow-down";
   if (text.includes("Забрать")) return "arrow-up";
   if (/цел/i.test(text)) return "star";

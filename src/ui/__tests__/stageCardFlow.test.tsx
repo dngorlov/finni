@@ -184,7 +184,11 @@ describe("Этап на панели", () => {
     expect(screen.queryByRole("button", { name: "Закрыть" })).not.toBeOnTheScreen();
     expect(screen.queryByText("Теперь ты Про!")).not.toBeOnTheScreen();
 
-    buyGoal(ports, goal("art-set", 120));
+    await act(() => {
+      buyGoal(ports, goal("art-set", 120));
+      const profileId = ports.meta.get(META_KEYS.activeProfileId)!;
+      for (const row of ports.game.listAchievements(profileId)) ports.game.celebrateAchievement(profileId, row.id);
+    });
     await user.press(screen.getByRole("button", { name: "Настройки" }));
     await user.press(screen.getByRole("button", { name: "Назад" }));
 

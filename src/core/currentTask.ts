@@ -7,6 +7,8 @@ export type CurrentTask =
   | { kind: "confirm-plan" }
   /** `itemIds`: today's unpaid Счета, in bill order, when the caller knows them. */
   | { kind: "buy-bills"; itemIds?: readonly string[] }
+  /** Баланс cannot cover those Счета, and Копилка has coins to take out. */
+  | { kind: "withdraw-savings" }
   | { kind: "lesson"; taskId: string };
 
 export interface CurrentTaskInput {
@@ -18,6 +20,12 @@ export interface CurrentTaskInput {
   planConfirmed: boolean;
   /** Today's Счета are all bought. */
   billsCovered: boolean;
+  /** Coins available to spend right now. */
+  balance: number;
+  /** Price of today's still unpaid Счета. */
+  unpaidBillCost: number;
+  /** Coins sitting in Копилка. */
+  pot: number;
   /** «Что такое сбережения» is playable and not completed. */
   savingsLessonPending: boolean;
   /** «Планирование бюджета» is playable and not completed. */
@@ -32,7 +40,10 @@ export function currentTask(input: CurrentTaskInput): CurrentTask | null {
   if (input.savingsOpen && !input.hasGoal) return { kind: "set-goal" };
   if (input.savingsOpen && input.goalReadyId) return { kind: "buy-goal", goalId: input.goalReadyId };
   if (input.planOpen && !input.planConfirmed) return { kind: "confirm-plan" };
-  if (!input.billsCovered) return { kind: "buy-bills" };
+  if (!input.billsCovered) {
+    if (input.balance >= input.unpaidBillCost) return { kind: "buy-bills" };
+    if (input.savingsOpen && input.pot > 0) return { kind: "withdraw-savings" };
+  }
   if (!input.savingsOpen && input.savingsLessonPending) {
     return { kind: "lesson", taskId: FEATURES.savingsTaskId };
   }

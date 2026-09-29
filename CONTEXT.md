@@ -27,7 +27,7 @@ A Профиль ребёнка taken off the device — that pet, its Игро�
 _Avoid_: clear storage, wipe, reset app, сброс приложения, сбросить демо
 
 **Родительский бонус (Parent bonus)**:
-Extra coins a parent awards at most once per Game Day from the Adult section, with an optional reason.
+Extra coins a parent adds to the child's Баланс from the Adult section: any positive amount, any number of times. Each one is a Журнал row.
 _Avoid_: награда, подарок
 
 ### Economy
@@ -156,7 +156,7 @@ A financial-literacy mission — an Урок, a mini-game that belongs to an У�
 _Avoid_: квест, тест
 
 **Текущая задача (Current task)**:
-The single next action suggested under the meters. It points at a Задание, at today's unpaid Счета (named, «купить обед и проезд»), at confirming the План, at choosing a Цель, or at buying the Цель once Копилка covers its price. That last one also opens a buy modal.
+The single next action suggested under the meters. It points at a Задание, at today's unpaid Счета when Баланс can pay them (named, «купить обед и проезд»), at taking coins out of Копилка when Баланс cannot pay those Счета and the pot has coins («снять деньги с копилки»), at confirming the План, at choosing a Цель, or at buying the Цель once Копилка covers its price. When Баланс cannot pay the Счета and the pot is empty, those Счета are not the task — the next Задание is. Buying the Цель also opens a buy modal.
 _Avoid_: Задание, квест, подсказка, туториал
 
 **Карта заданий (Mission map)**:

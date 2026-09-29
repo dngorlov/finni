@@ -6,11 +6,25 @@ import { strings } from "../strings";
 import { endsGameDay, playableTasks } from "../../core/tasks";
 import { TASK_TOPICS, topicTaskGroups } from "../tasks/model";
 
+export type AdultTopicStat = {
+  id: (typeof TASK_TOPICS)[number];
+  title: string;
+  done: number;
+  total: number;
+  line: string;
+};
+
 export type AdultOverview = {
   daysLine: string;
   tasksLine: string;
-  topics: string[];
+  topics: AdultTopicStat[];
+  /** Null until at least one answer has been scored. */
+  percent: number | null;
+  correct: number;
+  scored: number;
   answersLine: string;
+  lessons: number;
+  lessonDays: number;
   lessonsLine: string;
   lastLessonLine: string | null;
 };
@@ -69,6 +83,7 @@ export function adultOverview(
   const lessonIds = new Set(content.tasks.filter((task) => endsGameDay(task)).map((task) => task.id));
   const correct = progress.reduce((sum, row) => sum + row.correctAnswers, 0);
   const scored = progress.reduce((sum, row) => sum + row.scoredAnswers, 0);
+  const percent = scored === 0 ? null : Math.round((correct * 100) / scored);
   const activity = lessonActivity(progress, lessonIds, nowMs);
   return {
     daysLine: last ? strings.resultsDaysPlayed(last.n) : strings.adultDaysEmpty,
@@ -78,12 +93,21 @@ export function adultOverview(
     ),
     topics: TASK_TOPICS.map((topic) => {
       const pair = groups[topic].filter((task) => !task.correction);
-      return strings.adultTopicLine(TOPIC_TITLE[topic], pair.filter((task) => completed(task.id)).length, pair.length);
+      const done = pair.filter((task) => completed(task.id)).length;
+      return {
+        id: topic,
+        title: TOPIC_TITLE[topic],
+        done,
+        total: pair.length,
+        line: strings.adultTopicLine(TOPIC_TITLE[topic], done, pair.length),
+      };
     }),
-    answersLine:
-      scored === 0
-        ? strings.adultAnswersEmpty
-        : strings.adultAnswersLine(Math.round((correct * 100) / scored), correct, scored),
+    percent,
+    correct,
+    scored,
+    answersLine: percent == null ? strings.adultAnswersEmpty : strings.adultAnswersLine(percent, correct, scored),
+    lessons: activity.lessons,
+    lessonDays: activity.days,
     lessonsLine:
       activity.lessons === 0
         ? strings.adultLessonsEmpty

@@ -56,20 +56,29 @@ export function resolveCurrentTask(
     )
     .map((task) => task.id);
 
-  const activeGoal = game.savingsState(profileId).activeGoal;
+  const savings = game.savingsState(profileId);
+  const activeGoal = savings.activeGoal;
+  const unpaid = due.filter((id) => !purchased.has(id));
+  const unpaidBillCost = unpaid.reduce((sum, id) => {
+    const price = content.catalog.find((item) => item.id === id)?.price ?? 0;
+    return sum + price;
+  }, 0);
   const task = currentTask({
     savingsOpen,
     planOpen,
     hasGoal: Boolean(activeGoal) || goalsLeft(game, content, profileId, profile.stage) === 0,
     goalReadyId: activeGoal?.achieved ? activeGoal.key : null,
     planConfirmed: day.plan.status === "confirmed",
-    billsCovered: due.every((id) => purchased.has(id)),
+    billsCovered: unpaid.length === 0,
+    balance: profile.balance,
+    unpaidBillCost,
+    pot: savings.pot,
     savingsLessonPending: openIds.has(FEATURES.savingsTaskId) && !completed.has(FEATURES.savingsTaskId),
     planLessonPending: openIds.has(FEATURES.planTaskId) && !completed.has(FEATURES.planTaskId),
     lessonPool,
     pickLesson: pinLesson,
   });
-  if (task?.kind === "buy-bills") return { ...task, itemIds: due.filter((id) => !purchased.has(id)) };
+  if (task?.kind === "buy-bills") return { ...task, itemIds: unpaid };
   return task;
 }
 
@@ -87,6 +96,7 @@ export function currentTaskLabel(task: CurrentTask, content: GameContent): strin
     return strings.currentTaskBuyGoal(name);
   }
   if (task.kind === "confirm-plan") return strings.currentTaskPlan;
+  if (task.kind === "withdraw-savings") return strings.currentTaskWithdraw;
   if (task.kind === "buy-bills") {
     const phrase = billsPhrase(task.itemIds ?? [], content);
     return phrase ? strings.currentTaskBills(phrase) : strings.currentTaskShop;

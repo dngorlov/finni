@@ -50,6 +50,9 @@ describe("adult learning analytics", () => {
       row({ taskKey: "budget_fix_backpack", correctAnswers: 0, scoredAnswers: 2 }),
     ]);
 
+    expect(stats.percent).toBe(70);
+    expect(stats.correct).toBe(7);
+    expect(stats.scored).toBe(10);
     expect(stats.answersLine).toBe("Верных ответов: 70%, 7 из 10");
     expect(stats.lessonsLine).toBe("Уроки по календарю: 2 за 2 дня");
     expect(stats.lastLessonLine).toBe("Последний урок: сегодня");

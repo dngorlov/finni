@@ -47,6 +47,7 @@ function journalLabel(
   if (entry.labelKey === "starting_grant") return strings.journalStartingGrant;
   if (entry.labelKey === "daily_reward") return strings.journalDailyReward;
   if (entry.labelKey === "allowance") return strings.journalAllowance;
+  if (entry.labelKey === "parent_bonus") return strings.journalParentBonus;
   if (entry.labelKey === "savings_in") return strings.journalSavingsIn;
   if (entry.labelKey === "savings_out") return strings.journalSavingsOut;
   if (entry.labelKey === "bank_in") return strings.journalBankIn;
@@ -142,6 +143,7 @@ const CATEGORY: Record<JournalFlow, Record<string, { label: string; color: strin
     start: { label: moneyStrings.incStart, color: CHART_COLORS.mandatory, icon: "party-popper" },
     bank: { label: moneyStrings.incBank, color: CHART_COLORS.bank, icon: "coins" },
     fromSavings: { label: moneyStrings.incFromSavings, color: moneyColors.goal, icon: "arrow-up" },
+    parent: { label: moneyStrings.incParent, color: moneyColors.plus, icon: "coins" },
     other: { label: moneyStrings.catOther, color: CHART_COLORS.other, icon: "coins" },
   },
 };
@@ -187,7 +189,8 @@ export function JournalPanel() {
       };
     }
     const meta = row ? CATEGORY[row.flow][row.category] : CATEGORY.spend.other;
-    return { title: journalLabel(entry, itemName, taskTitle), subtitle: meta.label, icon: meta.icon, tint: meta.color };
+    const title = journalLabel(entry, itemName, taskTitle);
+    return { title, subtitle: meta.label === title ? undefined : meta.label, icon: meta.icon, tint: meta.color };
   };
 
   return (

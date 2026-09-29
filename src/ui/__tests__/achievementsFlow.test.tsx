@@ -1,5 +1,4 @@
 import { act, render, screen, userEvent } from "@testing-library/react-native";
-import type { CatalogItem } from "../../core/economy";
 import { loadContent } from "../../data/content";
 import { FinPetApp } from "../FinPetApp";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
@@ -7,7 +6,10 @@ import { openMoney, openTab } from "../testSupport/flowHelpers";
 
 const content = loadContent();
 const lunch = content.catalog.find((item) => item.id === "lunch")!;
+const transport = content.catalog.find((item) => item.id === "transport")!;
+const medicine = content.catalog.find((item) => item.id === "medicine")!;
 const candy = content.catalog.find((item) => item.id === "candy")!;
+const iceCream = content.catalog.find((item) => item.id === "ice-cream")!;
 
 async function renderApp(ports = createFakePorts()) {
   const user = userEvent.setup();
@@ -24,15 +26,27 @@ async function dismissRewards(user: ReturnType<typeof userEvent.setup>) {
   }
 }
 
-function closeScoredDay(ports: ReturnType<typeof createFakePorts>, profileId: string) {
+/** Four Достижения on one Игровой день, so Итоги can fold the list. None of them is a first buy. */
+function earnFoldedSet(ports: ReturnType<typeof createFakePorts>, profileId: string) {
+  for (let step = 0; step < 5; step += 1) {
+    const early = ports.game.dayState(profileId);
+    const moved = ports.game.transferToSavings(profileId, early.dayId, 1);
+    if (moved.status !== "ok") throw new Error("Копилка не приняла монету");
+    ports.game.closeDay(profileId, [lunch]);
+    const opened = ports.game.openDay(profileId);
+    if (opened.status !== "opened") throw new Error("День не открылся");
+  }
   const day = ports.game.dayState(profileId);
-  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 12, optional: 5, savings: 15 });
-  ports.game.confirmPlan(profileId, day.dayId);
-  ports.game.purchase(profileId, day.dayId, lunch);
-  ports.game.purchase(profileId, day.dayId, candy);
-  ports.game.transferToSavings(profileId, day.dayId, 15);
-  const tiny: CatalogItem[] = [lunch, candy];
-  return ports.game.closeDay(profileId, tiny);
+  const moved = ports.game.transferToSavings(profileId, day.dayId, 1);
+  if (moved.status !== "ok") throw new Error("Копилка не приняла монету");
+  for (const item of [lunch, transport, medicine, candy, iceCream]) {
+    const bought = ports.game.purchase(profileId, day.dayId, item);
+    if (bought.status !== "ok") throw new Error("Покупка не прошла");
+  }
+  for (const taskId of ["g1", "g2", "g3", "g4"]) {
+    ports.game.claimTaskReward(profileId, day.dayId, taskId, 0);
+  }
+  ports.game.closeDay(profileId, [lunch, candy]);
 }
 
 describe("Достижения", () => {
@@ -42,21 +56,21 @@ describe("Достижения", () => {
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
-    expect(screen.getByRole("button", { name: "Достижения. Получено 0 из 13" })).toBeOnTheScreen();
-    expect(screen.getByText("0/13", { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Достижения. Получено 0 из 11" })).toBeOnTheScreen();
+    expect(screen.getByText("0/11", { includeHiddenElements: true })).toBeOnTheScreen();
     expect(screen.queryByRole("heading", { name: "Достижения" })).not.toBeOnTheScreen();
-    expect(screen.queryByLabelText("Первая покупка. Купи что-нибудь в Магазине.")).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText("Два вкуса. Купи и Конфету, и Мороженое.")).not.toBeOnTheScreen();
 
-    await user.press(screen.getByRole("button", { name: "Достижения. Получено 0 из 13" }));
+    await user.press(screen.getByRole("button", { name: "Достижения. Получено 0 из 11" }));
     expect(screen.getByRole("heading", { name: "Достижения" })).toBeOnTheScreen();
-    expect(screen.getByText("0/13")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Получено 0 из 13")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Первая покупка. Купи что-нибудь в Магазине.")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Неделя с Финни. Закрой 7 Игровых дней.")).toBeOnTheScreen();
+    expect(screen.getByText("0/11")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Получено 0 из 11")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Два вкуса. Купи и Конфету, и Мороженое.")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Десять дней с Финни. Закрой 10 Игровых дней.")).toBeOnTheScreen();
     expect(screen.getByLabelText("Миллионер. Перейди на этап Миллионер.")).toBeOnTheScreen();
   });
 
-  it("opens a reward modal after a shop buy, then shows the earned ones in Журнал and Настройки", async () => {
+  it("stays quiet after Обед, then opens one reward when both Желаемые are bought", async () => {
     const ports = createFakePorts();
     seedReturningChild(ports);
     const { user } = await renderApp(ports);
@@ -64,10 +78,20 @@ describe("Достижения", () => {
     await user.press(screen.getByRole("button", { name: "Магазин" }));
     await user.press(screen.getByRole("button", { name: "Купить Обед" }));
     await user.press(screen.getByRole("button", { name: "Купить" }));
+    expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Понятно" }));
 
+    await user.press(screen.getByRole("button", { name: "Желаемое" }));
+    await user.press(screen.getByRole("button", { name: "Купить Конфета" }));
+    await user.press(screen.getByRole("button", { name: "Купить" }));
+    expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Понятно" }));
+
+    await user.press(screen.getByRole("button", { name: "Купить Мороженое" }));
+    await user.press(screen.getByRole("button", { name: "Купить" }));
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
-    expect(screen.getByText("Первая покупка")).toBeOnTheScreen();
-    expect(screen.getByText("Ты купил в Магазине.")).toBeOnTheScreen();
+    expect(screen.getByText("Два вкуса")).toBeOnTheScreen();
+    expect(screen.getByText("Конфета и мороженое куплены.")).toBeOnTheScreen();
     expect(screen.queryByText("Есть ещё.")).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Ура!" }));
     expect(screen.queryByText("Новое достижение")).not.toBeOnTheScreen();
@@ -75,14 +99,16 @@ describe("Достижения", () => {
 
     await user.press(screen.getByRole("button", { name: "Назад" }));
     await openMoney(user, "Журнал");
-    expect(screen.getByLabelText("Первая покупка. Получено. Ты купил в Магазине. День 1")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Два вкуса. Получено. Конфета и мороженое куплены. День 1")).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Настройки" }));
-    await user.press(screen.getByRole("button", { name: "Достижения. Получено 1 из 13" }));
-    expect(screen.getByText("1/13")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Получено 1 из 13")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Первая покупка. Получено. Ты купил в Магазине.")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Полтинник. Положи в Копилку 50 монет.")).toBeOnTheScreen();
+    await user.press(screen.getByRole("button", { name: "Достижения. Получено 1 из 11" }));
+    expect(screen.getByText("1/11")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Получено 1 из 11")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Два вкуса. Получено. Конфета и мороженое куплены.")).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText("Копилка по чуть-чуть. Положи монеты в Копилку в шесть разных дней."),
+    ).toBeOnTheScreen();
   });
 
   it("pops the reward on the very first launch, for a profile made after the app opened", async () => {
@@ -92,35 +118,38 @@ describe("Достижения", () => {
 
     await act(async () => {
       const profileId = seedReturningChild(ports);
-      ports.game.purchase(profileId, ports.game.dayState(profileId).dayId, lunch);
+      const dayId = ports.game.dayState(profileId).dayId;
+      ports.game.purchase(profileId, dayId, candy);
+      ports.game.purchase(profileId, dayId, iceCream);
     });
 
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
-    expect(screen.getByText("Первая покупка")).toBeOnTheScreen();
+    expect(screen.getByText("Два вкуса")).toBeOnTheScreen();
   });
 
   it("shows the day's earned achievements on Итоги дня and the full set on Итоги", async () => {
     const ports = createFakePorts();
     const profileId = seedReturningChild(ports);
-    closeScoredDay(ports, profileId);
+    earnFoldedSet(ports, profileId);
     const { user } = await renderApp(ports);
 
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
     await dismissRewards(user);
     expect(screen.getByText("Итоги дня")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Держу слово. Получено. Потратил не больше Плана. День 1")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Счета оплачены. Получено. Счета дня оплачены. День 1")).toBeOnTheScreen();
-    expect(screen.queryByText("Неделя с Финни")).not.toBeOnTheScreen();
+    expect(screen.getByLabelText("Два вкуса. Получено. Конфета и мороженое куплены. День 6")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Четыре задания. Получено. Четыре Задания позади. День 6")).toBeOnTheScreen();
+    expect(screen.queryByText("Десять дней с Финни")).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Следующий день" }));
     await openTab(user, "Дом");
     await user.press(screen.getByRole("button", { name: "Итоги" }));
     const showAll = screen.getByRole("button", { name: /^Показать все \(\d+\)$/ });
     expect(showAll).toBeCollapsed();
+    expect(screen.queryByText("Четыре задания")).not.toBeOnTheScreen();
     await user.press(showAll);
     expect(screen.getByRole("button", { name: "Свернуть" })).toBeExpanded();
-    expect(screen.getByLabelText("Первая покупка. Получено. Ты купил в Магазине. День 1")).toBeOnTheScreen();
-    expect(screen.getByLabelText("План есть. Получено. План подтверждён. День 1")).toBeOnTheScreen();
-    expect(screen.queryByText("Неделя с Финни")).not.toBeOnTheScreen();
+    expect(screen.getByLabelText("Два вкуса. Получено. Конфета и мороженое куплены. День 6")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Четыре задания. Получено. Четыре Задания позади. День 6")).toBeOnTheScreen();
+    expect(screen.queryByText("Десять дней с Финни")).not.toBeOnTheScreen();
   });
 });

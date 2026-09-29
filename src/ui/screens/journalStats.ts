@@ -7,7 +7,7 @@ export type JournalPeriod = "today" | "yesterday" | "three" | "all";
 export type JournalFlow = "spend" | "income";
 
 export type SpendCategory = "mandatory" | "optional" | "goal" | "savings" | "bank" | "other";
-export type IncomeCategory = "tasks" | "start" | "bank" | "fromSavings" | "other";
+export type IncomeCategory = "tasks" | "start" | "bank" | "fromSavings" | "parent" | "other";
 export type JournalCategory = SpendCategory | IncomeCategory;
 
 /** How a bought item counts: a catalog Необходимое / Желаемое or a Цель. */
@@ -15,7 +15,7 @@ export type ItemKind = "mandatory" | "optional" | "goal";
 export type ItemLookup = (itemId: string | null) => { kind: ItemKind; price: number } | undefined;
 
 export const SPEND_ORDER: readonly SpendCategory[] = ["mandatory", "optional", "goal", "savings", "bank", "other"];
-export const INCOME_ORDER: readonly IncomeCategory[] = ["tasks", "start", "bank", "fromSavings", "other"];
+export const INCOME_ORDER: readonly IncomeCategory[] = ["tasks", "start", "bank", "fromSavings", "parent", "other"];
 
 /**
  * The Стартовый бюджет is logged before any Игровой день (dayN 0);
@@ -56,6 +56,7 @@ export function classify(entry: JournalEntry, lookup: ItemLookup): Classified | 
   if (entry.kind === "task_reward" || entry.kind === "task_scene") return { flow: "income", category: "tasks", amount };
   if (entry.kind === "starting_grant") return { flow: "income", category: "start", amount };
   if (entry.kind === "daily_reward") return { flow: "income", category: "other", amount };
+  if (entry.kind === "parent_bonus") return { flow: "income", category: "parent", amount };
   if (entry.kind === "bank_out") return { flow: "income", category: "bank", amount };
   if (entry.kind === "savings_out") return { flow: "income", category: "fromSavings", amount };
   return { flow: "income", category: "other", amount };

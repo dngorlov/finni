@@ -207,6 +207,7 @@ export const strings = {
   currentTaskSetGoal: "Текущая задача: выбрать цель",
   currentTaskBuyGoal: (name: string) => `Текущая задача: купить «${name}»`,
   currentTaskPlan: "Текущая задача: спланировать день",
+  currentTaskWithdraw: "Текущая задача: снять деньги с копилки",
   currentTaskShop: "Текущая задача: купить нужное в Магазине",
   /** «Текущая задача: купить обед и проезд» — today's unpaid Счета by name. */
   currentTaskBills: (items: string) => `Текущая задача: купить ${items}`,
@@ -255,6 +256,7 @@ export const strings = {
   journalStartingGrant: "Стартовый бюджет",
   journalDailyReward: "Ежедневный подарок",
   journalAllowance: "Пособие",
+  journalParentBonus: "Родительский бонус",
   journalPurchase: (name: string) => `Покупка: ${name}`,
   journalSavingsIn: "Перевод в копилку",
   journalSavingsOut: "Из копилки",
@@ -410,6 +412,19 @@ export const strings = {
     if (done >= total) return `${topic}: все задания сделаны`;
     return `${topic}: сделано ${done} из ${total}`;
   },
+  adultTopics: "Темы",
+  adultTopicsChart: (done: number, parts: readonly { title: string; done: number; total: number }[]) =>
+    `Темы, сделано ${done}. ${parts.map((part) => `${part.title}: ${part.done} из ${part.total}`).join(". ")}`,
+  adultChartCaption: "сделано",
+  adultAnswers: "Ответы",
+  adultCorrectCount: (n: number) => `${n} ${ruCount(n, "верный", "верных", "верных")}`,
+  adultWrongCount: (n: number) => `${n} ${ruCount(n, "неверный", "неверных", "неверных")}`,
+  adultAddTitle: "Родительский бонус",
+  adultAddHint: "Любая сумма придёт на Баланс.",
+  adultAddAmount: "Сколько монет",
+  adultAdd: "Добавить",
+  adultAddBody: (n: number) => `На Баланс придёт ${n} ${coinsWord(n)}.`,
+  adultNowBalance: (n: number) => `Сейчас на Балансе ${n}`,
   resetProgress: "Сбросить прогресс",
   resetProgressBody: "Прогресс сбросится, имена и вид питомца останутся.",
   resetProgressTypedLabel: "Введи: сбросить",
@@ -425,6 +440,16 @@ export const strings = {
   stubTasks: "Скоро: задания. Пока вернись на главный экран.",
   stubAdult: "Скоро: взрослый раздел. Пока вернись на главный экран.",
 } as const;
+
+/** «1 верный / 3 верных / 5 верных». */
+function ruCount(n: number, one: string, few: string, many: string): string {
+  const mod100 = Math.abs(n) % 100;
+  const mod10 = mod100 % 10;
+  if (mod100 >= 11 && mod100 <= 14) return many;
+  if (mod10 === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4) return few;
+  return many;
+}
 
 /** «1 день / 3 дня / 5 дней». */
 function daysWord(n: number): string {

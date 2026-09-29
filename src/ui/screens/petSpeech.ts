@@ -4,18 +4,22 @@ import { homeStrings } from "../stringsHome";
 /** Low Сытость speaks from its own pool first: food is the most useful hint. */
 const HUNGRY_BELOW = 30;
 
+/** How long a spoken line stays up. */
+export const SPEECH_MS = 3500;
+/** Quiet gap before the pet starts the next line on its own. */
+export const QUIET_MS = 8000;
+/**
+ * Share of that quiet gap a hunger or sadness emoji fills.
+ * The rest is split into a pause before the emoji and a pause after it,
+ * so the mark never sits against a spoken line.
+ */
+export const MOOD_EMOJI_SHARE = 0.7;
+
 export type SpeechMood = "hungry" | "sad" | "happy" | "idle";
 
 export type SpeechInput = {
   care: number;
   mood: number;
-  goalName: string;
-  accumulated: number;
-  cost: number;
-  /** Копилка is open, so the child can pick a Цель. */
-  canPickGoal: boolean;
-  /** Local hour, 0–23. */
-  hour: number;
 };
 
 /** Which pool the pet is speaking from. Hungry wins over the pose. */
@@ -31,36 +35,30 @@ const MOOD_LINES: Record<SpeechMood, readonly string[]> = {
   idle: homeStrings.petLinesIdle,
 };
 
-function timeLine(hour: number): string {
-  if (hour >= 5 && hour < 12) return homeStrings.petLineMorning;
-  if (hour >= 12 && hour < 17) return homeStrings.petLineDay;
-  if (hour >= 17 && hour < 22) return homeStrings.petLineEvening;
-  return homeStrings.petLineNight;
-}
-
-function goalLine(input: SpeechInput): string | null {
-  if (!input.goalName || input.cost <= 0) return input.canPickGoal ? homeStrings.petLinePickGoal : null;
-  const left = input.cost - input.accumulated;
-  if (left <= 0) return homeStrings.petLineGoalReady;
-  if (input.accumulated <= 0) return homeStrings.petLineGoalStart(input.goalName);
-  if (input.accumulated * 2 >= input.cost) return homeStrings.petLineGoalHalf;
-  return homeStrings.petLineGoalLeft(left);
-}
-
 /**
- * Everything the pet may say right now: its mood's lines first (the first one
- * opens every visit), then its Цель, the time of day, and kind any-mood lines.
- * Never a scolding line.
+ * The lines the pet may say right now: its mood's pool. The first line opens
+ * every visit; a tap or a quiet gap picks another from the same pool.
  */
 export function speechPool(input: SpeechInput): readonly string[] {
-  const goal = goalLine(input);
-  const lines = [
-    ...MOOD_LINES[speechMood(input.care, input.mood)],
-    ...(goal ? [goal] : []),
-    timeLine(input.hour),
-    ...homeStrings.petLinesAny,
-  ];
-  return [...new Set(lines)];
+  return MOOD_LINES[speechMood(input.care, input.mood)];
+}
+
+export type MoodEmoji = { glyph: string; label: string };
+
+/** Hunger and sadness keep a face in the bubble while the pet is quiet. Other moods stay silent. */
+export function moodEmoji(mood: SpeechMood): MoodEmoji | null {
+  if (mood === "hungry") return { glyph: homeStrings.petHungryEmoji, label: homeStrings.petHungryEmojiLabel };
+  if (mood === "sad") return { glyph: homeStrings.petSadEmoji, label: homeStrings.petSadEmojiLabel };
+  return null;
+}
+
+/** How the quiet gap is spent: a pause, then the emoji, then a pause. */
+export function quietSchedule(mood: SpeechMood): { before: number; emoji: number; after: number } {
+  if (!moodEmoji(mood)) return { before: QUIET_MS, emoji: 0, after: 0 };
+  const emoji = Math.round(QUIET_MS * MOOD_EMOJI_SHARE);
+  const rest = QUIET_MS - emoji;
+  const before = Math.floor(rest / 2);
+  return { before, emoji, after: rest - before };
 }
 
 /** A different line from the pool, picked with `random`. */

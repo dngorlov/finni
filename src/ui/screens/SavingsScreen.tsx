@@ -10,9 +10,7 @@ import type { DayState, JournalEntry, SavingsView } from "../../data/repositorie
 import { AmountStepper } from "../components/AmountStepper";
 import { AppModal } from "../components/AppModal";
 import { CoinText } from "../components/CoinText";
-import { GlyphLabel } from "../components/Pictogram";
 import { ScreenTitle } from "../components/ScreenTitle";
-import { Card } from "../components/Card";
 import { FeedbackCard, type FeedbackModel } from "../components/FeedbackCard";
 import { GoalPicker } from "../components/GoalPicker";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -108,9 +106,9 @@ export default function SavingsScreen() {
   useFocusEffect(
     useCallback(() => {
       load();
-      setPhase({ name: "home" });
+      setPhase(focus?.kind === "withdraw" ? { name: "withdraw", amount: 0 } : { name: "home" });
       setOfferPickGoal(false);
-    }, [load]),
+    }, [load, focus]),
   );
 
   // A buy from the overlay spends the pot and clears the Цель without this screen acting.
@@ -373,6 +371,7 @@ export default function SavingsScreen() {
               label={strings.savingsWithdraw}
               icon="arrow-up"
               disabled={savings.pot <= 0}
+              highlighted={focus?.kind === "withdraw"}
               onPress={() => setPhase({ name: "withdraw", amount: 0 })}
             />
             <RoundAction
@@ -384,9 +383,17 @@ export default function SavingsScreen() {
           </ActionRow>
         ) : null}
         {celebrating ? (
-          <Card>
-            <GlyphLabel glyph={strings.savingsConfetti} label={strings.savingsAchieved} labelStyle={styles.section} />
-          </Card>
+          <View accessible aria-label={strings.savingsAchieved} style={styles.celebrate}>
+            <View
+              aria-hidden
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={styles.celebrateTile}
+            >
+              <Text style={styles.celebrateEmoji}>{presented?.icon || strings.savingsConfetti}</Text>
+            </View>
+            <Text style={styles.celebrateTitle}>{strings.savingsAchieved}</Text>
+          </View>
         ) : null}
         {showHome ? (
           <>
@@ -590,5 +597,30 @@ const styles = StyleSheet.create({
     color: moneyColors.heroText,
     fontSize: type.body,
     fontWeight: "700",
+  },
+  celebrate: {
+    alignItems: "center",
+    backgroundColor: moneyColors.heroFace,
+    borderRadius: radius.card,
+    gap: spacing.s,
+    padding: spacing.m,
+  },
+  celebrateTile: {
+    alignItems: "center",
+    backgroundColor: colors.highlight,
+    borderRadius: 20,
+    height: 72,
+    justifyContent: "center",
+    width: 72,
+  },
+  celebrateEmoji: {
+    fontSize: 40,
+    lineHeight: 52,
+  },
+  celebrateTitle: {
+    color: moneyColors.heroText,
+    fontSize: type.section,
+    fontWeight: "700",
+    textAlign: "center",
   },
 });

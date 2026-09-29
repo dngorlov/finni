@@ -9,22 +9,14 @@ import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
 import { shopStrings } from "../stringsShop";
 import { colors, font, minTarget, radius, spacing } from "../theme";
-import { nextSpeechLine, speechMood, speechPool } from "./petSpeech";
+import { moodEmoji, nextSpeechLine, quietSchedule, SPEECH_MS, speechMood, speechPool } from "./petSpeech";
 
 /** Before the first layout pass (and in jest, which never lays out). */
 const FALLBACK_PET = 240;
 /** Floor band, as a share of the scene height. */
 const FLOOR_SHARE = 0.3;
-/** How long a pet line stays up. */
-const SPEECH_MS = 3500;
-/** Quiet gap before the pet starts the next line on its own. */
-const QUIET_MS = 8000;
 /** Window on the left wall: its bottom edge above the floor, and its side. */
 const WINDOW_LIFT = spacing.l + 96;
-/** One narrow wooden shelf on the right wall: three cells stacked. */
-const SHELF_WIDTH = 48;
-const SHELF_HEIGHT = 132;
-const SHELF_CELLS = 3;
 /** Info mark is 32 dp; slop keeps the tap at the 48 dp minimum. */
 const DAY_INFO_SLOP = (minTarget - 32) / 2;
 
@@ -107,13 +99,11 @@ export function HomeScene({
   random?: () => number;
 }) {
   const [box, setBox] = useState({ width: 0, height: 0 });
-  // Bottom of Магазин / Итоги in scene space; the shelf stays clear of them and the HUD.
-  const [actionsBottom, setActionsBottom] = useState(0);
-  const [said, setLine] = useState<string | null>(null);
+  const [said, setSaid] = useState<{ text: string; label: string; emoji: boolean } | null>(null);
   // Speech pauses with the pet: nothing hangs in the air while Дом is hidden or the tour speaks.
   const line = active && !quiet ? said : null;
   const speech = useLatest({
-    input: { care: pet.care, mood: pet.mood, goalName, accumulated, cost, canPickGoal },
+    input: { care: pet.care, mood: pet.mood },
     random: random ?? Math.random,
   });
   const lineRef = useRef<string | null>(null);
@@ -127,21 +117,38 @@ export function HomeScene({
     let timer: ReturnType<typeof setTimeout> | undefined;
     let first = true;
 
+    const later = (ms: number, run: () => void) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!cancelled) run();
+      }, ms);
+    };
+
     const show = () => {
-      const pool = speechPool({ ...speech.current.input, hour: new Date().getHours() });
+      const pool = speechPool(speech.current.input);
       // Each visit (and each change of mood) opens with that mood's first line.
+      // A tap always lands here, so a hunger or sadness emoji flips to words at once.
       const next = first ? (pool[0] ?? null) : nextSpeechLine(pool, lineRef.current, speech.current.random);
       first = false;
       lineRef.current = next;
-      setLine(next);
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        if (cancelled) return;
-        setLine(null);
-        timer = setTimeout(() => {
-          if (!cancelled) show();
-        }, QUIET_MS);
-      }, SPEECH_MS);
+      setSaid(next ? { text: next, label: next, emoji: false } : null);
+      later(SPEECH_MS, () => {
+        setSaid(null);
+        const moodNow = speechMood(speech.current.input.care, speech.current.input.mood);
+        const emoji = moodEmoji(moodNow);
+        const gap = quietSchedule(moodNow);
+        if (!emoji) {
+          later(gap.before, show);
+          return;
+        }
+        later(gap.before, () => {
+          setSaid({ text: emoji.glyph, label: emoji.label, emoji: true });
+          later(gap.emoji, () => {
+            setSaid(null);
+            later(gap.after, show);
+          });
+        });
+      });
     };
 
     showRef.current = show;
@@ -172,18 +179,6 @@ export function HomeScene({
     : undefined;
 
   const say = () => showRef.current();
-
-  // The open «День N» note pushes the buttons down for a moment; the shelf keeps its place.
-  const onActionsLayout = (event: LayoutChangeEvent) => {
-    if (dayTip) return;
-    const { y, height } = event.nativeEvent.layout;
-    const bottom = Math.round(spacing.m + y + height); // styles.hud.top
-    setActionsBottom((current) => (current === bottom ? current : bottom));
-  };
-  const shelfBottom = floorHeight + WINDOW_LIFT;
-  const shelfTop = box.height - shelfBottom - SHELF_HEIGHT;
-  // Short scenes (small phones, big Этап card) have no wall for it: leave it out rather than overlap.
-  const showShelf = measured && actionsBottom > 0 && shelfTop >= actionsBottom + spacing.s && shelfBottom >= bottomInset;
 
   const progress = cost > 0 ? Math.max(0, Math.min(1, accumulated / cost)) : 0;
   const goalLabel = `${homeStrings.goalA11y(goalName, accumulated, cost)}${threshold ? `. ${threshold}` : ""}`;
@@ -216,7 +211,7 @@ export function HomeScene({
 
   return (
     <View testID="home-scene" style={styles.scene} onLayout={onLayout}>
-      {/* Room: wall, window, shelf, skirting board, floor planks. Pure decoration. */}
+      {/* Room: wall, window, skirting board, floor planks. Pure decoration. */}
       <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
         <View style={[styles.wall, { bottom: floorHeight }]} />
         <View style={[styles.window, { bottom: floorHeight + WINDOW_LIFT }]}>
@@ -227,13 +222,6 @@ export function HomeScene({
           <View style={styles.pane} />
           <View style={styles.pane} />
         </View>
-        {showShelf ? (
-          <View testID="home-shelf" style={[styles.shelf, { bottom: shelfBottom }]}>
-            {Array.from({ length: SHELF_CELLS }, (_, index) => (
-              <View key={index} style={styles.shelfCell} />
-            ))}
-          </View>
-        ) : null}
         <View style={[styles.floor, { height: floorHeight }]}>
           <View style={styles.skirting} />
           <View style={styles.plank} />
@@ -257,14 +245,14 @@ export function HomeScene({
           line ? (
             <Pressable
               role="button"
-              aria-label={line}
+              aria-label={line.label}
               accessibilityHint={homeStrings.petBubbleHint}
               accessibilityLiveRegion="polite"
               hitSlop={8}
               onPress={say}
               style={styles.bubble}
             >
-              <Text style={styles.bubbleText}>{line}</Text>
+              <Text style={line.emoji ? styles.bubbleEmoji : styles.bubbleText}>{line.text}</Text>
               <View aria-hidden style={styles.bubbleTail} />
             </Pressable>
           ) : null
@@ -334,7 +322,7 @@ export function HomeScene({
             </View>
           </View>
         ) : null}
-        <View testID="home-actions" pointerEvents="box-none" onLayout={onActionsLayout} style={styles.actionRow}>
+        <View testID="home-actions" pointerEvents="box-none" style={styles.actionRow}>
           <Fab
             label={strings.navShop}
             icon={<PixelIcon name="shopping-cart" size={32} color={waiting ? colors.subtle : colors.onRaised} />}
@@ -401,19 +389,6 @@ const styles = StyleSheet.create({
     top: 6,
     width: 12,
   },
-  shelf: {
-    backgroundColor: colors.raisedEdge,
-    gap: 4,
-    height: SHELF_HEIGHT,
-    padding: 4,
-    position: "absolute",
-    right: spacing.l + spacing.m,
-    width: SHELF_WIDTH,
-  },
-  shelfCell: {
-    backgroundColor: colors.card,
-    flex: 1,
-  },
   floor: {
     backgroundColor: colors.badgeFill,
     bottom: 0,
@@ -449,6 +424,12 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     // Press Start 2P draws a whole em above the baseline; the extra room keeps Й and Ё clear of the line above.
     lineHeight: 20,
+    textAlign: "center",
+  },
+  bubbleEmoji: {
+    fontSize: 28,
+    includeFontPadding: false,
+    lineHeight: 36,
     textAlign: "center",
   },
   bubbleTail: {

@@ -1088,6 +1088,31 @@ describe("Банк: вклад", () => {
   });
 });
 
+describe("Родительский бонус", () => {
+  it("adds any positive amount to Баланс and writes a Журнал row each time", () => {
+    const { game, profileId } = seed();
+    const opened = game.openDay(profileId);
+    if (opened.status !== "opened") throw new Error("expected opened");
+
+    game.addParentBonus(profileId, 40);
+    game.addParentBonus(profileId, 7);
+
+    expect(game.getProfile(profileId).balance).toBe(147);
+    const bonus = game.listJournal(profileId).filter((row) => row.labelKey === "parent_bonus");
+    expect(bonus).toHaveLength(2);
+    expect(bonus).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ amount: 7, kind: "parent_bonus", dayN: 1 }),
+        expect.objectContaining({ amount: 40, kind: "parent_bonus", dayN: 1 }),
+      ]),
+    );
+    expect(() => game.addParentBonus(profileId, 0)).toThrow(/больше нуля/);
+    expect(() => game.addParentBonus(profileId, -3)).toThrow(/больше нуля/);
+    expect(() => game.addParentBonus(profileId, 1.5)).toThrow(/больше нуля/);
+    expect(game.getProfile(profileId).balance).toBe(147);
+  });
+});
+
 describe("Ежедневный подарок", () => {
   it("pays the next step once per calendar day and does not reset or skip a miss", () => {
     const clock = new ManualClock(new Date(2026, 8, 19, 12, 0, 0));

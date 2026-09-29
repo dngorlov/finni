@@ -176,10 +176,31 @@ export const IMAGES: readonly Credit[] = [
   },
 ];
 
+/**
+ * Visual inspirations. A few shaped the screens; the rest are listed because
+ * they fit the game, even when they were not a direct source. None of these
+ * are included as code or assets.
+ */
 export const REFERENCES: readonly Credit[] = [
   { what: "Duolingo", source: "стиль интерфейса" },
   { what: "«Говорящий Том»", source: "главный экран" },
   { what: "Material Design 3", source: "палитра" },
+  { what: "Habitica", source: "ежедневные задания, золото и показатели" },
+  { what: "Minecraft", source: "пиксельный мир и смена облика" },
+  { what: "Block Strike", source: "пиксельные индикаторы" },
+  { what: "Банковские приложения", source: "баланс, журнал, копилка и вклад — как в Т-Банке и Monzo" },
+  { what: "Rayman Origins", source: "карта заданий" },
+  { what: "Tamagotchi", source: "индикаторы сытости и счастья" },
+  { what: "The Sims", source: "потребности, которые падают за день" },
+  { what: "Pokémon", source: "этапы питомца" },
+  { what: "Toca Boca", source: "внешний вид: вид, окрас и аксессуар" },
+  { what: "Animal Crossing", source: "магазин и ритм дня дома" },
+  { what: "Stardew Valley", source: "пиксельные будни и цель для копилки" },
+  { what: "Finch", source: "питомец, которого растит забота" },
+  { what: "Headspace", source: "один спокойный следующий шаг" },
+  { what: "Things", source: "текущая задача" },
+  { what: "Apple Human Interface", source: "крупные кнопки и ясная иерархия экрана" },
+  { what: "Stripe", source: "крупная цифра баланса и спокойные карточки" },
   {
     what: "Звуки верного ответа, ошибки и конца задания",
     source: "оригинальный синтез, HSE SPb Team (scripts/generate-sfx.mjs)",

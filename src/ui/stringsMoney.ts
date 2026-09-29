@@ -113,6 +113,7 @@ export const moneyStrings = {
   incStart: "Стартовый бюджет",
   incBank: "Банк",
   incFromSavings: "Из Копилки",
+  incParent: "Родительский бонус",
   tileIn: "Пришло",
   tileOut: "Ушло",
   tileNet: "Итого",
