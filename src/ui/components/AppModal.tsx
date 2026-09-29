@@ -12,7 +12,7 @@ export function AppModal({
   animation,
   children,
   ...rest
-}: Omit<ModalProps, "animationType"> & { animation: "fade" | "slide" }) {
+}: Omit<ModalProps, "animationType"> & { animation: "fade" | "slide" | "none" }) {
   // Seed the modal's provider with the root values so it renders at once; it
   // then re-measures inside the modal window.
   const insets = useContext(SafeAreaInsetsContext);
