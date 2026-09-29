@@ -57,7 +57,7 @@ describe("economy loop (Appendix A 5, 7–9)", () => {
     await user.press(screen.getByRole("button", { name: "Положить" }));
     await user.press(screen.getByRole("button", { name: "Сумма, больше" }));
     await user.press(screen.getByRole("button", { name: "Положить" }));
-    expect(screen.getByText("Копилка +1")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Копилка +1")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
 
     await openMoney(user, "Журнал");
@@ -119,7 +119,7 @@ describe("economy loop (Appendix A 5, 7–9)", () => {
       expect(screen.getByLabelText("в плане останется 0")).toBeOnTheScreen();
       expect(screen.queryByText("Это сверх плана.")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Положить" }));
-      expect(screen.getByText("Копилка +1")).toBeOnTheScreen();
+      expect(screen.getByLabelText("Копилка +1")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Понятно" }));
 
       await user.press(screen.getByRole("button", { name: "Забрать" }));

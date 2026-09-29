@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     top: 0,
-    backgroundColor: "rgba(34, 26, 18, 0.45)",
   },
   sheet: {
     backgroundColor: colors.background,

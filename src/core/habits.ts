@@ -3,8 +3,8 @@ import type { MeterEffect } from "./economy";
 /**
  * «Привычка» of a Магазин item: buying it on consecutive Игровые дни changes
  * the Счастье it gives. `grow` adds `step` per day in a row, up to `max` extra
- * (курс витаминов). `fade` takes `step` per day in a row, never below `min`
- * (мороженое надоедает). Сытость never changes.
+ * (бонус за дни подряд). `fade` takes `step` per day in a row, never below `min`
+ * (мороженое даёт меньше за дни подряд). Сытость never changes.
  */
 export type Habit =
   | { kind: "grow"; step: number; max: number }

@@ -9,9 +9,8 @@ export type MapEdge = { from: TaskContent; to: TaskContent };
 
 /**
  * The path drawn on Карта: one arrow from each pin's prerequisite to the pin.
- * «Что такое бюджет?» leads to the next budget Урок and to the first Урок of
- * every other topic; then each topic runs in order. Drawing only — which pins
- * open stays in core/tasks.
+ * The lessons run in one line: «Что такое бюджет?», then «Что такое сбережения»,
+ * then the other Уроки in order. Drawing only — which pins open stays in core/tasks.
  */
 export function mapEdges(pins: readonly TaskContent[], tasks: readonly TaskContent[]): MapEdge[] {
   return pins.flatMap((task) => {

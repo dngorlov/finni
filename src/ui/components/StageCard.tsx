@@ -17,7 +17,7 @@ import { homeStrings } from "../stringsHome";
 import { strings } from "../strings";
 import type { SpotlightBox } from "../finnyScript";
 import { measureSpotlight } from "../measureSpotlight";
-import { colors, font, minTarget, spacing } from "../theme";
+import { colors, font, minTarget, modalScrim, spacing } from "../theme";
 
 /** Lip under the tucked card, same press language as a raised button. */
 const PEEK_EDGE = 4;
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
     width: 26,
   },
   scrim: {
-    backgroundColor: "rgba(34, 26, 18, 0.45)",
+    backgroundColor: modalScrim,
     bottom: 0,
     left: 0,
     position: "absolute",

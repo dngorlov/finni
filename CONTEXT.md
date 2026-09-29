@@ -160,7 +160,7 @@ The single next action suggested under the meters. It points at a Задание
 _Avoid_: Задание, квест, подсказка, туториал
 
 **Карта заданий (Mission map)**:
-The map of Moscow districts where each Урок is a pin. The short name is Карта. Мини-игры on Карта lists every mini-game. «Что такое бюджет?», «Что такое сбережения», and «Планирование бюджета» are open at first; finishing «Что такое бюджет?» opens the first Урок of every topic that is still closed; after that each topic goes in order. The Игровой день never locks a pin. A replay, a mini-game, or a correction does not end the day.
+The map of Moscow districts where each Урок is a pin. The short name is Карта. Мини-игры on Карта lists every mini-game. Pins stay put and open in one path: «Что такое бюджет?», then «Что такое сбережения», then the other Уроки in order. The Игровой день never locks a pin. A replay, a mini-game, or a correction does not end the day.
 _Avoid_: список заданий, уровни
 
 **Журнал (History)**:

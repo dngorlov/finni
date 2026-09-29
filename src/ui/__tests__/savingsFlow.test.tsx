@@ -22,14 +22,14 @@ describe("Копилка", () => {
     expect(screen.getByText(stringsDash())).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Положить" }));
-    expect(screen.getByRole("button", { name: "Закрыть окно" })).toHaveStyle({
+    expect(screen.getByTestId("modal-scrim")).toHaveStyle({
       backgroundColor: "rgba(34, 26, 18, 0.45)",
     });
     await user.press(screen.getByRole("button", { name: "Сумма, больше" }));
     await user.press(screen.getByRole("button", { name: "Положить" }));
 
     expect(screen.getByLabelText("Баланс -1")).toBeOnTheScreen();
-    expect(screen.getByText("Копилка +1")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Копилка +1")).toBeOnTheScreen();
     expect(screen.queryByText(/Счастье/)).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
     expect(screen.queryByText(stringsDash())).not.toBeOnTheScreen();
@@ -52,7 +52,7 @@ describe("Копилка", () => {
 
     await openMoney(user, "Копилка");
     await user.press(screen.getByRole("button", { name: "Забрать" }));
-    expect(screen.getByRole("button", { name: "Закрыть окно" })).toHaveStyle({
+    expect(screen.getByTestId("modal-scrim")).toHaveStyle({
       backgroundColor: "rgba(34, 26, 18, 0.45)",
     });
     await user.press(screen.getByRole("button", { name: "Сумма, больше" }));
@@ -61,7 +61,7 @@ describe("Копилка", () => {
     await user.press(screen.getByRole("button", { name: "Забрать 1?" }));
 
     expect(screen.getByLabelText("Баланс +1")).toBeOnTheScreen();
-    expect(screen.getByText("Копилка -1")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Копилка -1")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
     expect(screen.getByLabelText("В копилке 14")).toBeOnTheScreen();
   });
@@ -93,8 +93,8 @@ describe("Копилка", () => {
     expect(screen.getByRole("button", { name: "Купить из копилки" })).toBeOnTheScreen();
 
     await user.press(screen.getByRole("button", { name: "Купить из копилки" }));
-    expect(screen.getByText("Счастье +94")).toBeOnTheScreen();
-    expect(screen.getByText("Копилка -90")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Счастье +94")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Копилка -90")).toBeOnTheScreen();
     expect(screen.getByText("Теперь ты Про!")).toBeOnTheScreen();
     expect(screen.queryByText(/Баланс/)).not.toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));

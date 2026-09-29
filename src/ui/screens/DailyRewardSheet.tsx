@@ -152,7 +152,6 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     alignItems: "center",
-    backgroundColor: "rgba(34, 26, 18, 0.45)",
     flex: 1,
     justifyContent: "center",
     padding: spacing.l,

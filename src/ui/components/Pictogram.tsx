@@ -2,7 +2,15 @@ import { StyleSheet, Text, View, type StyleProp, type TextStyle } from "react-na
 import { SvgXml } from "react-native-svg";
 import { PIXEL_ICON_XML, type PixelIconName } from "../pixelIconXml";
 import { colors, spacing } from "../theme";
-import { PixelSprite } from "./PixelSprite";
+import { PixelSprite, type SpriteName } from "./PixelSprite";
+
+/** Outline names drawn as coloured pixel sprites in design/icons. */
+const SPRITE_ICON: Partial<Record<PixelIconName, SpriteName>> = {
+  check: "check",
+  lock: "locked",
+  "shopping-cart": "shop",
+  clipboard: "task",
+};
 
 /** Emoji (variation selectors stripped) that have a free pixelarticons outline. */
 const GLYPH_ICON: Record<string, PixelIconName> = {
@@ -63,6 +71,8 @@ export function PixelIcon({
   size?: number;
   color?: string;
 }) {
+  const sprite = SPRITE_ICON[name];
+  if (sprite) return <PixelSprite name={sprite} size={size} />;
   return (
     <View {...hidden}>
       <SvgXml xml={PIXEL_ICON_XML[name].replaceAll("currentColor", color)} width={size} height={size} />

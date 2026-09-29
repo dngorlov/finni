@@ -61,6 +61,9 @@ export const radius = {
   card: 20,
 } as const;
 
+/** Dim over the screen while a modal is open. One value, so every window darkens the same way. */
+export const modalScrim = "rgba(34, 26, 18, 0.45)";
+
 /**
  * Text props for titles that must wrap only between words. Android otherwise
  * hyphenates or splits a long Russian word («при / надлежности») mid-word.

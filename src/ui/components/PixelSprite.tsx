@@ -11,6 +11,10 @@ const SPRITES = {
   /** Red frown made from Andrei's mood face: «если отложить: счастье −N». */
   "mood-down": require("../../../assets/icons/mood-down.png"),
   food: require("../../../assets/icons/food.png"),
+  check: require("../../../assets/icons/check.png"),
+  locked: require("../../../assets/icons/locked.png"),
+  shop: require("../../../assets/icons/shop.png"),
+  task: require("../../../assets/icons/task.png"),
 } satisfies Record<string, ImageSourcePropType>;
 
 export type SpriteName = keyof typeof SPRITES;

@@ -163,7 +163,7 @@ describe("Карта заданий", () => {
       expect(screen.getAllByRole("button", { name: /, открыто$/ })).toHaveLength(1);
       expect(screen.queryByLabelText("Награда: до 30 монет")).not.toBeOnTheScreen();
 
-      await user.press(screen.getByRole("button", { name: "Платежи, закрыто" }));
+      await user.press(screen.getByRole("button", { name: "Что такое сбережения, закрыто" }));
       expect(screen.getByText("Откроется после «Что такое бюджет?»")).toBeOnTheScreen();
       expect(screen.queryByRole("button", { name: "Начать" })).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Закрыть окно" }));
@@ -196,13 +196,13 @@ describe("Карта заданий", () => {
       await user.press(screen.getByRole("button", { name: "Карта" }));
 
       expect(screen.getByRole("button", { name: "Что такое бюджет?, пройдено" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Планирование бюджета, открыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Что такое сбережения, открыто" })).toBeOnTheScreen();
-      expect(screen.getByRole("button", { name: "Платежи, открыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Планирование бюджета, закрыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Платежи, закрыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Копим маленькими шагами, закрыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Где живут накопления?, закрыто" })).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Меняем план, закрыто" })).toBeOnTheScreen();
-      expect(screen.getAllByRole("button", { name: /, открыто$/ })).toHaveLength(3);
+      expect(screen.getAllByRole("button", { name: /, открыто$/ })).toHaveLength(1);
       expect(screen.queryByRole("button", { name: /, скоро$/ })).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Что такое бюджет?, пройдено" }));
       expect(screen.getByLabelText("Лучший результат: 23 из 30 монет")).toBeOnTheScreen();

@@ -447,7 +447,6 @@ function RestartConfirm({ onRestart, onKeep }: { onRestart: () => void; onKeep: 
 const styles = StyleSheet.create({
   backdrop: {
     alignItems: "center",
-    backgroundColor: "rgba(62, 42, 28, 0.45)",
     flex: 1,
     justifyContent: "center",
     padding: spacing.l,

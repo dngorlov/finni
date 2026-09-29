@@ -81,6 +81,7 @@ export const strings = {
   scoreFact: (word: string, points: number) => `${word} ${points > 0 ? `+${points}` : "+0"}`,
   nextDayPlanNeeds: "Завтра сначала запланируй необходимое.",
 
+  feedbackTitle: "Что изменилось",
   feedbackBalance: (n: number) => `Баланс ${n > 0 ? "+" : ""}${n}`,
   feedbackSavings: (n: number) => `Копилка ${n > 0 ? "+" : ""}${n}`,
   feedbackCare: (n: number) => `Сытость ${n > 0 ? "+" : ""}${n}`,

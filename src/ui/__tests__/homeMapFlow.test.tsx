@@ -306,7 +306,7 @@ describe("Карта заданий", () => {
     await fireEvent(screen.getByTestId("map-slot"), "layout", layoutOf(360, 480));
     const layer = screen.getByTestId("map-arrows", { includeHiddenElements: true });
     expect(layer).not.toBeVisible();
-    // Nine lessons: the start and three paths of 2, 3 and 3 steps.
+    // Nine lessons, eight arrows along one path.
     expect(screen.getAllByTestId("map-arrow", { includeHiddenElements: true })).toHaveLength(8);
     // The pins stay tappable above the arrows.
     expect(screen.getByRole("button", { name: "Что такое бюджет?, открыто" })).toBeOnTheScreen();

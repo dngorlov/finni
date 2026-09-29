@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.35)",
   },
   sheet: {
     backgroundColor: colors.background,

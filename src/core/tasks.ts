@@ -303,9 +303,9 @@ export function playableTasks(tasks: readonly TaskContent[]): TaskContent[] {
 
 /**
  * The Задание that must be completed before `task` opens, or null if it is
- * open from the start. Only «Что такое бюджет?» is open at first. Finishing
- * it opens «Планирование бюджета» and the first Урок of every other topic;
- * after that each topic goes in order.
+ * open from the start. A correction has none. A mini-game waits for its parent.
+ * `requires` names the prerequisite. Otherwise the previous `order` in the same
+ * topic, and the first Урок of every other topic waits for the first budget Урок.
  */
 export function missionPrerequisite(task: TaskContent, tasks: readonly TaskContent[]): TaskContent | null {
   if (task.correction) return null;

@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScreenTitle } from "../components/ScreenTitle";
 import { finnyScript, type SpotlightBox, type TourStep } from "../finnyScript";
-import { colors, radius, spacing, type } from "../theme";
+import { colors, modalScrim, radius, spacing, type } from "../theme";
 
 /** Clear pixels between the control and the stroke, so the stroke sits outside it. */
 const GAP = 4;
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   scrim: {
-    backgroundColor: "rgba(34, 26, 18, 0.45)",
+    backgroundColor: modalScrim,
   },
   scrimLight: {
     backgroundColor: "rgba(34, 26, 18, 0.12)",

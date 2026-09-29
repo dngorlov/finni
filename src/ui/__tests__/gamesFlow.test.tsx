@@ -55,7 +55,7 @@ describe("Мини-игры из обновлённого сценария", () 
   }, 20000);
 
   it("Шаг за шагом: contributions fill the bar, a temptation shrinks the round, the goal ends the game", async () => {
-    const user = await openLesson(["savings_what"], "Копим маленькими шагами");
+    const user = await openLesson(["budget_change"], "Копим маленькими шагами");
     await press(user, "Начать");
 
     expect(screen.getByLabelText("Воздушный змей. Накоплено: 0 из 50. Осталось: 50")).toBeOnTheScreen();

@@ -60,7 +60,8 @@ describe("Демо-режим panel", () => {
       const { user } = await renderApp(ports);
       expect(screen.getByLabelText("Баланс 98")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Карта" }));
-      expect(screen.getByRole("button", { name: "Планирование бюджета, открыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Что такое сбережения, открыто" })).toBeOnTheScreen();
+      expect(screen.getByRole("button", { name: "Планирование бюджета, закрыто" })).toBeOnTheScreen();
       await openTab(user, "Дом");
       expect(screen.queryByText("Демо: дни идут подряд")).not.toBeOnTheScreen();
       expect(screen.queryByText("Охота за ценником")).not.toBeOnTheScreen();
