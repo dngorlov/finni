@@ -58,10 +58,11 @@ type Face = {
 
 const FACES: Record<Stage, Face> = {
   novice: {
-    background: "#7EC8E3",
+    // Light green (was sky blue).
+    background: "#BFE3A5",
     band: "#FFF6E4",
-    ink: "#14324A",
-    accent: "#2B8CB8",
+    ink: "#23401A",
+    accent: "#5E9448",
     radius: 28,
     fontFamily: font.novice,
     kind: "sticker",
@@ -574,8 +575,9 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden",
   },
+  // Taller than the tucked card: in Итоги the pet name and the logo were cut off at the bottom.
   plateCard: {
-    aspectRatio: CARD_RATIO,
+    aspectRatio: 1.4,
     overflow: "hidden",
     width: "100%",
   },
