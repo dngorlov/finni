@@ -3,9 +3,11 @@ import { StyleSheet } from "react-native";
 import { BANK, ECONOMY, METERS, SAVINGS } from "../../core/config";
 import { DAILY_REWARD_COINS } from "../../core/dailyReward";
 import { loadContent } from "../../data/content";
+import { META_KEYS } from "../../data/metaKeys";
 import { FinPetApp } from "../FinPetApp";
 import { strings } from "../strings";
 import { DEV_TOOLS, RUNTIME_LIBRARIES } from "../credits";
+import { shelfGoals } from "../goalLabel";
 import { HomeScene, type HomePet } from "../screens/HomeScene";
 import { speechPool } from "../screens/petSpeech";
 import { homeStrings } from "../stringsHome";
@@ -25,6 +27,33 @@ function flatText(node: unknown): string[] {
   if (typeof children === "string") return [children];
   if (!Array.isArray(children)) return [];
   return children.flatMap(flatText);
+}
+
+/** Earn the coins, save them, and buy a Цель from Копилка, the way SavingsScreen does. */
+function buyGoal(ports: ReturnType<typeof createFakePorts>, id: string) {
+  const profileId = ports.meta.get(META_KEYS.activeProfileId)!;
+  const content = ports.content.goals.find((goal) => goal.id === id)!;
+  const item = { id, kind: "optional" as const, price: content.price, effect: content.effect, once: true };
+  const day = ports.game.dayState(profileId);
+  ports.game.applyTaskStep(profileId, day.dayId, {
+    next: "exit",
+    verdict: "good",
+    explanation: "чек",
+    effects: [{ coins: item.price }],
+  });
+  ports.game.setActiveGoal(profileId, item);
+  if (ports.game.transferToSavings(profileId, day.dayId, item.price).status !== "ok") throw new Error("Копилка");
+  if (ports.game.purchaseFromSavings(profileId, day.dayId, item).status !== "ok") throw new Error("Цель не купилась");
+}
+
+const layoutOf = (width: number, height: number, y = 0) => ({
+  nativeEvent: { layout: { x: 0, y, width, height } },
+});
+
+/** Give Дом a tall phone-sized box so the shelf has its wall. */
+async function layOutHome() {
+  await fireEvent(screen.getByTestId("home-scene"), "layout", layoutOf(400, 700));
+  await fireEvent(screen.getByTestId("home-actions"), "layout", layoutOf(200, 92, 44));
 }
 
 /** Speech input for the default scene below. */
@@ -116,6 +145,60 @@ describe("Главная scene", () => {
     // A short scene has no wall for it above the floor: it is left out, not squeezed over the buttons.
     await fireEvent(screen.getByTestId("home-scene"), "layout", layout(400, 420));
     expect(screen.queryByTestId("home-shelf", { includeHiddenElements: true })).not.toBeOnTheScreen();
+  });
+
+  it("puts the bought Цели on the shelf, latest three, and names them for the reader", async () => {
+    await render(
+      <HomeScene
+        pet={{ species: "sp1", color: "c1", accessory: "a1", petName: "Пух", care: 50, mood: 50 }}
+        day={1}
+        waiting={false}
+        goalName=""
+        accumulated={0}
+        cost={0}
+        onShop={() => {}}
+        onResults={() => {}}
+        dayTip={false}
+        onDayTip={() => {}}
+        shelf={[
+          { id: "lego", name: "Конструктор", icon: "🧱" },
+          { id: "scooter", name: "Самокат", icon: "🛴" },
+        ]}
+      />,
+    );
+    await layOutHome();
+    const shelf = screen.getByLabelText("Полка: Конструктор, Самокат");
+    expect(shelf).toBeVisible();
+    expect(shelf.children).toHaveLength(3);
+    expect(screen.getByTestId("home-shelf-lego")).toHaveTextContent("🧱");
+    expect(screen.getByTestId("home-shelf-scooter")).toHaveTextContent("🛴");
+    // The empty third cell stays empty.
+    expect(flatText(shelf.children[2])).toEqual([]);
+  });
+
+  it("keeps the latest three bought Цели for the shelf, a Своя цель with its name and a star", () => {
+    const goals = loadContent().goals;
+    expect(shelfGoals([], goals)).toEqual([]);
+    const shelf = shelfGoals(["lego", "smartwatch", "custom:cg1:50:%D0%9A%D0%BE%D1%82", "scooter", "unknown"], goals);
+    expect(shelf.map((goal) => goal.name)).toEqual(["Смарт-часы", "Кот", "Самокат"]);
+    expect(shelf.map((goal) => goal.icon)).toEqual(["⌚", "⭐", "🛴"]);
+  });
+
+  it("shows a Цель on the shelf once it is bought from Копилка, and an empty shelf before", async () => {
+    const ports = createFakePorts();
+    seedReturningChild(ports, { unlockMoney: true });
+    await renderApp(ports);
+    await layOutHome();
+    expect(screen.getByTestId("home-shelf", { includeHiddenElements: true })).not.toBeVisible();
+    expect(screen.queryByLabelText(/^Полка/)).not.toBeOnTheScreen();
+    await screen.unmount();
+
+    buyGoal(ports, "lego");
+    await renderApp(ports);
+    await layOutHome();
+    const shelf = screen.getByLabelText("Полка: Конструктор", { includeHiddenElements: true });
+    expect(screen.getByTestId("home-shelf-lego", { includeHiddenElements: true })).toHaveTextContent("🧱");
+    expect(shelf.children).toHaveLength(3);
   });
 
   it("keeps the whole «День N» label readable: it holds its width on one line", async () => {

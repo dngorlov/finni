@@ -29,6 +29,8 @@ export const homeStrings = {
     "На карте нас ждут уроки!",
     "Спасибо, что заботишься обо мне!",
   ],
+  /** Spoken label of the shelf with the Цели already bought. */
+  shelfA11y: (names: readonly string[]) => `Полка: ${names.join(", ")}`,
   petLineMorning: "Доброе утро!",
   petLineDay: "Хорошего тебе дня!",
   petLineEvening: "Добрый вечер!",
