@@ -55,7 +55,7 @@ describe("Мини-игры из обновлённого сценария", () 
   }, 20000);
 
   it("Шаг за шагом: contributions fill the bar, a temptation shrinks the round, the goal ends the game", async () => {
-    const user = await openLesson(["budget_change"], "Копим маленькими шагами");
+    const user = await openLesson(["budget_what", "savings_what"], "Копим маленькими шагами");
     await press(user, "Начать");
 
     expect(screen.getByLabelText("Воздушный змей. Накоплено: 0 из 50. Осталось: 50")).toBeOnTheScreen();
@@ -100,7 +100,7 @@ describe("Мини-игры из обновлённого сценария", () 
   }, 20000);
 
   it("Правильный платёж: compares the tag with the till, stops a wrong payment, and picks card or cash", async () => {
-    const user = await openLesson(["budget_what"], "Платежи");
+    const user = await openLesson(["budget_what", "savings_what"], "Платежи");
     await press(user, "Начать");
 
     expect(screen.getByLabelText("Сок, 30")).toBeOnTheScreen();

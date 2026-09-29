@@ -258,6 +258,8 @@ describe("Карта заданий", () => {
     const profileId = seedReturningChild(ports);
     const day = ports.game.dayState(profileId);
     ports.game.claimTaskReward(profileId, day.dayId, "budget_what", 10);
+    // «Планирование бюджета» opens after «Что такое сбережения» (lesson order 1 → 4 → the rest).
+    ports.game.claimTaskReward(profileId, day.dayId, "savings_what", 10);
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Карта" }));
