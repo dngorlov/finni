@@ -10,6 +10,10 @@ import { speechPool } from "../screens/petSpeech";
 import { homeStrings } from "../stringsHome";
 import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 
+const layoutOf = (width: number, height: number, y = 0) => ({
+  nativeEvent: { layout: { x: 0, y, width, height } },
+});
+
 async function renderApp(ports = createFakePorts()) {
   const user = userEvent.setup();
   await render(<FinPetApp ports={ports} />);
