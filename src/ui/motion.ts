@@ -40,6 +40,6 @@ export function useAnimationsOn(): boolean {
   return useSyncExternalStore(subscribe, read, () => true);
 }
 
-export function useModalAnimation(kind: "fade" | "slide"): "fade" | "slide" | "none" {
+export function useModalAnimation(kind: "fade" | "slide" | "none"): "fade" | "slide" | "none" {
   return useAnimationsOn() ? kind : "none";
 }
