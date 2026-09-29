@@ -17,7 +17,7 @@ import { StatusStrip } from "../components/StatusStrip";
 import type { MoneySection } from "../navigation/playChrome";
 import { usePlayChrome } from "../navigation/playChrome";
 import type { RootStackParamList } from "../navigation/types";
-import { goalFace, shelfGoals } from "../goalLabel";
+import { goalFace } from "../goalLabel";
 import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { shopStrings } from "../stringsShop";
@@ -29,7 +29,7 @@ import { colors, minTarget, spacing, type } from "../theme";
 import BankScreen from "./BankScreen";
 import { DailyRewardCalendar, DailyRewardGot } from "./DailyRewardSheet";
 import { FinnyTour } from "./FinnyTour";
-import { HomeScene, type ShelfGoal } from "./HomeScene";
+import { HomeScene } from "./HomeScene";
 import { PillRow } from "./moneyParts";
 import { TabPane, useTabFade } from "./TabPane";
 import { JournalPanel } from "./progressPanels";
@@ -54,7 +54,6 @@ type HubModel = {
   bankOpen: boolean;
   giftReady: boolean;
   giftCells: DailyRewardCell[];
-  shelf: ShelfGoal[];
 };
 
 const MONEY_OPTIONS: { id: MoneySection; label: string }[] = [
@@ -231,7 +230,6 @@ export default function MainScreen({ navigation }: Props) {
       bankOpen,
       giftReady: gift.ready,
       giftCells: gift.cells,
-      shelf: shelfGoals(game.boughtGoalIds(profileId), content.goals),
     });
     const bankPaid = bank && bank.paid > 0 ? bank : null;
     if (bankPaid) {
@@ -408,7 +406,6 @@ export default function MainScreen({ navigation }: Props) {
                 dropRef={dropRef}
                 onDropLayout={placeDropShield}
                 bottomInset={STAGE_PEEK_HEIGHT}
-                shelf={hub.shelf}
                 active={focused && !showUnlock && !showFinale && tab === "home"}
                 quiet={tour != null}
               />
