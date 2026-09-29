@@ -322,22 +322,23 @@ export function HomeScene({
             </View>
           </View>
         ) : null}
-        <View testID="home-actions" pointerEvents="box-none" style={styles.actionRow}>
-          <Fab
-            label={strings.navShop}
-            icon={<PixelIcon name="shopping-cart" size={32} color={waiting ? colors.subtle : colors.onRaised} />}
-            disabled={waiting}
-            accessibilityHint={waiting ? strings.waitingEconomyHint : undefined}
-            onPress={onShop}
-          />
-          <Fab
-            label={strings.tabResults}
-            icon={<PixelIcon name="clipboard" size={32} color={colors.onRaised} />}
-            onPress={onResults}
-          />
-        </View>
       </View>
 
+      {/* Bottom right, as before: up top they covered the pet's speech bubble. */}
+      <FabStack testID="home-actions" bottom={spacing.m + bottomInset}>
+        <Fab
+          label={strings.navShop}
+          icon={<PixelIcon name="shopping-cart" size={32} color={waiting ? colors.subtle : colors.onRaised} />}
+          disabled={waiting}
+          accessibilityHint={waiting ? strings.waitingEconomyHint : undefined}
+          onPress={onShop}
+        />
+        <Fab
+          label={strings.tabResults}
+          icon={<PixelIcon name="clipboard" size={32} color={colors.onRaised} />}
+          onPress={onResults}
+        />
+      </FabStack>
       {giftReady && onGift ? (
         <FabStack side="left" bottom={spacing.m + bottomInset}>
           <Fab

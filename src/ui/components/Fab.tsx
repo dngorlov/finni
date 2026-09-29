@@ -65,13 +65,16 @@ export function FabStack({
   children,
   bottom = spacing.m,
   side = "right",
+  testID,
 }: {
   children: ReactNode;
   bottom?: number;
   side?: "left" | "right";
+  testID?: string;
 }) {
   return (
     <View
+      testID={testID}
       pointerEvents="box-none"
       style={[styles.stack, side === "left" ? styles.stackLeft : styles.stackRight, { bottom }]}
     >

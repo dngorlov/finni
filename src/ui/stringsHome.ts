@@ -10,7 +10,7 @@ export const homeStrings = {
   petLinesHungry: ["Я бы что-нибудь съел…", "Животик урчит!"],
   petLinesSad: ["Мне немного грустно.", "Давай поиграем?"],
   petLinesHappy: ["Ура, я так рад!", "Ты лучший друг!", "Копим на мечту?", "Сегодня отличный день!"],
-  petLinesIdle: ["Привет!", "Пойдём на карту?", "Копим на мечту?", "Что купим сегодня?"],
+  petLinesIdle: ["Привет!", "Открывай карту!", "Копим на мечту?", "Что купим сегодня?"],
   /** Shown in the quiet gap while the pet is hungry, between spoken lines. */
   petHungryEmoji: "🍽️",
   petHungryEmojiLabel: "Голоден",

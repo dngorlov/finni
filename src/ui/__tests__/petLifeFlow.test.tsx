@@ -303,7 +303,7 @@ describe("living pet on Дом", () => {
 
     await user.press(screen.getByRole("button", { name: "Поговорить с питомцем Пух" }));
     expect(petClip()).toBe("idle");
-    expect(screen.getByText("Пойдём на карту?")).toBeOnTheScreen();
+    expect(screen.getByText("Открывай карту!")).toBeOnTheScreen();
     await advance(30000);
     expect(petClip()).toBe("idle");
   });

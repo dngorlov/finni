@@ -20,7 +20,8 @@ export const moneyColors = {
   plus: "#4F5B00",
   /** Money out (≥4.5:1 on white, 7.6:1). */
   minus: "#9B2C14",
-  goal: "#8C4A60",
+  // Brown like the rest of the palette (was a plum that read as purple).
+  goal: "#6B4423",
   free: colors.disabledFace,
 } as const;
 

@@ -27,6 +27,7 @@ import {
   type PetClip,
 } from "./petLife";
 import { PixelFrame } from "./PixelFrame";
+import { PET_POSE_FRAME } from "./petSprites.generated";
 
 /**
  * Rounds an animated offset down to whole physical pixels on the native side.
@@ -353,7 +354,8 @@ export function LivingPet({
   );
   /* eslint-enable react-hooks/refs */
 
-  const frame = clipFrame(shown.clip, shown.tick);
+  // With «Анимация» off the pet stands in its base pose (top-left of Андрей's sheet), not on a frozen mid-move frame.
+  const frame = animationsOn ? clipFrame(shown.clip, shown.tick) : PET_POSE_FRAME.idle;
   const pose = poseFromMeters(pet.care, pet.mood);
 
   return (
@@ -399,7 +401,7 @@ export function LivingPet({
           })}
           testID={`living-pet-${shown.clip}`}
         >
-          <PixelFrame pixels={petPixels(pet)} frame={frame} size={size} flipped={shown.faceLeft} />
+          <PixelFrame pixels={petPixels(pet)} frame={frame} size={size} flipped={animationsOn && shown.faceLeft} />
         </View>
       </Pressable>
     </Animated.View>
