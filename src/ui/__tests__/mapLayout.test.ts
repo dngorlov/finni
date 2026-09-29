@@ -124,16 +124,16 @@ describe("Карта arrows", () => {
     expect(arrowShape({ x: 0, y: 0 }, { x: 50, y: 0 }, { gap: 27, head: 10, centre })).toBeNull();
   });
 
-  it("draws one path: «Что такое бюджет?», then «Что такое сбережения», then the other lessons", () => {
+  it("draws «Что такое бюджет?» → «Что такое сбережения», then a branch into each topic", () => {
     const tasks = loadContent().tasks;
     const edges = mapEdges(taskUnlockOrder(tasks), tasks).map((edge) => `${edge.from.id}>${edge.to.id}`);
     expect(edges).toEqual([
       "savings_what>budget_plan",
       "budget_plan>budget_change",
       "budget_what>savings_what",
-      "budget_change>savings_steps",
+      "savings_what>savings_steps",
       "savings_steps>savings_where",
-      "savings_where>payments_pay",
+      "savings_what>payments_pay",
       "payments_pay>payments_shop",
       "payments_shop>payments_later",
     ]);
