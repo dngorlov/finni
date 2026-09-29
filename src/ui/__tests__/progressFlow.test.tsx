@@ -81,7 +81,7 @@ describe("Прогресс", () => {
     expect(screen.getByLabelText("Этап 1 из 3, Новичок. Цель: Скейтборд, 15 из 90")).toBeOnTheScreen();
     expect(screen.getByText("Новичок")).toBeOnTheScreen();
     expect(screen.getByText("Игровых дней: 1")).toBeOnTheScreen();
-    expect(screen.getByText("Задания 1/12")).toBeOnTheScreen();
+    expect(screen.getByText("Задания 1/20")).toBeOnTheScreen();
     expect(screen.getByText("Целей: 0")).toBeOnTheScreen();
   });
 });

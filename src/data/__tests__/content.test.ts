@@ -309,6 +309,51 @@ describe("loadContent", () => {
     }
   });
 
+  it("gives every lesson its mini-game, played from the lesson's own game nodes to «Готово!»", () => {
+    const expected: [string, string][] = [
+      ["budget_what", "Нужно или хочется?"],
+      ["budget_plan", "План и факт"],
+      ["budget_change", "Пересобери план"],
+      ["savings_what", "Интерактивный тест"],
+      ["savings_steps", "Шаг за шагом"],
+      ["savings_where", "Финансовая мечта"],
+      ["payments_pay", "Правильный платёж"],
+      ["payments_later", "Купить или подождать?"],
+    ];
+    for (const [parentId, title] of expected) {
+      const parent = content.tasks.find((t) => t.id === parentId)!;
+      const game = content.tasks.find((t) => t.id === `${parentId}_game`);
+      expect(game).toMatchObject({ parent: parentId, title, reward: 10, topic: parent.topic, difficulty: parent.difficulty });
+      const nodes = game!.nodes;
+      expect(nodes[0]).toMatchObject({ kind: "card", title });
+      expect(nodes.at(-1)).toMatchObject({ id: "fin", kind: "card", title: "Готово!", next: "exit" });
+      // Game nodes are copies of the lesson's, not new content.
+      const lessonIds = new Set(parent.nodes.map((n) => n.id));
+      for (const node of nodes.slice(1, -1)) expect(lessonIds.has(node.id)).toBe(true);
+      // A replay must not touch real state: no spawned corrections.
+      expect(nodes.flatMap((n) => n.options ?? []).some((o) => o.spawnTask)).toBe(false);
+      // Walk the right answers from the first node: it reaches «Готово!» and exits.
+      const byId = new Map(nodes.map((n) => [n.id, n]));
+      let at: string = nodes[0]!.id;
+      const path: string[] = [];
+      while (at !== "exit") {
+        expect(path).not.toContain(at);
+        path.push(at);
+        const node = byId.get(at)!;
+        at = (node.kind ?? "choice") === "choice" ? node.options!.find((o) => o.next !== "retry")!.next : node.next!;
+      }
+      expect(path.at(-1)).toBe("fin");
+    }
+    // Every lesson but «Покупки» (three games already) has exactly one.
+    for (const lesson of content.tasks.filter((t) => t.pin && t.id !== "payments_shop")) {
+      expect(content.tasks.filter((t) => t.parent === lesson.id)).toHaveLength(1);
+    }
+    // План и факт keeps its plan, the four spends and the compare.
+    expect(content.tasks.find((t) => t.id === "budget_plan_game")?.nodes.map((n) => n.kind ?? "choice")).toEqual([
+      "card", "allocate", "choice", "choice", "choice", "choice", "compare", "card",
+    ]);
+  });
+
   it("keeps the savings test and the Нужно или хочется? game from the scenario", () => {
     const savings = content.tasks.find((t) => t.id === "savings_what");
     expect(savings?.nodes.filter((n) => (n.kind ?? "choice") === "choice")).toHaveLength(4);

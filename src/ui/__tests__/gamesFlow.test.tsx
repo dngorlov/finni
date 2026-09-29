@@ -154,4 +154,48 @@ describe("Мини-игры из обновлённого сценария", () 
     await user.press(screen.getByRole("button", { name: "Дальше" }));
     expect(screen.getByText("Раунд 2 из 3")).toBeOnTheScreen();
   });
+  it("Нужно или хочется?: opens in Мини-игры after «Что такое бюджет?», plays to the end, pays and keeps the day open", async () => {
+    const ports = createFakePorts();
+    const profileId = seedReturningChild(ports);
+    const day = ports.game.dayState(profileId);
+    ports.game.claimTaskReward(profileId, day.dayId, "budget_what", 30);
+    const user = userEvent.setup();
+    await render(<FinPetApp ports={ports} />);
+
+    await user.press(screen.getByRole("button", { name: "Карта" }));
+    await user.press(screen.getByRole("button", { name: "Мини-игры" }));
+    expect(screen.getByRole("button", { name: "Играть: Нужно или хочется?" })).toBeEnabled();
+    for (const title of ["План и факт", "Пересобери план", "Интерактивный тест", "Правильный платёж"]) {
+      expect(screen.getByRole("button", { name: `Играть: ${title}` })).toBeDisabled();
+    }
+    await user.press(screen.getByRole("button", { name: "Играть: Нужно или хочется?" }));
+    expect(screen.getByText(/Разложи покупки питомца Пух/)).toBeOnTheScreen();
+    await press(user, "Начать");
+
+    const sorted: [string, "Нужно" | "Хочется"][] = [
+      ["Обед", "Нужно"],
+      ["Новая игрушка", "Хочется"],
+      ["Лекарство", "Нужно"],
+      ["Шампунь для шёрстки", "Нужно"],
+      ["Блестящий ошейник", "Хочется"],
+      ["Мячик", "Хочется"],
+      ["Зубная щётка", "Нужно"],
+      ["Шапка с помпоном", "Хочется"],
+    ];
+    for (const [chip, bin] of sorted) {
+      await press(user, chip);
+      await press(user, new RegExp(`^Корзина «${bin}»`));
+    }
+    await press(user, "Подтвердить");
+    await press(user, "Обед, 10");
+    await press(user, "Шампунь, 6");
+    await press(user, "Купить");
+    await press(user, "Дальше");
+    expect(screen.getByText("Готово!")).toBeOnTheScreen();
+    await press(user, "Продолжить");
+
+    expect(screen.getByLabelText("+10 монет")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Итоги дня" })).not.toBeOnTheScreen();
+    expect(ports.game.dayState(profileId).open).toBe(true);
+  }, 20000);
 });
