@@ -49,8 +49,7 @@ export function AmountStepper({
   const plusDisabled = Boolean(disabled) || (max != null && value >= max);
   const minusDisabled = Boolean(disabled) || value <= min;
   const trackOn = showTrack === true;
-  const fillWidth =
-    `${Math.max(0, Math.min(100, trackOn && max > 0 ? (value / max) * 100 : 0))}%` as const;
+  const fillWidth = `${Math.max(0, Math.min(100, trackOn && max > 0 ? (value / max) * 100 : 0))}%` as const;
 
   const valueRef = useLatest(value);
   const onChangeRef = useLatest(onChange);
@@ -75,18 +74,21 @@ export function AmountStepper({
 
   useEffect(() => () => clearHold(), [clearHold]);
 
-  const stepBy = useCallback((delta: number) => {
-    if (disabledRef.current) {
-      return false;
-    }
-    const next = valueRef.current + delta;
-    const cap = maxRef.current;
-    if (next < minRef.current || (cap != null && next > cap)) {
-      return false;
-    }
-    onChangeRef.current(next);
-    return true;
-  }, [disabledRef, maxRef, minRef, onChangeRef, valueRef]);
+  const stepBy = useCallback(
+    (delta: number) => {
+      if (disabledRef.current) {
+        return false;
+      }
+      const next = valueRef.current + delta;
+      const cap = maxRef.current;
+      if (next < minRef.current || (cap != null && next > cap)) {
+        return false;
+      }
+      onChangeRef.current(next);
+      return true;
+    },
+    [disabledRef, maxRef, minRef, onChangeRef, valueRef],
+  );
 
   const startHold = useCallback(
     (delta: number) => {
@@ -114,22 +116,25 @@ export function AmountStepper({
   const trackPageXRef = useRef(0);
   const trackRef = useRef<View>(null);
 
-  const setFromPageX = useCallback((pageX: number) => {
-    if (disabledRef.current) {
-      return;
-    }
-    const cap = maxRef.current;
-    if (cap == null) {
-      return;
-    }
-    const width = trackWidthRef.current;
-    if (width <= 0) {
-      return;
-    }
-    const x = Math.max(0, Math.min(width, pageX - trackPageXRef.current));
-    const raw = cap === 0 ? 0 : Math.round((x / width) * cap);
-    onChangeRef.current(Math.max(minRef.current, raw));
-  }, [disabledRef, maxRef, minRef, onChangeRef]);
+  const setFromPageX = useCallback(
+    (pageX: number) => {
+      if (disabledRef.current) {
+        return;
+      }
+      const cap = maxRef.current;
+      if (cap == null) {
+        return;
+      }
+      const width = trackWidthRef.current;
+      if (width <= 0) {
+        return;
+      }
+      const x = Math.max(0, Math.min(width, pageX - trackPageXRef.current));
+      const raw = cap === 0 ? 0 : Math.round((x / width) * cap);
+      onChangeRef.current(Math.max(minRef.current, raw));
+    },
+    [disabledRef, maxRef, minRef, onChangeRef],
+  );
 
   // PanResponder handlers read refs only when a gesture fires, never during render.
   /* eslint-disable react-hooks/refs */
@@ -198,12 +203,16 @@ export function AmountStepper({
     </Pressable>
   );
 
-  const valueText = <CoinText coin text={strings.bucketValue(label, value)} style={styles.value} />;
+  const valueText = <CoinText coin text={strings.bucketValue("", value)} style={styles.value} />;
 
   const heading = (
     <>
       <Pictogram glyph={pictogram} size={dense ? 20 : 24} />
-      <Text style={[styles.label, dense ? styles.labelDense : null]} aria-label={amountLabel} numberOfLines={dense ? 1 : undefined}>
+      <Text
+        style={[styles.label, dense ? styles.labelDense : null]}
+        aria-label={amountLabel}
+        numberOfLines={dense ? 1 : undefined}
+      >
         {label}
       </Text>
     </>

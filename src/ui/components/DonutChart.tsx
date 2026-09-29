@@ -80,7 +80,7 @@ export const CHART_COLORS = {
   mandatory: colors.heroFill,
   optional: "#F7A115",
   savings: "#6B7A00",
-  bank: "#3F6A8A",
+  bank: "#6B7A00",
   tasks: "#F7A115",
   other: "#9C8A76",
 } as const;

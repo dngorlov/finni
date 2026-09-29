@@ -127,7 +127,8 @@ export const strings = {
   taskCardNext: "Дальше",
   taskRestart: "Начать заново",
   taskRestartTitle: "Начать заново?",
-  taskRestartBody: "Задание начнётся с первого шага, ответы этого раза сотрутся. Монеты дадут, только если новый результат будет лучше.",
+  taskRestartBody:
+    "Задание начнётся с первого шага, ответы этого раза сотрутся. Монеты дадут, только если новый результат будет лучше.",
   taskRestartConfirm: "Да, начать заново",
   taskRestartKeep: "Продолжить",
   taskSortPrompt: "Куда это отнести?",
@@ -158,7 +159,7 @@ export const strings = {
     },
     bank: {
       name: "Банк",
-      glyph: "🏦",
+      glyph: "",
       where: "В «Деньгах» можно открыть вклад.",
       spoken: "Открылось: Банк. В «Деньгах» можно открыть вклад.",
     },
@@ -270,8 +271,7 @@ export const strings = {
 
   planAvailable: (n: number) => `Можно распределить: ${n}`,
   planBillsShort: (missing: number) => `На все счета не хватает ${missing}. Сделай Задание — за него дают монеты.`,
-  planGoalForecast: (goal: string, days: number) =>
-    `Так ${goal} будет через ${days} ${daysWord(days)}.`,
+  planGoalForecast: (goal: string, days: number) => `Так ${goal} будет через ${days} ${daysWord(days)}.`,
   planGoalNoSavings: (goal: string) => `Без Копилки ${goal} не станет ближе.`,
   planWantsHint: (names: readonly string[]) =>
     names.length > 0 ? `Хватит на: ${names.join(", ")}` : "Пока ни на что из желаемого не хватит.",
@@ -337,7 +337,7 @@ export const strings = {
   navTasksPictogram: "🎯",
   navProgressPictogram: "📚",
   navAdultPictogram: "👤",
-  navBankPictogram: "🏦",
+  navBankPictogram: "",
   poseIdle: POSE_NAMES.idle,
   poseHappy: POSE_NAMES.happy,
   poseSad: POSE_NAMES.sad,

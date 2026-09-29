@@ -15,6 +15,7 @@ const SPRITES = {
   locked: require("../../../assets/icons/locked.png"),
   shop: require("../../../assets/icons/shop.png"),
   task: require("../../../assets/icons/task.png"),
+  pig: require("../../../assets/icons/pig.png"),
 } satisfies Record<string, ImageSourcePropType>;
 
 export type SpriteName = keyof typeof SPRITES;

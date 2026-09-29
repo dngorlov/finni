@@ -65,7 +65,10 @@ export default function BankScreen() {
   const returnsOn = day ? maturesOnDay(day.n, offer.days) : 0;
   const locked = deposits.filter((dep) => dep.status === "open").reduce((sum, dep) => sum + dep.amount, 0);
   // Open вклады first; a long history of returned ones folds away.
-  const ordered = [...deposits.filter((dep) => dep.status === "open"), ...deposits.filter((dep) => dep.status !== "open")];
+  const ordered = [
+    ...deposits.filter((dep) => dep.status === "open"),
+    ...deposits.filter((dep) => dep.status !== "open"),
+  ];
   const foldable = ordered.length > DEPOSITS_SHOWN;
   const shownDeposits = foldable && !showAllDeposits ? ordered.slice(0, DEPOSITS_SHOWN) : ordered;
 
@@ -194,7 +197,9 @@ export default function BankScreen() {
                 <View accessible aria-label={moneyStrings.bankProgressA11y(passed, dep.days)}>
                   <ProgressBar value={passed} max={dep.days} color={CHART_COLORS.bank} />
                 </View>
-                <Text style={styles.muted}>{dep.status === "paid" ? strings.bankPaid : strings.bankDaysLeft(dep.daysLeft)}</Text>
+                <Text style={styles.muted}>
+                  {dep.status === "paid" ? strings.bankPaid : strings.bankDaysLeft(dep.daysLeft)}
+                </Text>
               </View>
             </View>
           );

@@ -40,17 +40,11 @@ const hidden = {
   importantForAccessibility: "no-hide-descendants" as const,
 };
 
-export function Pictogram({
-  glyph,
-  size = 24,
-  color = colors.text,
-}: {
-  glyph: string;
-  size?: number;
-  color?: string;
-}) {
+export function Pictogram({ glyph, size = 24, color = colors.text }: { glyph: string; size?: number; color?: string }) {
   const bare = glyph.replace(/\uFE0F/g, "");
   if (bare === "🪙") return <PixelSprite name="coin" size={size} />;
+  if (bare === "🐷") return <PixelSprite name="pig" size={size} />;
+  if (bare === "🏦") return;
   const name = GLYPH_ICON[bare];
   if (!name) {
     return (
