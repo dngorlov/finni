@@ -1,4 +1,4 @@
-import { useContext, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Animated,
   PanResponder,
@@ -28,6 +28,14 @@ export function shouldCloseSheet(dy: number, vy: number, sheetHeight: number): b
   return dy >= distance;
 }
 
+/** The drawer on screen now. Opening another one closes it, so two never stack. */
+let openSheet: { token: object; close: () => void } | null = null;
+
+/** Test hook: forget the drawer on screen. */
+export function resetOpenSheetForTests(): void {
+  openSheet = null;
+}
+
 /**
  * Bottom drawer: slides up over a dimmed screen. Tap on the dim area, the
  * system Back, or a pull down on the grabber closes it. `footer` holds the
@@ -44,9 +52,20 @@ export function BottomSheet({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const [token] = useState(() => ({}));
+  const latestClose = useLatest(onClose);
+  useEffect(() => {
+    if (!visible) return undefined;
+    if (openSheet && openSheet.token !== token) openSheet.close();
+    openSheet = { token, close: () => latestClose.current() };
+    return () => {
+      if (openSheet?.token === token) openSheet = null;
+    };
+  }, [visible, token, latestClose]);
   if (!visible) return null;
+  // The dim shows at once; only the sheet itself slides up (see SheetBody).
   return (
-    <AppModal animation="slide" transparent visible statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
+    <AppModal animation="none" transparent visible statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <SheetBody onClose={onClose} footer={footer}>
         {children}
       </SheetBody>
@@ -58,8 +77,10 @@ function SheetBody({ onClose, children, footer }: { onClose: () => void; childre
   // Context, not the hook: a sheet rendered without a SafeAreaProvider (a lone screen in a test) has no insets.
   const bottomInset = useContext(SafeAreaInsetsContext)?.bottom ?? 0;
   const animate = useAnimationsOn();
-  const [offset] = useState(() => new Animated.Value(0));
+  // Starts below the screen and slides up; the dim behind it is already there.
+  const [offset] = useState(() => new Animated.Value(animate ? 1000 : 0));
   const height = useRef(0);
+  const entered = useRef(!animate);
   // The responder is made once; these keep it reading the latest props.
   const latest = useLatest({ onClose, animate });
 
@@ -100,6 +121,10 @@ function SheetBody({ onClose, children, footer }: { onClose: () => void; childre
 
   const onLayout = (event: LayoutChangeEvent) => {
     height.current = event.nativeEvent.layout.height;
+    if (entered.current) return;
+    entered.current = true;
+    offset.setValue(height.current);
+    Animated.timing(offset, { toValue: 0, duration: 220, useNativeDriver: true }).start();
   };
 
   return (
