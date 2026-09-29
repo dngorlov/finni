@@ -9,7 +9,7 @@ export const homeStrings = {
   /** Spoken name of the pet button on Главная (the pet picture keeps its own label). */
   petTalk: (petName: string) => (petName ? `Поговорить с питомцем ${petName}` : "Поговорить с питомцем"),
   /** Pet lines on Дом: the pool for the pet's mood comes first, then goal, time of day, and any-mood lines. */
-  petLinesHungry: ["Я бы что-нибудь съел…", "Животик урчит!", "Может, купим обед?", "Обед — важная покупка!"],
+  petLinesHungry: ["Я бы что-нибудь съел…", "Животик урчит!", "Может, купим супа?", "Еда — важная покупка!"],
   petLinesSad: ["Мне немного грустно.", "Давай поиграем?", "Побудь со мной немножко.", "Вместе всегда веселее!"],
   petLinesHappy: [
     "Ура, я так рад!",

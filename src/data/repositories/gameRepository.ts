@@ -12,6 +12,7 @@ import { ECONOMY, FEATURES, METERS } from "../../core/config";
 import { dayId as makeDayId } from "../../core/days";
 import {
   applyMeterDelta,
+  billsCovered,
   billsForDay,
   checkPurchase,
   dayCloseMeterDeltas,
@@ -45,7 +46,7 @@ import {
   type Stage,
 } from "../../core/stages";
 import { checkedTally, endsGameDay, rewardTopUp, type AnswerTally, type TaskContent, type TaskStepResult } from "../../core/tasks";
-import { earnedAchievementIds, LUNCH_ITEM_ID, orderEarned, type AchievementFacts } from "../../core/achievements";
+import { earnedAchievementIds, orderEarned, type AchievementFacts } from "../../core/achievements";
 import { createLocalId } from "../localId";
 import { META_KEYS } from "../metaKeys";
 import * as tables from "../schema";
@@ -411,7 +412,6 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     const shelf = purchases.filter((row) => row.boughtAsActiveGoal !== 1);
     return {
       shopBuys: purchases.length,
-      lunchBuys: purchases.filter((row) => row.itemId === LUNCH_ITEM_ID).length,
       optionalBuys: shelf.filter((row) => row.kind === "optional").length,
       savingsIns: savedIn.length,
       savedTotal: savedIn.reduce((sum, row) => sum + row.amount, 0),
@@ -691,18 +691,20 @@ export function createGameRepository(db: GameDb, clock: Clock) {
       .from(tables.savingsTransfers)
       .where(and(eq(tables.savingsTransfers.dayId, day.id), eq(tables.savingsTransfers.kind, "in")))
       .all();
-    const mandatoryIds =
-      bills.length > 0
-        ? billsForDay(day.n, bills).items
-        : catalog.filter((item) => item.kind === "mandatory").map((item) => item.id);
+    const actual = actualForDay(tx, day.id);
+    // Счета are a coin minimum for Обязательные. Without a cycle (tests, old
+    // callers) every mandatory catalog item must be bought.
     const boughtIds = new Set(bought.map((row) => row.itemId));
-    const mandatoryCovered = mandatoryIds.every((id) => boughtIds.has(id));
+    const mandatoryCovered =
+      bills.length > 0
+        ? billsCovered(billsForDay(day.n, bills), actual.mandatory)
+        : catalog.filter((item) => item.kind === "mandatory").every((item) => boughtIds.has(item.id));
     const confirmed = plan?.status === "confirmed" ? plan : null;
     const withinPlan = planKept({
       plan: confirmed
         ? { mandatory: confirmed.mandatory, optional: confirmed.optional, savings: confirmed.savings }
         : null,
-      actual: actualForDay(tx, day.id),
+      actual,
     });
     const deposited = deposits.length > 0;
     const score = dayScore({ mandatoryCovered, withinPlan, deposited });
@@ -1462,9 +1464,9 @@ export function createGameRepository(db: GameDb, clock: Clock) {
     },
 
     /**
-     * `bills` is the Счета cycle from content: only the items due on this
-     * Игровой день count as «необходимое закрыто». An empty cycle falls back
-     * to every mandatory catalog item.
+     * `bills` is the Счета cycle from content: «необходимое закрыто» once the
+     * day's Обязательные purchases reach this Игровой день's minimum. An empty
+     * cycle falls back to every mandatory catalog item.
      */
     closeDay(
       profileId: string,

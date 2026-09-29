@@ -3,6 +3,7 @@ import { ECONOMY, FEATURES, METERS } from "../../core/config";
 import { dailyRewardCalendar, dailyRewardReady, nextDailyRewardCoins } from "../../core/dailyReward";
 import {
   applyMeterDelta,
+  billsCovered,
   billsForDay,
   checkPurchase,
   dayCloseMeterDeltas,
@@ -32,7 +33,7 @@ import {
   stageGoalFloor,
   type Stage,
 } from "../../core/stages";
-import { earnedAchievementIds, LUNCH_ITEM_ID, orderEarned, type AchievementFacts } from "../../core/achievements";
+import { earnedAchievementIds, orderEarned, type AchievementFacts } from "../../core/achievements";
 import { createLocalId } from "../../data/localId";
 import { checkedTally, endsGameDay, rewardTopUp, type AnswerTally, type TaskStepResult } from "../../core/tasks";
 import { loadContent } from "../../data/content";
@@ -229,7 +230,6 @@ export function createFakePorts(): SessionPorts {
     const shelf = row.purchases.filter((item) => !item.boughtAsActiveGoal);
     return {
       shopBuys: row.purchases.length,
-      lunchBuys: row.purchases.filter((item) => item.itemId === LUNCH_ITEM_ID).length,
       optionalBuys: shelf.filter((item) => item.kind === "optional").length,
       savingsIns: savedIn.length,
       savedTotal: savedIn.reduce((sum, item) => sum + item.amount, 0),
@@ -820,12 +820,11 @@ export function createFakePorts(): SessionPorts {
         const row = requireRow(profiles, profileId);
         if (!row.dayOpen) throw new Error("Нет открытого игрового дня");
         const bought = row.purchases.filter((item) => item.dayId === row.dayId);
-        const mandatoryIds =
-          bills.length > 0
-            ? billsForDay(row.dayN, bills).items
-            : catalog.filter((item) => item.kind === "mandatory").map((item) => item.id);
         const boughtIds = new Set(bought.map((item) => item.itemId));
-        const mandatoryCovered = mandatoryIds.every((id) => boughtIds.has(id));
+        const mandatoryCovered =
+          bills.length > 0
+            ? billsCovered(billsForDay(row.dayN, bills), actuals(row).mandatory)
+            : catalog.filter((item) => item.kind === "mandatory").every((item) => boughtIds.has(item.id));
         const confirmed = row.planStatus === "confirmed" ? row.buckets : null;
         const withinPlan = planKept({ plan: confirmed, actual: actuals(row) });
         const deposited = row.transfers.some((item) => item.dayId === row.dayId && item.kind === "in");

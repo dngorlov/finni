@@ -2,23 +2,15 @@ import { billsForDay, billsTotal, type DayBills } from "../../core/economy";
 import type { CatalogItemContent } from "../../data/content";
 
 export interface TodayBills {
-  parts: { id: string; name: string; price: number }[];
+  /** Least the Обязательные bucket should hold today. */
   total: number;
   note?: string;
 }
 
-/** Счета due on Игровой день `n`, named and priced from the catalog. */
-export function todayBills(
-  n: number,
-  cycle: readonly DayBills[],
-  catalog: readonly CatalogItemContent[],
-): TodayBills {
+/** Счета due on Игровой день `n`: the Обязательные minimum and its optional note. */
+export function todayBills(n: number, cycle: readonly DayBills[]): TodayBills {
   const bills = billsForDay(n, cycle);
-  const parts = bills.items.flatMap((id) => {
-    const item = catalog.find((entry) => entry.id === id);
-    return item ? [{ id, name: item.name, price: item.price }] : [];
-  });
-  return { parts, total: billsTotal(bills, catalog), note: bills.note };
+  return { total: billsTotal(bills), note: bills.note };
 }
 
 /** Cheapest-first Желаемые items that fit together into `budget`. */

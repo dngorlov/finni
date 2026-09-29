@@ -1,6 +1,7 @@
 import { loadContent } from "../content";
 import { METERS } from "../../core/config";
 import { itemMeterEffects } from "../../core/economy";
+import { ITEM_SPRITES } from "../../ui/components/itemSprites.generated";
 
 describe("loadContent", () => {
   const content = loadContent();
@@ -35,32 +36,22 @@ describe("loadContent", () => {
   it("ships the shelf and nine Цели that are not sold there", () => {
     const byId = Object.fromEntries(content.catalog.map((item) => [item.id, item]));
 
-    expect(content.catalog.map((item) => item.id)).toEqual([
-      "lunch",
-      "school",
-      "transport",
-      "medicine",
-      "candy",
-      "ice-cream",
+    expect(content.catalog.map((item) => [item.id, item.name, item.kind, item.price])).toEqual([
+      ["soup", "Суп", "mandatory", 8],
+      ["cherry", "Вишня", "mandatory", 3],
+      ["tea", "Чай", "mandatory", 2],
+      ["vitamins", "Витамины", "mandatory", 5],
+      ["teddy", "Плюшевый мишка", "optional", 15],
+      ["ice-cream", "Мороженое", "optional", 4],
+      ["cinema", "Билет в кино", "optional", 10],
+      ["pizza", "Пицца", "optional", 15],
     ]);
-    expect(byId.lunch).toMatchObject({
-      name: "Обед",
-      kind: "mandatory",
-      price: 12,
-      effect: { meter: "care", delta: 10 },
-      also: { meter: "mood", delta: 5 },
-    });
-    expect(byId.candy).toMatchObject({
-      kind: "optional",
-      price: 5,
-      effect: { meter: "mood", delta: 5 },
-    });
-    expect(byId["ice-cream"]).toMatchObject({
-      name: "Мороженое",
-      kind: "optional",
-      price: 8,
-      effect: { meter: "mood", delta: 6 },
-    });
+    expect(byId.soup).toMatchObject({ effect: { meter: "care", delta: 12 } });
+    expect(byId.soup.also).toBeUndefined();
+    expect(byId.vitamins).toMatchObject({ effect: { meter: "care", delta: 5 }, also: { meter: "mood", delta: 2 } });
+    expect(byId.teddy).toMatchObject({ effect: { meter: "mood", delta: 22 } });
+    expect(byId.pizza).toMatchObject({ effect: { meter: "care", delta: 10 }, also: { meter: "mood", delta: 5 } });
+    expect(content.catalog.some((item) => /лекарств/i.test(item.name))).toBe(false);
     expect(content.goals.map((goal) => [goal.stage, goal.name, goal.price])).toEqual([
       ["novice", "Конструктор", 60],
       ["novice", "Смарт-часы", 75],
@@ -92,31 +83,62 @@ describe("loadContent", () => {
     expect(smartwatch.effect.delta).toBeLessThan(content.goals.find((goal) => goal.id === "skateboard")!.effect.delta);
   });
 
-  it("makes a Цель worth more Счастье than the same coins spent on Желаемое", () => {
-    const wants = content.catalog.filter((item) => item.kind === "optional");
-    const bestPerCoin = Math.max(
-      ...wants.map((item) => itemMeterEffects(item).find((effect) => effect.meter === "mood")!.delta / item.price),
+  it("makes a Цель lift Счастье more than any one Желаемое, within the meter", () => {
+    // The final shop (2026-09-29) sells Счастье cheaper per coin than the novice Цели;
+    // a Цель still beats any single purchase and is the only way up an Этап.
+    const bestWant = Math.max(
+      ...content.catalog
+        .filter((item) => item.kind === "optional")
+        .flatMap((item) => itemMeterEffects(item).filter((effect) => effect.meter === "mood").map((effect) => effect.delta)),
     );
     for (const goal of content.goals) {
       expect(goal.effect.delta).toBeLessThanOrEqual(METERS.max);
-      // Счастье stops at METERS.max, so no pile of sweets adds more than that. Where the price
-      // outruns the meter, the Цель still fills at least nine tenths of it in one purchase.
-      const sweets = Math.min(goal.price * bestPerCoin, METERS.max * 0.9);
-      expect(goal.effect.delta).toBeGreaterThan(sweets);
-    }
-    for (const goal of content.goals.filter((row) => row.price * bestPerCoin < METERS.max)) {
-      expect(goal.effect.delta / goal.price).toBeGreaterThan(bestPerCoin);
+      expect(goal.effect.delta).toBeGreaterThan(bestWant);
     }
   });
 
-  it("ships a Счета cycle of mandatory items with a medicine day", () => {
-    const mandatory = new Set(content.catalog.filter((item) => item.kind === "mandatory").map((item) => item.id));
-    expect(content.bills.length).toBeGreaterThanOrEqual(5);
-    for (const day of content.bills) {
-      for (const id of day.items) expect(mandatory.has(id)).toBe(true);
+  it("ships four Обязательные and four Желаемые, each with a pixel picture", () => {
+    const mandatory = content.catalog.filter((item) => item.kind === "mandatory");
+    const optional = content.catalog.filter((item) => item.kind === "optional");
+    expect(mandatory).toHaveLength(4);
+    expect(optional).toHaveLength(4);
+    for (const item of content.catalog) {
+      expect(Object.keys(ITEM_SPRITES)).toContain(item.sprite);
     }
-    expect(content.bills[0].items).toEqual(["lunch", "transport"]);
-    expect(content.bills.some((day) => day.items.includes("medicine") && day.note)).toBe(true);
+    // Every Обязательное feeds the pet: Счета are «еда и витамины».
+    for (const item of mandatory) {
+      expect(itemMeterEffects(item).some((effect) => effect.meter === "care" && effect.delta > 0)).toBe(true);
+    }
+  });
+
+  it("lets 20–25 coins of Обязательные cover the daily Сытость drop", () => {
+    // Best Сытость the child can buy with `budget` coins of Обязательные (each item bought any number of times).
+    const mandatory = content.catalog.filter((item) => item.kind === "mandatory");
+    const careOf = (item: (typeof mandatory)[number]) =>
+      itemMeterEffects(item).reduce((sum, effect) => sum + (effect.meter === "care" ? effect.delta : 0), 0);
+    const bestCare = (budget: number) => {
+      const best = new Array<number>(budget + 1).fill(0);
+      for (let coins = 1; coins <= budget; coins += 1) {
+        for (const item of mandatory) {
+          if (item.price <= coins) best[coins] = Math.max(best[coins], best[coins - item.price] + careOf(item));
+        }
+      }
+      return best[budget];
+    };
+    expect(bestCare(20)).toBeGreaterThanOrEqual(METERS.dailyCareDrop);
+    // Суп + Витамины: 13 coins, Сытость +17, Счастье +2.
+    const soup = content.catalog.find((item) => item.id === "soup")!;
+    const vitamins = content.catalog.find((item) => item.id === "vitamins")!;
+    expect(soup.price + vitamins.price).toBeLessThanOrEqual(20);
+    expect(careOf(soup) + careOf(vitamins)).toBeGreaterThanOrEqual(METERS.dailyCareDrop);
+  });
+
+  it("ships a Счета cycle of Обязательные minimums inside the 20–25 coin rule", () => {
+    expect(content.bills.length).toBeGreaterThanOrEqual(1);
+    for (const day of content.bills) {
+      expect(day.min).toBeGreaterThanOrEqual(20);
+      expect(day.min).toBeLessThanOrEqual(25);
+    }
   });
 
   it("ships the Словарик terms including План", () => {
@@ -155,8 +177,14 @@ describe("loadContent", () => {
       id: "optional",
       term: "Желаемые расходы",
       definition:
-        "Покупки не из обязательных: они поднимают счастье. Сейчас это конфета и мороженое.",
+        "Покупки не из обязательных: они поднимают счастье. Сейчас это плюшевый мишка, мороженое, билет в кино и пицца.",
     });
+    expect(content.terms.find((t) => t.id === "mandatory")?.definition).toBe(
+      "Покупки, без которых питомцу плохо: еда и витамины. В магазине это суп, вишня, чай и витамины.",
+    );
+    expect(content.terms.find((t) => t.id === "care")?.definition).toBe(
+      "Насколько питомец сыт. Растёт, когда покупаешь еду и витамины. Каждый день падает на 15. Покупка в магазине это компенсирует.",
+    );
     expect(content.terms.find((t) => t.id === "mood")).toEqual({
       id: "mood",
       term: "Счастье",

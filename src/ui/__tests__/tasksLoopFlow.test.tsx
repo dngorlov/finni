@@ -5,7 +5,7 @@ import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 import { passAdultGate } from "../testSupport/flowHelpers";
 
 const content = loadContent();
-const candy = content.catalog.find((item) => item.id === "candy")!;
+const tea = content.catalog.find((item) => item.id === "tea")!;
 const iceCream = content.catalog.find((item) => item.id === "ice-cream")!;
 
 async function renderApp(ports = createFakePorts()) {
@@ -45,7 +45,7 @@ describe("Задания combined loop", () => {
 
       const day = ports.game.dayState(profileId);
       while (ports.game.getProfile(profileId).balance >= iceCream.price) {
-        ports.game.purchase(profileId, day.dayId, candy);
+        ports.game.purchase(profileId, day.dayId, tea);
       }
 
       await user.press(screen.getByRole("button", { name: "Магазин" }));

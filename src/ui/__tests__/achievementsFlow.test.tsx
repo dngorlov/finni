@@ -6,8 +6,8 @@ import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 import { openMoney, openTab } from "../testSupport/flowHelpers";
 
 const content = loadContent();
-const lunch = content.catalog.find((item) => item.id === "lunch")!;
-const candy = content.catalog.find((item) => item.id === "candy")!;
+const soup = content.catalog.find((item) => item.id === "soup")!;
+const iceCream = content.catalog.find((item) => item.id === "ice-cream")!;
 
 async function renderApp(ports = createFakePorts()) {
   const user = userEvent.setup();
@@ -26,12 +26,12 @@ async function dismissRewards(user: ReturnType<typeof userEvent.setup>) {
 
 function closeScoredDay(ports: ReturnType<typeof createFakePorts>, profileId: string) {
   const day = ports.game.dayState(profileId);
-  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 12, optional: 5, savings: 15 });
+  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 8, optional: 4, savings: 15 });
   ports.game.confirmPlan(profileId, day.dayId);
-  ports.game.purchase(profileId, day.dayId, lunch);
-  ports.game.purchase(profileId, day.dayId, candy);
+  ports.game.purchase(profileId, day.dayId, soup);
+  ports.game.purchase(profileId, day.dayId, iceCream);
   ports.game.transferToSavings(profileId, day.dayId, 15);
-  const tiny: CatalogItem[] = [lunch, candy];
+  const tiny: CatalogItem[] = [soup, iceCream];
   return ports.game.closeDay(profileId, tiny);
 }
 
@@ -62,7 +62,7 @@ describe("Достижения", () => {
     const { user } = await renderApp(ports);
 
     await user.press(screen.getByRole("button", { name: "Магазин" }));
-    await user.press(screen.getByRole("button", { name: "Купить Обед" }));
+    await user.press(screen.getByRole("button", { name: "Купить Суп" }));
     await user.press(screen.getByRole("button", { name: "Купить" }));
 
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();
@@ -92,7 +92,7 @@ describe("Достижения", () => {
 
     await act(async () => {
       const profileId = seedReturningChild(ports);
-      ports.game.purchase(profileId, ports.game.dayState(profileId).dayId, lunch);
+      ports.game.purchase(profileId, ports.game.dayState(profileId).dayId, soup);
     });
 
     expect(screen.getByText("Новое достижение")).toBeOnTheScreen();

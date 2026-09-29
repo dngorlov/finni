@@ -822,9 +822,10 @@ describe("day and journal reads", () => {
 describe("Счета and a kept План", () => {
   const medicine: CatalogItem = { id: "medicine", kind: "mandatory", price: 15, effect: { meter: "mood", delta: 20 } };
   const catalogWithMedicine: CatalogItem[] = [...tinyCatalog, medicine];
-  const bills = [{ items: ["lunch"] }, { items: ["lunch", "medicine"], note: "Питомец простыл" }];
+  // Счета are a coin minimum for Обязательные; any mandatory items reach it.
+  const bills = [{ min: 12 }, { min: 27, note: "Сегодня нужно больше" }];
 
-  it("counts only today's Счета as covered, so an unneeded mandatory item is not required", () => {
+  it("counts today's Счета as covered once Обязательные reach the minimum, without buying every item", () => {
     const { game, profileId } = seed();
     const opened = game.openDay(profileId);
     if (opened.status !== "opened") throw new Error("expected opened");
@@ -837,7 +838,7 @@ describe("Счета and a kept План", () => {
     expect(summary.meterDeltas.care).toBe(-15);
   });
 
-  it("requires the day's extra bill on its cycle day", () => {
+  it("asks for the higher minimum on its cycle day", () => {
     const { game, profileId } = seed();
     playScoredDay(game, profileId);
     const opened = game.openDay(profileId);
@@ -848,6 +849,18 @@ describe("Счета and a kept План", () => {
 
     const summary = game.closeDay(profileId, catalogWithMedicine, bills);
     expect(summary.facts.mandatoryCovered).toBe(false);
+  });
+
+  it("counts two Обязательные together toward the minimum", () => {
+    const { game, profileId } = seed();
+    playScoredDay(game, profileId);
+    const opened = game.openDay(profileId);
+    if (opened.status !== "opened") throw new Error("expected opened");
+    game.purchase(profileId, opened.dayId, lunch);
+    game.purchase(profileId, opened.dayId, medicine);
+
+    const summary = game.closeDay(profileId, catalogWithMedicine, bills);
+    expect(summary.facts.mandatoryCovered).toBe(true);
   });
 
   it("refuses a План whose Обязательные are below today's Счета", () => {
@@ -869,7 +882,7 @@ describe("Счета and a kept План", () => {
     game.purchase(profileId, opened.dayId, lunch);
     game.transferToSavings(profileId, opened.dayId, 5);
 
-    const summary = game.closeDay(profileId, tinyCatalog, [{ items: ["lunch"] }]);
+    const summary = game.closeDay(profileId, tinyCatalog, [{ min: 12 }]);
     expect(summary.facts.withinPlan).toBe(false);
   });
 });

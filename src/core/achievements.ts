@@ -1,15 +1,11 @@
 import type { Stage } from "./stages";
 
-/** Shop item that feeds the «Обед готов» achievement. */
-export const LUNCH_ITEM_ID = "lunch";
-
 /**
  * What the profile has done so far. Counts only grow; an earned achievement
  * is stored and is not taken away if a later day looks different.
  */
 export type AchievementFacts = {
   shopBuys: number;
-  lunchBuys: number;
   optionalBuys: number;
   savingsIns: number;
   savedTotal: number;
@@ -52,7 +48,6 @@ export type AchievementId = (typeof ACHIEVEMENT_RULES)[number]["id"];
 export function emptyAchievementFacts(over: Partial<AchievementFacts> = {}): AchievementFacts {
   return {
     shopBuys: 0,
-    lunchBuys: 0,
     optionalBuys: 0,
     savingsIns: 0,
     savedTotal: 0,

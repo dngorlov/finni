@@ -6,9 +6,9 @@ describe("достижения", () => {
   });
 
   it("earns a first buy and a treat, and Обед adds nothing of its own", () => {
-    expect(earnedAchievementIds(emptyAchievementFacts({ shopBuys: 1, lunchBuys: 1 }))).toEqual(["first_buy"]);
+    expect(earnedAchievementIds(emptyAchievementFacts({ shopBuys: 1 }))).toEqual(["first_buy"]);
     expect(
-      earnedAchievementIds(emptyAchievementFacts({ shopBuys: 2, lunchBuys: 1, optionalBuys: 1 })),
+      earnedAchievementIds(emptyAchievementFacts({ shopBuys: 2, optionalBuys: 1 })),
     ).toEqual(["first_buy", "treat"]);
   });
 

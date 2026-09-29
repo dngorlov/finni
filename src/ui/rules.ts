@@ -77,7 +77,6 @@ function coinsSection(content: RulesContent): RuleSection {
 }
 
 function planSection(content: RulesContent): RuleSection {
-  const names = new Map(content.catalog.map((entry) => [entry.id, entry.name]));
   const lines: RuleLine[] = [
     text(s.planPromise),
     formula(s.planFormula),
@@ -85,8 +84,7 @@ function planSection(content: RulesContent): RuleSection {
     text(s.billsIntro(content.bills.length)),
   ];
   content.bills.forEach((day, index) => {
-    const list = day.items.map((id) => names.get(id) ?? id).join(" + ");
-    lines.push(item(s.billsDay(index + 1, list, billsTotal(day, content.catalog), day.note)));
+    lines.push(item(s.billsDay(index + 1, billsTotal(day), day.note)));
   });
   lines.push(text(s.billsRepeat(content.bills.length + 1)));
   return { title: s.planTitle, lines };

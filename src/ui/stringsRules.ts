@@ -74,9 +74,10 @@ export const rulesStrings = {
   planFormula: "Обязательные + Желаемые + Копилка ≤ Баланс",
   planFloor:
     "И ещё: Обязательные должны покрывать сегодняшние счета. Если монет меньше, чем счета, хватит всего баланса.",
-  billsIntro: (days: number) => `Счета идут по кругу из ${days} дней:`,
-  billsDay: (day: number, names: string, total: number, note?: string) =>
-    `День ${day}: ${names} = ${coins(total)}${note ? `. ${note}` : ""}`,
+  billsIntro: (days: number) =>
+    `Счета — это минимум на обязательное (еда и витамины). Подойдёт любой набор из обязательных покупок. Минимум идёт по кругу из ${days} дней:`,
+  billsDay: (day: number, total: number, note?: string) =>
+    `День ${day}: минимум ${coins(total)}${note ? `. ${note}` : ""}`,
   billsRepeat: (next: number) => `День ${next} снова как день 1, и так далее.`,
 
   shopTitle: "3. Покупки и шкалы",

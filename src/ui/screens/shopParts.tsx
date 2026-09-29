@@ -4,6 +4,7 @@ import type { CatalogItemContent } from "../../data/content";
 import { METERS } from "../../core/config";
 import { itemMeterEffects } from "../../core/economy";
 import { CoinText } from "../components/CoinText";
+import { isItemSprite, ItemSprite } from "../components/ItemSprite";
 import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
 import type { PixelIconName } from "../pixelIconXml";
@@ -86,12 +87,15 @@ export function goalAnnouncement(
   return parts.join(". ");
 }
 
-/** Big square picture of the item on a tile tinted by its kind. */
+/**
+ * Big square picture of the item on a tile tinted by its kind. Shop items have
+ * a 16 px pixel sprite (drawn about 56 dp on a 72 tile); a Цель has an emoji.
+ */
 export function ItemTile({
   item,
   size = 72,
 }: {
-  item: { icon: string; kind?: "mandatory" | "optional" };
+  item: { icon: string; sprite?: string; kind?: "mandatory" | "optional" };
   size?: number;
 }) {
   return (
@@ -103,9 +107,13 @@ export function ItemTile({
         { backgroundColor: item.kind === "mandatory" ? tint.mandatoryTile : tint.optionalTile },
       ]}
     >
-      <Text style={[styles.tileEmoji, { fontSize: Math.round(size * 0.66), lineHeight: Math.round(size * 0.9) }]}>
-        {item.icon}
-      </Text>
+      {isItemSprite(item.sprite) ? (
+        <ItemSprite name={item.sprite} size={Math.round(size * 0.78)} />
+      ) : (
+        <Text style={[styles.tileEmoji, { fontSize: Math.round(size * 0.66), lineHeight: Math.round(size * 0.9) }]}>
+          {item.icon}
+        </Text>
+      )}
     </View>
   );
 }

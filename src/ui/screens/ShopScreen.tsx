@@ -20,7 +20,7 @@ import { useSession } from "../session/SessionProvider";
 import { strings } from "../strings";
 import { shopStrings } from "../stringsShop";
 import { colors, spacing, type } from "../theme";
-import { billsForDay } from "../../core/economy";
+import { billsCovered, billsForDay } from "../../core/economy";
 import { confirmedLeftover, leftoverAfterTap } from "./planLeftover";
 import { PurchaseResult, type PurchaseResultModel } from "./PurchaseResult";
 import {
@@ -107,9 +107,10 @@ export default function ShopScreen({ navigation }: Props) {
 
   const activeKey = savings?.activeGoal?.key ?? null;
   const pot = savings?.pot ?? 0;
-  const dueIds = new Set(day ? billsForDay(day.n, content.bills).items : []);
+  // Счета are a coin minimum: every Обязательное counts until today's minimum is reached.
+  const billsOpen = day != null && !billsCovered(billsForDay(day.n, content.bills), day.actual.mandatory);
   const flagsFor = (item: CatalogItemContent): RowFlags => ({
-    due: dueIds.has(item.id),
+    due: billsOpen && item.kind === "mandatory",
     goal: activeKey === item.id,
     bought: bought.includes(item.id),
   });

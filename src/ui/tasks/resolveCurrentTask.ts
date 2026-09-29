@@ -1,9 +1,9 @@
 import { readCustomGoalItem } from "../../core/customGoal";
 import { FEATURES } from "../../core/config";
 import { currentTask, createLessonPin, type CurrentTask } from "../../core/currentTask";
-import { billsForDay } from "../../core/economy";
+import { billsCovered, billsForDay, billsTotal } from "../../core/economy";
 import { unlockedTasks } from "../../core/tasks";
-import type { GameContent } from "../../data/content";
+import { RETIRED_SHOP_ITEMS, type GameContent } from "../../data/content";
 import type { SessionGame } from "../session/types";
 import { strings } from "../strings";
 import { completedTaskIds } from "./model";
@@ -42,8 +42,7 @@ export function resolveCurrentTask(
   const planOpen = profile.isDemo || completed.has(FEATURES.planTaskId);
   const unlocked = unlockedTasks(content.tasks, completed);
   const openIds = new Set(unlocked.map((task) => task.id));
-  const purchased = new Set(game.purchasedItemIds(profileId, day.dayId));
-  const due = billsForDay(day.n, content.bills).items;
+  const bills = billsForDay(day.n, content.bills);
   const lessonPool = unlocked
     .filter(
       (task) =>
@@ -63,33 +62,30 @@ export function resolveCurrentTask(
     hasGoal: Boolean(activeGoal) || goalsLeft(game, content, profileId, profile.stage) === 0,
     goalReadyId: activeGoal?.achieved ? activeGoal.key : null,
     planConfirmed: day.plan.status === "confirmed",
-    billsCovered: due.every((id) => purchased.has(id)),
+    billsCovered: billsCovered(bills, day.actual.mandatory),
     savingsLessonPending: openIds.has(FEATURES.savingsTaskId) && !completed.has(FEATURES.savingsTaskId),
     planLessonPending: openIds.has(FEATURES.planTaskId) && !completed.has(FEATURES.planTaskId),
     lessonPool,
     pickLesson: pinLesson,
   });
-  if (task?.kind === "buy-bills") return { ...task, itemIds: due.filter((id) => !purchased.has(id)) };
+  if (task?.kind === "buy-bills") return { ...task, left: Math.max(0, billsTotal(bills) - day.actual.mandatory) };
   return task;
-}
-
-/** «обед», «обед и проезд», «обед, проезд и лекарство» from catalog names. */
-export function billsPhrase(itemIds: readonly string[], content: GameContent): string {
-  const names = itemIds.map((id) => (content.catalog.find((item) => item.id === id)?.name ?? id).toLowerCase());
-  if (names.length <= 1) return names.join("");
-  return `${names.slice(0, -1).join(", ")} и ${names[names.length - 1]}`;
 }
 
 export function currentTaskLabel(task: CurrentTask, content: GameContent): string {
   if (task.kind === "set-goal") return strings.currentTaskSetGoal;
   if (task.kind === "buy-goal") {
-    const name = readCustomGoalItem(task.goalId)?.name ?? content.goals.find((goal) => goal.id === task.goalId)?.name ?? task.goalId;
+    const name =
+      readCustomGoalItem(task.goalId)?.name ??
+      content.goals.find((goal) => goal.id === task.goalId)?.name ??
+      content.catalog.find((item) => item.id === task.goalId)?.name ??
+      RETIRED_SHOP_ITEMS.find((item) => item.id === task.goalId)?.name ??
+      task.goalId;
     return strings.currentTaskBuyGoal(name);
   }
   if (task.kind === "confirm-plan") return strings.currentTaskPlan;
   if (task.kind === "buy-bills") {
-    const phrase = billsPhrase(task.itemIds ?? [], content);
-    return phrase ? strings.currentTaskBills(phrase) : strings.currentTaskShop;
+    return task.left ? strings.currentTaskBills(task.left) : strings.currentTaskShop;
   }
   const title = content.tasks.find((row) => row.id === task.taskId)?.title ?? task.taskId;
   return strings.currentTaskLesson(title);

@@ -5,7 +5,7 @@ import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 import { confirmTinyPlan, openMoney, openTab, walkTinyPlan } from "../testSupport/flowHelpers";
 
 const content = loadContent();
-const candy = content.catalog.find((item) => item.id === "candy")!;
+const tea = content.catalog.find((item) => item.id === "tea")!;
 const iceCream = content.catalog.find((item) => item.id === "ice-cream")!;
 
 async function renderApp(ports = createFakePorts()) {
@@ -27,20 +27,20 @@ describe("economy loop (Appendix A 5, 7–9)", () => {
     await openTab(user, "Дом");
 
     await user.press(screen.getByRole("button", { name: "Магазин" }));
-    await user.press(screen.getByRole("button", { name: "Купить Обед" }));
+    await user.press(screen.getByRole("button", { name: "Купить Суп" }));
     await user.press(screen.getByRole("button", { name: "Купить" }));
-    expect(screen.getByLabelText("Баланс -12")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Баланс -8")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
     await user.press(screen.getByRole("button", { name: "Желаемое" }));
-    await user.press(screen.getByRole("button", { name: "Купить Конфета" }));
+    await user.press(screen.getByRole("button", { name: "Купить Билет в кино" }));
     await user.press(screen.getByRole("button", { name: "Купить" }));
-    expect(screen.getByLabelText("Счастье +5")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Счастье +15")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Понятно" }));
     await user.press(screen.getByRole("button", { name: "Назад" }));
 
     const day = ports.game.dayState(profileId);
     while (ports.game.getProfile(profileId).balance >= iceCream.price) {
-      ports.game.purchase(profileId, day.dayId, candy);
+      ports.game.purchase(profileId, day.dayId, tea);
     }
 
     await user.press(screen.getByRole("button", { name: "Магазин" }));
@@ -61,8 +61,9 @@ describe("economy loop (Appendix A 5, 7–9)", () => {
     await user.press(screen.getByRole("button", { name: "Понятно" }));
 
     await openMoney(user, "Журнал");
-    expect(screen.getByLabelText("Покупка: Обед -12")).toBeOnTheScreen();
-    expect(screen.getAllByLabelText("Покупка: Конфета -5").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Покупка: Суп -8")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Покупка: Билет в кино -10")).toBeOnTheScreen();
+    expect(screen.getAllByLabelText("Покупка: Чай -2").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Перевод в копилку -1")).toBeOnTheScreen();
     expect(screen.queryByLabelText("Пособие +20")).not.toBeOnTheScreen();
     await openTab(user, "Дом");
@@ -86,29 +87,29 @@ describe("economy loop (Appendix A 5, 7–9)", () => {
       expect(screen.getByLabelText("Баланс 100")).toBeOnTheScreen();
 
       await user.press(screen.getByRole("button", { name: "Магазин" }));
-      // Обязательные start at today's Счета (Обед 12 + Проезд 8) + 1 from confirmTinyPlan.
+      // Обязательные start at today's Счета minimum (20) + 1 from confirmTinyPlan.
       expect(screen.getByLabelText("Обязательные: в плане осталось 21")).toBeOnTheScreen();
       expect(screen.getAllByLabelText(/: в плане осталось \d+$/)).toHaveLength(1);
 
-      await user.press(screen.getByRole("button", { name: "Купить Обед" }));
-      expect(screen.getByLabelText("в плане останется 9")).toBeOnTheScreen();
+      await user.press(screen.getByRole("button", { name: "Купить Суп" }));
+      expect(screen.getByLabelText("в плане останется 13")).toBeOnTheScreen();
       expect(screen.queryByText("Это сверх плана.")).not.toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Купить" }));
       await user.press(screen.getByRole("button", { name: "Понятно" }));
-      expect(screen.getByLabelText("Обязательные: в плане осталось 9")).toBeOnTheScreen();
+      expect(screen.getByLabelText("Обязательные: в плане осталось 13")).toBeOnTheScreen();
 
       await user.press(screen.getByRole("button", { name: "Желаемое" }));
       expect(screen.getByLabelText("Желаемые: в плане осталось 1")).toBeOnTheScreen();
-      expect(screen.queryByLabelText("Обязательные: в плане осталось 9")).not.toBeOnTheScreen();
+      expect(screen.queryByLabelText("Обязательные: в плане осталось 13")).not.toBeOnTheScreen();
 
-      await user.press(screen.getByRole("button", { name: "Купить Конфета" }));
-      expect(screen.getByLabelText("в плане останется -4")).toBeOnTheScreen();
+      await user.press(screen.getByRole("button", { name: "Купить Мороженое" }));
+      expect(screen.getByLabelText("в плане останется -3")).toBeOnTheScreen();
       expect(screen.getByText("Это сверх плана.")).toBeOnTheScreen();
       expect(screen.getByRole("button", { name: "Купить" })).toBeEnabled();
       await user.press(screen.getByRole("button", { name: "Купить" }));
-      expect(screen.getByLabelText("Баланс -5")).toBeOnTheScreen();
+      expect(screen.getByLabelText("Баланс -4")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Понятно" }));
-      expect(screen.getByLabelText("Желаемые: сверх плана 4")).toBeOnTheScreen();
+      expect(screen.getByLabelText("Желаемые: сверх плана 3")).toBeOnTheScreen();
       await user.press(screen.getByRole("button", { name: "Назад" }));
 
       await openMoney(user, "Копилка");

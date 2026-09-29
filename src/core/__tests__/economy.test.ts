@@ -1,5 +1,6 @@
 import {
   applyMeterDelta,
+  billsCovered,
   billsForDay,
   billsTotal,
   planKept,
@@ -119,23 +120,25 @@ describe("day-close meters", () => {
 });
 
 describe("Счета and the План floor", () => {
-  const cycle = [{ items: ["lunch"] }, { items: ["lunch", "medicine"], note: "Питомец простыл" }];
-  const catalog = [
-    { id: "lunch", price: 12 },
-    { id: "medicine", price: 15 },
-  ];
+  const cycle = [{ min: 20 }, { min: 25, note: "Сегодня питомец очень голодный" }];
 
   it("repeats the Счета cycle by Игровой день", () => {
-    expect(billsForDay(1, cycle).items).toEqual(["lunch"]);
-    expect(billsForDay(2, cycle).note).toBe("Питомец простыл");
-    expect(billsForDay(3, cycle).items).toEqual(["lunch"]);
-    expect(billsForDay(1, [])).toEqual({ items: [] });
+    expect(billsForDay(1, cycle).min).toBe(20);
+    expect(billsForDay(2, cycle).note).toBe("Сегодня питомец очень голодный");
+    expect(billsForDay(3, cycle).min).toBe(20);
+    expect(billsForDay(1, [])).toEqual({ min: 0 });
   });
 
-  it("sums today's Счета and clamps the floor to what the child has", () => {
-    expect(billsTotal(billsForDay(2, cycle), catalog)).toBe(27);
-    expect(planMandatoryFloor(27, 100)).toBe(27);
-    expect(planMandatoryFloor(27, 10)).toBe(10);
+  it("counts any Обязательные spend toward today's minimum", () => {
+    expect(billsTotal(billsForDay(2, cycle))).toBe(25);
+    expect(billsCovered(billsForDay(1, cycle), 19)).toBe(false);
+    expect(billsCovered(billsForDay(1, cycle), 20)).toBe(true);
+    expect(billsCovered(billsForDay(1, []), 0)).toBe(true);
+  });
+
+  it("clamps the floor to what the child has", () => {
+    expect(planMandatoryFloor(25, 100)).toBe(25);
+    expect(planMandatoryFloor(25, 10)).toBe(10);
   });
 
   it("rejects a План whose Обязательные are under the floor", () => {

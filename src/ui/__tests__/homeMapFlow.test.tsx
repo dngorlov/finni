@@ -490,11 +490,16 @@ describe("Как всё считается", () => {
     expect(text).toContain(`по последним ${SAVINGS.estimateWindow} взносам`);
 
     const content = loadContent();
-    const lunch = content.catalog.find((item) => item.id === "lunch")!;
-    expect(text).toContain(`${lunch.name} (обязательное) — ${lunch.price} монет`);
+    const soup = content.catalog.find((item) => item.id === "soup")!;
+    expect(text).toContain(`${soup.name} (обязательное) — ${soup.price} монет: Сытость +${soup.effect.delta}`);
+    const cherry = content.catalog.find((item) => item.id === "cherry")!;
+    expect(text).toContain(`${cherry.name} (обязательное) — ${cherry.price} монеты: Сытость +2, Счастье +2`);
+    expect(text).not.toContain("Лекарство");
     const guitar = content.goals.find((goal) => goal.id === "guitar")!;
     expect(text).toContain(`${guitar.name} ${guitar.price} (Счастье +${guitar.effect.delta})`);
-    expect(text).toContain(`Счета идут по кругу из ${content.bills.length} дней`);
+    expect(text).toContain("Счета — это минимум на обязательное (еда и витамины)");
+    expect(text).toContain(`Минимум идёт по кругу из ${content.bills.length} дней`);
+    content.bills.forEach((day, index) => expect(text).toContain(`День ${index + 1}: минимум ${day.min} монет`));
 
     await user.press(screen.getByRole("button", { name: strings.back }));
     expect(screen.getByRole("button", { name: "Как всё считается" })).toBeOnTheScreen();

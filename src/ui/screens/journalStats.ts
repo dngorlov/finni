@@ -1,5 +1,6 @@
 import { readCustomGoalItem } from "../../core/customGoal";
 import type { PlanBuckets } from "../../core/economy";
+import { RETIRED_SHOP_ITEMS } from "../../data/content";
 import type { JournalEntry } from "../../data/repositories/gameRepository";
 
 /** Periods of the Журнал, counted in Игровые дни. */
@@ -182,7 +183,11 @@ export function savingsOps(journal: readonly JournalEntry[], lookup: ItemLookup)
   });
 }
 
-/** Item lookup over the content catalog and Цели (a catalog item wins on a shared id). */
+/**
+ * Item lookup over the content catalog and Цели (a catalog item wins on a
+ * shared id). Items retired from Магазин still resolve, so old Журнал rows
+ * keep their bucket.
+ */
 export function itemLookup(
   catalog: readonly { id: string; kind: "mandatory" | "optional"; price: number }[],
   goals: readonly { id: string; price: number }[],
@@ -191,7 +196,7 @@ export function itemLookup(
     if (!itemId) return undefined;
     const custom = readCustomGoalItem(itemId);
     if (custom) return { kind: "goal" as const, price: custom.price };
-    const item = catalog.find((entry) => entry.id === itemId);
+    const item = catalog.find((entry) => entry.id === itemId) ?? RETIRED_SHOP_ITEMS.find((entry) => entry.id === itemId);
     if (item) return { kind: item.kind, price: item.price };
     const goal = goals.find((entry) => entry.id === itemId);
     return goal ? { kind: "goal", price: goal.price } : undefined;
@@ -206,7 +211,12 @@ export function itemTitle(
   if (!itemId) return "";
   const custom = readCustomGoalItem(itemId);
   if (custom) return custom.name;
-  return catalog.find((item) => item.id === itemId)?.name ?? goals.find((goal) => goal.id === itemId)?.name ?? itemId;
+  return (
+    catalog.find((item) => item.id === itemId)?.name ??
+    goals.find((goal) => goal.id === itemId)?.name ??
+    RETIRED_SHOP_ITEMS.find((item) => item.id === itemId)?.name ??
+    itemId
+  );
 }
 
 export interface SavingsStats {

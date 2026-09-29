@@ -6,9 +6,9 @@ import { createFakePorts, seedReturningChild } from "../testSupport/fakePorts";
 import { openMoney, openTab } from "../testSupport/flowHelpers";
 
 const content = loadContent();
-const lunch = content.catalog.find((item) => item.id === "lunch")!;
-const candy = content.catalog.find((item) => item.id === "candy")!;
-const tinyCatalog: CatalogItem[] = [lunch, candy];
+const soup = content.catalog.find((item) => item.id === "soup")!;
+const cinema = content.catalog.find((item) => item.id === "cinema")!;
+const tinyCatalog: CatalogItem[] = [soup, cinema];
 
 async function renderApp(ports = createFakePorts()) {
   const user = userEvent.setup();
@@ -18,10 +18,10 @@ async function renderApp(ports = createFakePorts()) {
 
 function closeScoredDay(ports: ReturnType<typeof createFakePorts>, profileId: string) {
   const day = ports.game.dayState(profileId);
-  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 12, optional: 5, savings: 15 });
+  ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 8, optional: 10, savings: 15 });
   ports.game.confirmPlan(profileId, day.dayId);
-  ports.game.purchase(profileId, day.dayId, lunch);
-  ports.game.purchase(profileId, day.dayId, candy);
+  ports.game.purchase(profileId, day.dayId, soup);
+  ports.game.purchase(profileId, day.dayId, cinema);
   ports.game.transferToSavings(profileId, day.dayId, 15);
   return ports.game.closeDay(profileId, tinyCatalog);
 }
@@ -31,12 +31,12 @@ describe("Прогресс", () => {
     const ports = createFakePorts();
     const profileId = seedReturningChild(ports);
     const day = ports.game.dayState(profileId);
-    ports.game.purchase(profileId, day.dayId, lunch);
+    ports.game.purchase(profileId, day.dayId, soup);
     const { user } = await renderApp(ports);
 
     await openMoney(user, "Журнал");
     expect(screen.getByText("День 1")).toBeOnTheScreen();
-    expect(screen.getByLabelText("Покупка: Обед -12")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Покупка: Суп -8")).toBeOnTheScreen();
     expect(screen.queryByLabelText("Пособие +20")).not.toBeOnTheScreen();
     expect(screen.getByText("Старт")).toBeOnTheScreen();
     expect(screen.getByLabelText("Стартовый бюджет +100")).toBeOnTheScreen();
@@ -73,8 +73,8 @@ describe("Прогресс", () => {
       screen.queryByText("Итоги появятся после первого закрытого игрового дня."),
     ).not.toBeOnTheScreen();
     expect(screen.getByText("Игровой день 1")).toBeOnTheScreen();
-    expect(screen.getByLabelText("план 12 · потрачено 12")).toBeOnTheScreen();
-    expect(screen.getByLabelText("план 5 · потрачено 5")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 8 · потрачено 8")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 10 · потрачено 10")).toBeOnTheScreen();
     expect(screen.getByLabelText("план 15 · потрачено 15")).toBeOnTheScreen();
     expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();
     expect(screen.queryByText("Каждый день: Счастье -15")).not.toBeOnTheScreen();

@@ -66,7 +66,7 @@ describe("Итоги дня", () => {
     const ports = createFakePorts();
     const profileId = seedReturningChild(ports);
     const day = ports.game.dayState(profileId);
-    ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 45, optional: 0, savings: 15 });
+    ports.game.saveDraftPlan(profileId, day.dayId, { mandatory: 18, optional: 0, savings: 15 });
     ports.game.confirmPlan(profileId, day.dayId);
     for (const item of content.catalog.filter((row) => row.kind === "mandatory")) {
       ports.game.purchase(profileId, day.dayId, item);
@@ -77,7 +77,7 @@ describe("Итоги дня", () => {
     await user.press(screen.getByRole("button", { name: "Следующий день" }));
     await user.press(screen.getByRole("button", { name: "Итоги" }));
 
-    expect(screen.getByLabelText("план 45 · потрачено 45")).toBeOnTheScreen();
+    expect(screen.getByLabelText("план 18 · потрачено 18")).toBeOnTheScreen();
     expect(screen.getByLabelText("план 0 · потрачено 0")).toBeOnTheScreen();
     expect(screen.getByLabelText("план 15 · потрачено 15")).toBeOnTheScreen();
     expect(screen.queryByText("Каждый день: Сытость -15")).not.toBeOnTheScreen();

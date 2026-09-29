@@ -15,12 +15,14 @@ const meterEffectSchema = z.object({
 const catalogItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  /** Emoji shown beside the name in Магазин. Hidden from TalkBack. */
+  /** Emoji fallback when there is no pixel picture. Hidden from TalkBack. */
   icon: z.string().min(1),
+  /** Pixel picture in Магазин: a file name from design/items (see scripts/pack-item-sprites.mjs). */
+  sprite: z.string().min(1),
   kind: z.enum(["mandatory", "optional"]),
   price: z.number().int().nonnegative(),
   effect: meterEffectSchema,
-  /** Обед also raises Счастье. */
+  /** A second meter the item raises (Вишня: Сытость and Счастье). */
   also: meterEffectSchema.optional(),
   description: z.string().min(1),
   once: z.boolean().optional().default(false),
@@ -36,8 +38,9 @@ const goalItemSchema = z.object({
   description: z.string().min(1),
 });
 
+/** One day of Счета: the least the child spends on Обязательные that day. */
 const dayBillsSchema = z.object({
-  items: z.array(z.string().min(1)).min(1),
+  min: z.number().int().positive(),
   note: z.string().min(1).optional(),
 });
 
@@ -50,19 +53,7 @@ const catalogFileSchema = z
     bills: z.array(dayBillsSchema).min(1),
   })
   .superRefine((file, ctx) => {
-    const mandatory = new Set(file.items.filter((item) => item.kind === "mandatory").map((item) => item.id));
     const shopIds = new Set(file.items.map((item) => item.id));
-    file.bills.forEach((day, dayIndex) => {
-      day.items.forEach((id, itemIndex) => {
-        if (!mandatory.has(id)) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["bills", dayIndex, "items", itemIndex],
-            message: `Счёт «${id}» должен быть обязательным товаром каталога`,
-          });
-        }
-      });
-    });
     for (const stage of ["novice", "pro", "millionaire"] as const) {
       const count = file.goals.filter((goal) => goal.stage === stage).length;
       if (count !== 3) {
@@ -367,6 +358,19 @@ const tasksFileSchema = z
   });
 
 export type CatalogItemContent = z.infer<typeof catalogItemSchema>;
+
+/**
+ * Магазин items retired with the final catalogue (2026-09-29). A saved
+ * purchase keeps its own price and kind in the database; this only keeps old
+ * Журнал rows named and counted in the right bucket. Never sold again.
+ */
+export const RETIRED_SHOP_ITEMS: readonly { id: string; name: string; kind: "mandatory" | "optional"; price: number }[] = [
+  { id: "lunch", name: "Обед", kind: "mandatory", price: 12 },
+  { id: "school", name: "Школьные принадлежности", kind: "mandatory", price: 10 },
+  { id: "transport", name: "Проезд", kind: "mandatory", price: 8 },
+  { id: "medicine", name: "Лекарство", kind: "mandatory", price: 15 },
+  { id: "candy", name: "Конфета", kind: "optional", price: 5 },
+];
 export type DayBillsContent = z.infer<typeof dayBillsSchema>;
 export type GoalContent = z.infer<typeof goalItemSchema> & { stage: Stage };
 export type TermContent = z.infer<typeof termSchema>;
@@ -376,7 +380,7 @@ export type TaskFileContent = z.infer<typeof taskSchema>;
 export interface GameContent {
   contentVersion: typeof CONTENT_VERSION;
   catalog: CatalogItemContent[];
-  /** Счета cycle — which mandatory items are due on each Игровой день. */
+  /** Счета cycle — the Обязательные minimum for each Игровой день. */
   bills: DayBillsContent[];
   goals: GoalContent[];
   terms: TermContent[];

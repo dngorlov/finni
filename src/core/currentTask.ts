@@ -5,8 +5,8 @@ export type CurrentTask =
   | { kind: "set-goal" }
   | { kind: "buy-goal"; goalId: string }
   | { kind: "confirm-plan" }
-  /** `itemIds`: today's unpaid Счета, in bill order, when the caller knows them. */
-  | { kind: "buy-bills"; itemIds?: readonly string[] }
+  /** `left`: coins today's Счета still ask for on Обязательные, when the caller knows it. */
+  | { kind: "buy-bills"; left?: number }
   | { kind: "lesson"; taskId: string };
 
 export interface CurrentTaskInput {
@@ -16,7 +16,7 @@ export interface CurrentTaskInput {
   /** Копилка already covers the active Цель. */
   goalReadyId: string | null;
   planConfirmed: boolean;
-  /** Today's Счета are all bought. */
+  /** Today's Обязательные purchases reach the Счета minimum. */
   billsCovered: boolean;
   /** «Что такое сбережения» is playable and not completed. */
   savingsLessonPending: boolean;
