@@ -300,6 +300,23 @@ describe("loadContent", () => {
     expect(sort?.items?.length).toBeGreaterThanOrEqual(6);
   });
 
+  it("keeps every map pin on the map and apart from the others, even on a 320 px wide map", () => {
+    const pins = content.tasks.flatMap((task) => (task.pin ? [{ id: task.id, ...task.pin }] : []));
+    expect(pins).toHaveLength(9);
+    for (const pin of pins) {
+      expect(pin.x).toBeGreaterThanOrEqual(0);
+      expect(pin.x).toBeLessThanOrEqual(1);
+      expect(pin.y).toBeGreaterThanOrEqual(0);
+      expect(pin.y).toBeLessThanOrEqual(1);
+    }
+    // 320 x 427 map, 44 px pins: centres at least a pin apart.
+    for (const [i, a] of pins.entries()) {
+      for (const b of pins.slice(i + 1)) {
+        expect(Math.hypot((a.x - b.x) * 320, (a.y - b.y) * 427)).toBeGreaterThan(44);
+      }
+    }
+  });
+
   it("gives each new lesson its interactive game from the updated scenario", () => {
     const kinds = (id: string) => content.tasks.find((t) => t.id === id)?.nodes.map((n) => n.kind ?? "choice") ?? [];
     expect(kinds("budget_plan")).toEqual(expect.arrayContaining(["allocate", "compare"]));

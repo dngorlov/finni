@@ -4,12 +4,14 @@ import { Fab, FabStack } from "../components/Fab";
 import { PixelIcon } from "../components/Pictogram";
 import { PixelSprite } from "../components/PixelSprite";
 import { useLatest } from "../components/useLatest";
+import { SHELF_GOALS } from "../goalLabel";
 import { LivingPet } from "../pet/LivingPet";
 import { strings } from "../strings";
 import { homeStrings } from "../stringsHome";
 import { shopStrings } from "../stringsShop";
 import { colors, font, minTarget, radius, spacing } from "../theme";
 import { nextSpeechLine, speechMood, speechPool } from "./petSpeech";
+import { ItemTile } from "./shopParts";
 
 /** Before the first layout pass (and in jest, which never lays out). */
 const FALLBACK_PET = 240;
@@ -21,12 +23,17 @@ const SPEECH_MS = 3500;
 const QUIET_MS = 8000;
 /** Window on the left wall: its bottom edge above the floor, and its side. */
 const WINDOW_LIFT = spacing.l + 96;
-/** One narrow wooden shelf on the right wall: three cells stacked. */
+/** One narrow wooden shelf on the right wall: three cells stacked, one bought Цель in each. */
 const SHELF_WIDTH = 48;
 const SHELF_HEIGHT = 132;
-const SHELF_CELLS = 3;
+const SHELF_CELLS = SHELF_GOALS;
+/** Goal tile inside a 40 x 38 cell: whole pixels, a little air around it. */
+const SHELF_TILE = 34;
 /** Info mark is 32 dp; slop keeps the tap at the 48 dp minimum. */
 const DAY_INFO_SLOP = (minTarget - 32) / 2;
+
+/** A bought Цель standing on the shelf. */
+export type ShelfGoal = { id: string; name: string; icon: string };
 
 export type HomePet = {
   species: string;
@@ -71,6 +78,7 @@ export function HomeScene({
   dropRef,
   onDropLayout,
   bottomInset = 0,
+  shelf = [],
   active = true,
   quiet = false,
   random,
@@ -99,6 +107,8 @@ export function HomeScene({
   onDropLayout?: () => void;
   /** Space the pet and buttons leave at the bottom for the overlaid Этап card. */
   bottomInset?: number;
+  /** Bought Цели for the shelf, oldest first; only the first three cells are used. */
+  shelf?: readonly ShelfGoal[];
   /** Дом is on screen. False pauses the pet's animation timers. */
   active?: boolean;
   /** Acquaintance tour is speaking, so the pet stays quiet. */
@@ -183,6 +193,7 @@ export function HomeScene({
   const shelfBottom = floorHeight + WINDOW_LIFT;
   const shelfTop = box.height - shelfBottom - SHELF_HEIGHT;
   // Short scenes (small phones, big Этап card) have no wall for it: leave it out rather than overlap.
+  const shelfItems = shelf.slice(0, SHELF_CELLS);
   const showShelf = measured && actionsBottom > 0 && shelfTop >= actionsBottom + spacing.s && shelfBottom >= bottomInset;
 
   const progress = cost > 0 ? Math.max(0, Math.min(1, accumulated / cost)) : 0;
@@ -216,7 +227,7 @@ export function HomeScene({
 
   return (
     <View testID="home-scene" style={styles.scene} onLayout={onLayout}>
-      {/* Room: wall, window, shelf, skirting board, floor planks. Pure decoration. */}
+      {/* Room: wall, window, skirting board, floor planks. Pure decoration. */}
       <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
         <View style={[styles.wall, { bottom: floorHeight }]} />
         <View style={[styles.window, { bottom: floorHeight + WINDOW_LIFT }]}>
@@ -227,13 +238,6 @@ export function HomeScene({
           <View style={styles.pane} />
           <View style={styles.pane} />
         </View>
-        {showShelf ? (
-          <View testID="home-shelf" style={[styles.shelf, { bottom: shelfBottom }]}>
-            {Array.from({ length: SHELF_CELLS }, (_, index) => (
-              <View key={index} style={styles.shelfCell} />
-            ))}
-          </View>
-        ) : null}
         <View style={[styles.floor, { height: floorHeight }]}>
           <View style={styles.skirting} />
           <View style={styles.plank} />
@@ -241,6 +245,26 @@ export function HomeScene({
           <View style={styles.plank} />
         </View>
       </View>
+
+      {showShelf ? (
+        <View
+          testID="home-shelf"
+          pointerEvents="none"
+          {...(shelfItems.length > 0
+            ? { accessible: true, "aria-label": homeStrings.shelfA11y(shelfItems.map((goal) => goal.name)) }
+            : { "aria-hidden": true, accessibilityElementsHidden: true, importantForAccessibility: "no-hide-descendants" as const })}
+          style={[styles.shelf, { bottom: shelfBottom }]}
+        >
+          {Array.from({ length: SHELF_CELLS }, (_, index) => {
+            const goal = shelfItems[index];
+            return (
+              <View key={goal?.id ?? `empty-${index}`} testID={goal ? `home-shelf-${goal.id}` : undefined} style={styles.shelfCell}>
+                {goal ? <ItemTile item={{ icon: goal.icon, kind: "optional" }} size={SHELF_TILE} /> : null}
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
 
       <LivingPet
         pet={pet}
@@ -411,8 +435,11 @@ const styles = StyleSheet.create({
     width: SHELF_WIDTH,
   },
   shelfCell: {
+    alignItems: "center",
     backgroundColor: colors.card,
     flex: 1,
+    justifyContent: "center",
+    overflow: "hidden",
   },
   floor: {
     backgroundColor: colors.badgeFill,
