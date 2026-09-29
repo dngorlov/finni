@@ -43,8 +43,7 @@ const points = (n: number) => (n === 0.5 ? "½" : String(n).replace(".", ","));
 export const rulesStrings = {
   open: "Как всё считается",
   title: "Как всё считается",
-  intro:
-    "Здесь все правила игры. Числа берутся прямо из игры, поэтому они всегда такие же, как на экранах.",
+  intro: "Здесь все правила игры. Числа берутся прямо из игры, поэтому они всегда такие же, как на экранах.",
 
   coinsTitle: "1. Откуда монеты",
   startBudget: (n: number) => `Старт: ${coins(n)} один раз, когда появляется питомец.`,
@@ -55,12 +54,19 @@ export const rulesStrings = {
     `Очки: верно — ${points(good)}, «с ценой» — ${points(warn)}, неверно — ${points(bad)}. Считается только первый ответ. Каждая фишка в сортировке — отдельный вопрос. Результат округляется и не бывает больше награды.`,
   lessonUnscored:
     "Учебные карточки и игры на расчёт («распредели», «сравни», «пересобери», «шаг за шагом», «финансовая мечта») в вопросы не входят. Если вопросов нет совсем, награда платится целиком.",
-  lessonExample: (reward: number, questions: number, good: number, warn: number, bad: number, total: number, earned: number) =>
+  lessonExample: (
+    reward: number,
+    questions: number,
+    good: number,
+    warn: number,
+    bad: number,
+    total: number,
+    earned: number,
+  ) =>
     `Пример: урок на ${coins(reward)}, ${questions} вопроса. С первого раза ${good} верно, ${warn} «с ценой», ${bad} неверно. Очки ${points(total)}. Монеты = ${reward} × ${points(total)} ÷ ${questions} ≈ ${earned}.`,
   miniReward: (min: number, max: number) =>
     `Награда за мини-игру — ${range(min, max)} монет, считается по той же формуле. Мини-игра день не закрывает.`,
-  correctionReward: (title: string, reward: number) =>
-    `«${title}» появляется после ошибки и даёт до ${coins(reward)}.`,
+  correctionReward: (title: string, reward: number) => `«${title}» появляется после ошибки и даёт до ${coins(reward)}.`,
   repeatFormula: "Повтор = новый результат − лучший прошлый (если меньше нуля, то 0)",
   repeatExample: (best: number, now: number, topUp: number) =>
     `Пример: в прошлый раз ${best}, сейчас ${now} → доплата ${signed(topUp)}. Так повтором нельзя «накрутить» монеты, но стараться снова выгодно.`,
@@ -89,9 +95,9 @@ export const rulesStrings = {
   habitIntro:
     "Привычки. «Подряд» — это сколько прошлых игровых дней подряд (вчера, позавчера…) ты покупал этот товар. Сегодняшние покупки не считаются, поэтому все покупки за один день дают одинаково. Пропустил день — счёт с нуля.",
   habitGrow: (name: string, base: number, step: number, max: number) =>
-    `${name} — бонус за подряд: Счастье = ${base} + ${step} за каждый день подряд, но не больше ${base + max}.`,
+    `${name} — бонус за повтор: Счастье = ${base} + ${step} за каждый день подряд, но не больше ${base + max}.`,
   habitFade: (name: string, base: number, step: number, min: number) =>
-    `${name} — меньше за подряд: Счастье = ${base} − ${step} за каждый день подряд, но не меньше ${min}.`,
+    `${name} — меньше за повтор: Счастье = ${base} − ${step} за каждый день подряд, но не меньше ${min}.`,
   meterStart: (care: number, mood: number) => `Новый питомец: Сытость ${care}, Счастье ${mood}.`,
   dayEnd: (care: number, mood: number) =>
     `Конец каждого игрового дня: Сытость ${signed(-care)}, Счастье ${signed(-mood)}. Покупка это не отменяет, её прибавка уже на шкале.`,
@@ -124,8 +130,10 @@ export const rulesStrings = {
   stagesTitle: "6. Этапы питомца",
   stagesOrder: (names: readonly string[]) =>
     `${names.join(" → ")}. Этап растёт только от покупки цели из копилки: одна цель — один шаг.`,
-  stageFloor: (stage: string, price: number) => `Чтобы уйти с этапа ${stage}, накопи хотя бы ${coins(price)}: столько стоит самая дешёвая цель этапа.`,
-  stageLast: (stage: string) => `На этапе ${stage} следующего этапа нет, но цели всё равно можно покупать ради Счастья.`,
+  stageFloor: (stage: string, price: number) =>
+    `Чтобы уйти с этапа ${stage}, накопи хотя бы ${coins(price)}: столько стоит самая дешёвая цель этапа.`,
+  stageLast: (stage: string) =>
+    `На этапе ${stage} следующего этапа нет, но цели всё равно можно покупать ради Счастья.`,
   accessory: (stage: string, name: string) => `${stage}: ${name}`,
   accessoryIntro: "Аксессуар открывается вместе с этапом:",
 } as const;

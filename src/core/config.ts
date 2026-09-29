@@ -4,7 +4,7 @@
  */
 export const ECONOMY = {
   /** Стартовый бюджет: granted once at profile creation (§2.1). */
-  startingBudget: 100,
+  startingBudget: 30,
   /**
    * Unscored correction Задания (`taskRewardDue`). A scored mission pays up to
    * its own `reward` in tasks.json: a pinned Урок is 30 or 35 (the old daily
@@ -54,4 +54,3 @@ export const BANK = {
     { id: "long", days: 5, ratePercent: 20 },
   ],
 } as const;
-
