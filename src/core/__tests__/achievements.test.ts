@@ -38,7 +38,7 @@ describe("достижения", () => {
     expect(
       achievementFactsFrom({
         purchases: [
-          { dayId: "d1", itemId: "candy", boughtAsActiveGoal: false },
+          { dayId: "d1", itemId: "pizza", boughtAsActiveGoal: false },
           { dayId: "d1", itemId: "skateboard", boughtAsActiveGoal: true },
         ],
         savingsInDayIds: [],
@@ -53,7 +53,7 @@ describe("достижения", () => {
     expect(
       achievementFactsFrom({
         purchases: [
-          { dayId: "d1", itemId: "candy", boughtAsActiveGoal: false },
+          { dayId: "d1", itemId: "pizza", boughtAsActiveGoal: false },
           { dayId: "d2", itemId: "ice-cream", boughtAsActiveGoal: false },
         ],
         savingsInDayIds: [],
@@ -67,12 +67,12 @@ describe("достижения", () => {
     ).toBe(true);
   });
 
-  it("counts a sick day only when Обед, Проезд, and Лекарство share one day", () => {
+  it("counts a sick day only when Суп, Чай, and Витамины share one day", () => {
     const split = achievementFactsFrom({
       purchases: [
-        { dayId: "d1", itemId: "lunch", boughtAsActiveGoal: false },
-        { dayId: "d1", itemId: "transport", boughtAsActiveGoal: false },
-        { dayId: "d2", itemId: "medicine", boughtAsActiveGoal: false },
+        { dayId: "d1", itemId: "soup", boughtAsActiveGoal: false },
+        { dayId: "d1", itemId: "tea", boughtAsActiveGoal: false },
+        { dayId: "d2", itemId: "vitamins", boughtAsActiveGoal: false },
       ],
       savingsInDayIds: ["d1", "d1"],
       plansConfirmed: 0,
@@ -87,9 +87,9 @@ describe("достижения", () => {
 
     const together = achievementFactsFrom({
       purchases: [
-        { dayId: "d1", itemId: "lunch", boughtAsActiveGoal: false },
-        { dayId: "d1", itemId: "transport", boughtAsActiveGoal: false },
-        { dayId: "d1", itemId: "medicine", boughtAsActiveGoal: false },
+        { dayId: "d1", itemId: "soup", boughtAsActiveGoal: false },
+        { dayId: "d1", itemId: "tea", boughtAsActiveGoal: false },
+        { dayId: "d1", itemId: "vitamins", boughtAsActiveGoal: false },
       ],
       savingsInDayIds: [],
       plansConfirmed: 0,

@@ -1,13 +1,17 @@
 import type { Stage } from "./stages";
 
-/** Shelf Желаемые. Both are required; the first one alone is not a Достижение. */
-export const TREAT_ITEM_IDS = ["candy", "ice-cream"] as const;
+/**
+ * Two Желаемые treats: Мороженое and Пицца. Both are required; the first one
+ * alone is not a Достижение. (Конфета left Магазин with the 2026-09-29 catalogue.)
+ */
+export const TREAT_ITEM_IDS = ["ice-cream", "pizza"] as const;
 
 /**
- * Обед, Проезд, and Лекарство bought on the same Игровой день — the Счета
- * of the day the pet is ill. One of them, or the same three on different days, does not count.
+ * Суп, Чай, and Витамины bought on the same Игровой день — how a day of caring
+ * for the pet looks. One of them, or the same three on different days, does not count.
+ * (Обед, Проезд, and Лекарство left Магазин with the 2026-09-29 catalogue.)
  */
-export const SICK_DAY_ITEM_IDS = ["lunch", "transport", "medicine"] as const;
+export const SICK_DAY_ITEM_IDS = ["soup", "tea", "vitamins"] as const;
 
 /** Deposits into Копилка on this many different days. One lump toward a Цель is not enough. */
 export const SAVINGS_DAYS = 6;
@@ -32,9 +36,9 @@ export const PERFECT_DAYS = 3;
  * is stored and is not taken away if a later day looks different.
  */
 export type AchievementFacts = {
-  /** Конфета and Мороженое have each been bought at least once. */
+  /** Мороженое and Пицца have each been bought at least once. */
   bothTreats: boolean;
-  /** Days on which Обед, Проезд, and Лекарство were all bought. */
+  /** Days on which Суп, Чай, and Витамины were all bought. */
   sickDays: number;
   /** Distinct days with a deposit into Копилка. */
   savingsDays: number;

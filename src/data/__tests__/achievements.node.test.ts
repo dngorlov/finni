@@ -1,39 +1,39 @@
 import type { CatalogItem } from "../../core/economy";
 import { openMemoryGame } from "../testSupport/memoryDb";
 
-const lunch: CatalogItem = {
-  id: "lunch",
-  kind: "mandatory",
-  price: 12,
-  effect: { meter: "care", delta: 10 },
-};
-
-const transport: CatalogItem = {
-  id: "transport",
+const soup: CatalogItem = {
+  id: "soup",
   kind: "mandatory",
   price: 8,
-  effect: { meter: "mood", delta: 5 },
+  effect: { meter: "care", delta: 12 },
 };
 
-const medicine: CatalogItem = {
-  id: "medicine",
+const tea: CatalogItem = {
+  id: "tea",
   kind: "mandatory",
-  price: 15,
-  effect: { meter: "mood", delta: 20 },
+  price: 2,
+  effect: { meter: "care", delta: 2 },
 };
 
-const candy: CatalogItem = {
-  id: "candy",
-  kind: "optional",
+const vitamins: CatalogItem = {
+  id: "vitamins",
+  kind: "mandatory",
   price: 5,
-  effect: { meter: "mood", delta: 5 },
+  effect: { meter: "care", delta: 5 },
+};
+
+const pizza: CatalogItem = {
+  id: "pizza",
+  kind: "optional",
+  price: 15,
+  effect: { meter: "care", delta: 10 },
 };
 
 const iceCream: CatalogItem = {
   id: "ice-cream",
   kind: "optional",
-  price: 8,
-  effect: { meter: "mood", delta: 6 },
+  price: 4,
+  effect: { meter: "mood", delta: 5 },
 };
 
 function openProfile() {
@@ -58,8 +58,8 @@ describe("достижения", () => {
     const { game, profileId, dayId } = openProfile();
 
     expect(game.listAchievements(profileId)).toEqual([]);
-    game.purchase(profileId, dayId, lunch);
-    game.purchase(profileId, dayId, candy);
+    game.purchase(profileId, dayId, soup);
+    game.purchase(profileId, dayId, pizza);
     expect(game.listAchievements(profileId)).toEqual([]);
 
     game.purchase(profileId, dayId, iceCream);
@@ -69,13 +69,13 @@ describe("достижения", () => {
     expect(game.listAchievements(profileId)).toEqual([{ id: "sweets", dayN: 1, celebrated: true }]);
   });
 
-  it("records Питомец здоров only when Обед, Проезд, and Лекарство share the day", () => {
+  it("records Питомец здоров only when Суп, Чай, and Витамины share the day", () => {
     const { game, profileId, dayId } = openProfile();
-    game.purchase(profileId, dayId, lunch);
-    game.purchase(profileId, dayId, transport);
+    game.purchase(profileId, dayId, soup);
+    game.purchase(profileId, dayId, tea);
     expect(game.listAchievements(profileId)).toEqual([]);
 
-    game.purchase(profileId, dayId, medicine);
+    game.purchase(profileId, dayId, vitamins);
     expect(game.listAchievements(profileId)).toEqual([{ id: "sick_day", dayN: 1, celebrated: false }]);
   });
 
@@ -86,7 +86,7 @@ describe("достижения", () => {
 
     let current = dayId;
     for (let step = 0; step < 3; step += 1) {
-      game.closeDay(profileId, [lunch]);
+      game.closeDay(profileId, [soup]);
       const next = game.openDay(profileId);
       if (next.status !== "opened") throw new Error("День не открылся");
       current = next.dayId;
