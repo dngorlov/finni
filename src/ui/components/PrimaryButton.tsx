@@ -10,9 +10,10 @@ export function PrimaryButton({
   label,
   disabled,
   highlighted,
+  alignStart,
   onPress,
   ...rest
-}: { label: string; highlighted?: boolean } & PressableProps) {
+}: { label: string; highlighted?: boolean; alignStart?: boolean } & PressableProps) {
   return (
     <Pressable
       {...rest}
@@ -33,6 +34,7 @@ export function PrimaryButton({
           styles.face,
           disabled ? styles.faceDisabled : styles.faceRaised,
           highlighted ? styles.faceMarked : null,
+          alignStart ? styles.faceStart : null,
         ]}
       >
         <PixelIcon name={buttonIcon(label)} color={disabled ? colors.subtle : colors.onRaised} />
@@ -71,6 +73,10 @@ const styles = StyleSheet.create({
     minHeight: minTarget,
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
+  },
+  // A column of answers: every icon on one vertical line.
+  faceStart: {
+    justifyContent: "flex-start",
   },
   faceRaised: {
     backgroundColor: colors.raisedFace,

@@ -81,12 +81,9 @@ describe("Главная scene", () => {
     expect(screen.getByText("Каждый день Сытость и Счастье уменьшаются на 15. Совершая покупки, можно их восполнить!")).toBeOnTheScreen();
     await user.press(screen.getByRole("button", { name: "Подсказка про день" }));
     expect(screen.queryByText(/Каждый день сытость -15/)).not.toBeOnTheScreen();
+    // Магазин and Итоги stack bottom right, clear of the pet's speech bubble.
     const actions = screen.getByTestId("home-actions");
-    const hud = actions.parent;
-    let dayRow = screen.getByText("День 1").parent;
-    while (dayRow && dayRow.parent !== hud) dayRow = dayRow.parent;
-    expect(hud?.children.indexOf(dayRow!)).toBeLessThan(hud?.children.indexOf(actions) ?? -1);
-    expect(actions).toHaveStyle({ alignSelf: "flex-end", flexDirection: "row" });
+    expect(actions).toHaveStyle({ position: "absolute" });
     expect(actions).toContainElement(screen.getByRole("button", { name: "Магазин" }));
     expect(screen.getByRole("button", { name: "Магазин" })).toBeEnabled();
     expect(actions).toContainElement(screen.getByRole("button", { name: "Итоги" }));
@@ -189,7 +186,7 @@ describe("Главная scene", () => {
     await act(async () => {
       jest.advanceTimersByTime(QUIET_MS - quietSchedule("hungry").before);
     });
-    expect(screen.getByText("Пойдём на карту?")).toBeOnTheScreen();
+    expect(screen.getByText("Открывай карту!")).toBeOnTheScreen();
   });
 
   it("shows a sadness emoji in the quiet gap, then the next phrase", async () => {

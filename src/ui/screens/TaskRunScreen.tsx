@@ -248,7 +248,7 @@ export default function TaskRunScreen({ navigation, route }: Props) {
     ) : kind === "choice" && !tileMode && !pickMode ? (
       <>
         {node?.options?.map((option, index) => (
-          <PrimaryButton key={`${node.id}-${index}`} label={withPet(option.label)} onPress={() => choose(index)} />
+          <PrimaryButton key={`${node.id}-${index}`} alignStart label={withPet(option.label)} onPress={() => choose(index)} />
         ))}
       </>
     ) : null;

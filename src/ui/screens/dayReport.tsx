@@ -155,7 +155,7 @@ function petLines(deltas: DaySummaryView["meterDeltas"]): PetLine[] {
 export function PetDayCard({ deltas }: { deltas: DaySummaryView["meterDeltas"] }) {
   const meters = [
     { key: "care", sprite: "food" as const, label: strings.care, delta: deltas.care, spoken: strings.feedbackCare(deltas.care) },
-    { key: "mood", sprite: "mood" as const, label: strings.mood, delta: deltas.mood, spoken: strings.feedbackMood(deltas.mood) },
+    { key: "mood", sprite: deltas.mood < 0 ? ("mood-down" as const) : ("mood" as const), label: strings.mood, delta: deltas.mood, spoken: strings.feedbackMood(deltas.mood) },
   ];
   return (
     <MoneyCard tight>
@@ -163,7 +163,7 @@ export function PetDayCard({ deltas }: { deltas: DaySummaryView["meterDeltas"] }
         {meters.map((meter) => (
           <View key={meter.key} accessible aria-label={meter.spoken} style={styles.meter}>
             <PixelSprite name={meter.sprite} size={22} />
-            <Text aria-hidden style={styles.meterLabel} numberOfLines={1}>
+            <Text aria-hidden style={[styles.meterLabel, { flex: 1 }]} numberOfLines={1}>
               {meter.label}
             </Text>
             <Text aria-hidden style={[styles.meterValue, { color: amountColor(meter.delta) }]}>
@@ -306,8 +306,8 @@ const styles = StyleSheet.create({
     fontSize: type.body,
     lineHeight: 22,
   },
+  // One under the other: side by side the labels were cut to «Сыт…» and «Сча…».
   meterRow: {
-    flexDirection: "row",
     gap: spacing.s,
   },
   meter: {
